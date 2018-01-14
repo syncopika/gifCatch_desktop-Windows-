@@ -13,41 +13,6 @@ idea: take a bunch of screenshots in sequence (with interval as n milliseconds),
 	
 	maybe give fps option and length of gif, not choose delay and number of frames.
 	
-	-> the mechanism to collect frames is in place 
-	-> now need to collect parameters, such as # of frames, # ms delay, and the area to capture 
-	-> # of frames and # ms delay between frames is pretty much in place 
-	-> need to implement a 2nd full-screen, transparent window to capture area 
-	
-	help!
-	https://stackoverflow.com/questions/2382464/win32-full-screen-and-hiding-taskbar
-	https://stackoverflow.com/questions/1857292/how-do-you-get-the-location-in-x-y-coordinate-pixels-of-a-mouse-click
-	https://stackoverflow.com/questions/3970066/creating-a-transparent-window-in-c-win32
-	https://stackoverflow.com/questions/2886609/how-to-make-multiple-windows-using-win32-api
-	https://msdn.microsoft.com/en-us/library/windows/desktop/ms633504(v=vs.85).aspx
-	https://stackoverflow.com/questions/30668040/specifying-a-window-procedure-for-child-windows
-	https://msdn.microsoft.com/en-us/library/windows/desktop/ms633548(v=vs.85).aspx  // show/hide window 
-	https://stackoverflow.com/questions/15605655/transparent-win32-window-and-text
-	
-	// dragging rectangle / rubberband 
-	https://stackoverflow.com/questions/13336225/win32-draw-a-dragging-rectangle
-	http://jdearden.gotdns.org/programming_windows_notebook/how_to_use_win32_api_to_draw_a_dragging_rectangle_on_screen_dc.html
-	http://www.cplusplus.com/forum/beginner/11226/
-	https://www.codeproject.com/Articles/1988/Guide-to-WIN-Paint-for-Beginners
-	
-	// creating multiple windows 
-	http://www.cplusplus.com/forum/windows/154449/
-	
-	// set active window 
-	https://msdn.microsoft.com/en-us/library/windows/desktop/ms646311(v=vs.85).aspx
-	
-	// yes/no box, prompt user after area selected 
-	http://forums.codeguru.com/showthread.php?445032-Determine-if-message-box-button-YES-or-NO-was-clicked-(MB_YESNO)
-	https://msdn.microsoft.com/en-us/library/windows/desktop/ms645505(v=vs.85).aspx
-	
-	// maybe use Qt to then select part of image, make gif ? nah, just use win32 for now 
-	// https://forum.qt.io/topic/11912/selecting-a-part-of-image/7
-	// http://www.cplusplus.com/forum/windows/106009/
-	
 */
 
 #include <iostream>
@@ -74,9 +39,12 @@ idea: take a bunch of screenshots in sequence (with interval as n milliseconds),
 #define ID_SELECT_SCREENAREA_BUTTON 106 
 #define ID_START_BUTTON 107
 
+using namespace Gdiplus;
+using namespace std;
+
 /*****************
 
-	global variables to hold parameters
+	global variables
 
 *****************/
 
@@ -85,7 +53,6 @@ int y1 = 0; // top left y coord
 int x2 = GetSystemMetrics(SM_CXSCREEN); // screen bottom right x coord 
 int y2 = GetSystemMetrics(SM_CYSCREEN); // screen bottom right y coord 
 
-
 // for selection window 
 bool bDrag = false;
 bool bDraw = false;
@@ -93,11 +60,23 @@ bool bDraw = false;
 // point structs for keeping track of start and final coordinates
 POINT ptCurr = {0, 0};
 POINT ptNew = {0, 0};
-HGDIOBJ original = NULL;
+
+// register 2 different windows 
+const char g_szClassName[] = "mainGUI";
+const char g_szClassName2[] = "selectionWindow";
+
+// handler variables for the windows 
+HWND hwnd;
+HWND selectionWindow;
 
 
-using namespace Gdiplus;
-using namespace std;
+// convert an integer to string 
+string int_to_string(int i){
+	stringstream ss;
+	ss << i;
+	string i_str = ss.str();
+	return i_str;
+}
 
 int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
 {
@@ -167,13 +146,6 @@ bool ScreenCapture(int x, int y, int width, int height, const char *filename)
 	return true;
 }
 
-string int_to_string(int i){
-	stringstream ss;
-	ss << i;
-	string i_str = ss.str();
-	return i_str;
-}
-
 void getSnapshots(int nImages, int delay){
     // Initialize GDI+.
     GdiplusStartupInput gdiplusStartupInput;
@@ -204,10 +176,10 @@ void getSnapshots(int nImages, int delay){
     //Shutdown GDI+
     GdiplusShutdown(gdiplusToken);
 	
-	/* this is hard. for GifWriteFrame, I need to convert the bmp file 
+	/* this is hard. was going to use gif.h (https://github.com/ginsweater/gif-h), 
+	   but for GifWriteFrame, I need to convert the bmp file 
 	   to an array of uint8_t, which I don't know how to do right now. 
-	   I'm also not really sure what an ARGB frame is :/. use a python script 
-	   to generate the gif 
+	   I'm also not really sure what an ARGB frame is :/.
 	
 	// make the gif here! using gif.h 
 	int width = x2 - x1;
@@ -241,14 +213,6 @@ void getSnapshots(int nImages, int delay){
 DO Win32 GUI STUFF HERE 
 
 *****************/
-// register 2 different windows 
-const char g_szClassName[] = "mainGUI";
-const char g_szClassName2[] = "selectionWindow";
-
-// handler variables for the windows 
-HWND hwnd;
-HWND selectionWindow;
-
 /* 
 
 	the window procedure 
@@ -271,14 +235,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 					int x = GetSystemMetrics(SM_CXSCREEN);
 					int y = GetSystemMetrics(SM_CYSCREEN);
 					selectionWindow = CreateWindowEx(
-											WS_EX_LAYERED,
-											g_szClassName2,
-											"selection",
-											WS_TILEDWINDOW,
-											0, 0, x, y,
-											NULL, NULL, GetModuleHandle(NULL), NULL
-										);
-											
+										WS_EX_LAYERED,
+										g_szClassName2,
+										"selection",
+										WS_TILEDWINDOW,
+										0, 0, x, y,
+										NULL, NULL, GetModuleHandle(NULL), NULL
+									);
+
 					// make window transparent
 					SetLayeredWindowAttributes(
 						selectionWindow,
@@ -310,13 +274,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 					int tDelay = atoi(timeDelay);
 					
 					/* for debugging */
-					cout << "num frames: " << int_to_string(nFrames) << endl;
-					cout << "delay: " << int_to_string(tDelay) << endl;
+					//cout << "num frames: " << int_to_string(nFrames) << endl;
+					//cout << "delay: " << int_to_string(tDelay) << endl;
 					
 					// get window parameters 
 					// by default screenshot whole screen
 					getSnapshots(nFrames, tDelay);
-					
 				}
 				break;
 			}
@@ -342,6 +305,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 	window procedure for the selection window 
 	
 */
+void reset(POINT *p1, POINT *p2, bool *drag, bool *draw){
+	*drag = false;
+	*draw = false;
+	p1->x = 0;
+	p1->y = 0;
+	p2->x = 0;
+	p2->y = 0;
+}
 
 LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 
@@ -357,7 +328,6 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 			ScreenToClient(hwnd, &ptCurr);
 		}
 		break;
-		
 		case WM_MOUSEMOVE:
 		{
 			if(bDrag){
@@ -398,18 +368,13 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 			if(bDraw){
 				
 				// get coordinates 
-				cout << "start x: " << ptCurr.x << ", start y: " << ptCurr.y << endl;
-				cout << "end x: " << ptNew.x << ", end y: " << ptNew.y << endl;
+				//cout << "start x: " << ptCurr.x << ", start y: " << ptCurr.y << endl;
+				//cout << "end x: " << ptNew.x << ", end y: " << ptNew.y << endl;
 				
 				// check if ok with user 
 				int response = MessageBox(hwnd, "Is this selection okay?", "Confirm Selection", MB_YESNOCANCEL);
 				if(response == IDCANCEL){
-					bDrag = false;
-					bDraw = false;
-					ptCurr.x = 0;
-					ptCurr.y = 0;
-					ptNew.x = 0;
-					ptNew.y = 0;
+					reset(&ptCurr, &ptNew, &bDrag, &bDraw);
 					ReleaseCapture();
 					DestroyWindow(hwnd);
 					return 0; 
@@ -422,22 +387,24 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 					
 					// do some correction to take into account the title bar height 
 					if(ptCurr.y > 0){
-						//cout << "height of title bar: " << int_to_string(GetSystemMetrics(SM_CYCAPTION)) << endl;
 						y1 = y1 + GetSystemMetrics(SM_CYCAPTION);
 					}
 					
+					reset(&ptCurr, &ptNew, &bDrag, &bDraw);
 					DestroyWindow(hwnd);
 					ReleaseCapture();
 					return 0;
 				}else if(response == IDNO){
+					// need to clear screen!!
+					HDC hdc = GetDC(hwnd);
+					SelectObject(hdc,GetStockObject(DC_BRUSH));
+					SetDCBrushColor(hdc, RGB(255,0,0)); 
+					SetROP2(hdc, R2_NOTXORPEN);
+					// erase old rectangle 
+					Rectangle(hdc, ptCurr.x, ptCurr.y, ptNew.x, ptNew.y);
+					ReleaseDC(hwnd, hdc);
 					// reset stuff
-					// need to clear screen also!!
-					bDrag = false;
-					bDraw = false;
-					ptCurr.x = 0;
-					ptCurr.y = 0;
-					ptNew.x = 0;
-					ptNew.y = 0;	
+					reset(&ptCurr, &ptNew, &bDrag, &bDraw);
 				}else{
 					// failure to show message box	
 					cout << "error with message box!!" << endl;
@@ -448,7 +415,6 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 			}
 		}
 		break;
-		
 		case WM_CLOSE:
 		{
 			DestroyWindow(hwnd);
@@ -478,8 +444,8 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow){
 
 	/* console attached for debugging */
-	AllocConsole();
-	freopen( "CON", "w", stdout );
+	//AllocConsole();
+	//freopen( "CON", "w", stdout );
 	
 	WNDCLASSEX wc; // this is the main GUI window 
 	MSG Msg;
@@ -632,7 +598,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	);
 	
 	
-	
 	/* button to select area of screen  */
 	CreateWindow(
 		TEXT("button"),
@@ -645,7 +610,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		hInstance,
 		NULL
 	);
-	/* button to start */
+	
+	/* button to start the screen capture */
 	CreateWindow(
 		TEXT("button"),
 		TEXT("start"),

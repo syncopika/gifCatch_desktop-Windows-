@@ -1,0 +1,27 @@
+help! - resources I used to help me with this program
+
+https://stackoverflow.com/questions/2382464/win32-full-screen-and-hiding-taskbar
+https://stackoverflow.com/questions/1857292/how-do-you-get-the-location-in-x-y-coordinate-pixels-of-a-mouse-click
+https://stackoverflow.com/questions/3970066/creating-a-transparent-window-in-c-win32
+https://stackoverflow.com/questions/2886609/how-to-make-multiple-windows-using-win32-api
+https://msdn.microsoft.com/en-us/library/windows/desktop/ms633504(v=vs.85).aspx
+https://stackoverflow.com/questions/30668040/specifying-a-window-procedure-for-child-windows
+https://msdn.microsoft.com/en-us/library/windows/desktop/ms633548(v=vs.85).aspx  // show/hide window 
+https://stackoverflow.com/questions/15605655/transparent-win32-window-and-text
+
+// dragging rectangle / rubberband 
+http://jdearden.gotdns.org/programming_windows_notebook/how_to_use_win32_api_to_draw_a_dragging_rectangle_on_screen_dc.html
+https://stackoverflow.com/questions/13336225/win32-draw-a-dragging-rectangle
+http://www.cplusplus.com/forum/beginner/11226/
+https://www.codeproject.com/Articles/1988/Guide-to-WIN-Paint-for-Beginners
+https://msdn.microsoft.com/en-us/library/windows/desktop/dd162492(v=vs.85).aspx
+
+// creating multiple windows 
+http://www.cplusplus.com/forum/windows/154449/
+
+// set active window 
+https://msdn.microsoft.com/en-us/library/windows/desktop/ms646311(v=vs.85).aspx
+
+// yes/no box, prompt user after area selected 
+http://forums.codeguru.com/showthread.php?445032-Determine-if-message-box-button-YES-or-NO-was-clicked-(MB_YESNO)
+https://msdn.microsoft.com/en-us/library/windows/desktop/ms645505(v=vs.85).aspx

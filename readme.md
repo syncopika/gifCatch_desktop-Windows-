@@ -2,11 +2,10 @@
     
 the program in the gui folder lets you select what part of the screen to screenshot.    
 this is still heavily in the works but it has almost at least the minimum functionality.    
-right now the gif-making step is handled by the python script, which requires imageio but is extremely easy to install.    
+right now the gif-making step is handled by the python script, which requires imageio but is extremely easy to install.  also, the gif-making step isn't working out too well either though.      
     
 things to do:    
-- clean up gui    
-- fix the bugs with the rubber-banding/area selection    
+- clean up gui (maybe eventually move to Qt)        
 - understand how gifs work    
 - can I get better quality images?    
     
