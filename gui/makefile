@@ -25,7 +25,7 @@ $(EXE): $(OBJ)
 #gui.o: captureGUI.rc
 #	windres captureGUI.rc -o gui.o 
 	
-capture.o: captureGUI.cpp
+capture.o: captureGUI.cpp gif.h
 	$(CXX) $(FLAGS) $< -o  $@
 	
 clean:

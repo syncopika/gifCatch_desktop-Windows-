@@ -1,18 +1,15 @@
 /**
-
-using the screen capture code from: https://github.com/ebonwheeler/Win32GrabScreen/blob/master/capture.cpp
-
-idea: take a bunch of screenshots in sequence (with interval as n milliseconds), 
-	  create gif from screenshots
+	idea: take a bunch of screenshots in sequence (with interval as n milliseconds), 
+	create gif from screenshots
 
 	have a GUI, user inputs 3 args
 	- pre-delay, milliseconds (give the user some time to minimize the gui window if they want a gif that is full screen)
 	- number of frames to collect 
 	- interval between screenshots, in milliseconds (10 <= n <= 1000 ms) cap it at 1000
 
-	
 	maybe give fps option and length of gif, not choose delay and number of frames.
-	
+
+	check out resources.txt in the main directory outside this one for helpful links/resources!
 */
 
 #include <iostream>
@@ -20,9 +17,14 @@ idea: take a bunch of screenshots in sequence (with interval as n milliseconds),
 #include <stdlib.h>
 #include <sstream>
 #include <string>
+#include <vector>
+#include <array>
+#include <fstream>
+#include <iterator>
 #include <windows.h>
 #include <gdiplus.h>
 #include <memory>
+#include "gif.h"
 //#include "resource.h"
 
 // give some identifiers for the GUI numbers 
@@ -70,6 +72,7 @@ HWND hwnd;
 HWND selectionWindow;
 
 
+
 // convert an integer to string 
 string int_to_string(int i){
 	stringstream ss;
@@ -77,6 +80,66 @@ string int_to_string(int i){
 	string i_str = ss.str();
 	return i_str;
 }
+
+
+// get a bmp image and extract the image data into a uint8_t array 
+// which will be passed to gif functions from gif.h to create the gif 
+vector<uint8_t> getBMPImageData(const string filename){
+	
+	static constexpr size_t HEADER_SIZE = 54;
+	
+	ifstream bmp(filename, ios::binary);
+	
+	// this represents the header of the bmp file 
+	array<char, HEADER_SIZE> header;
+	
+	// read in 54 bytes of the file and put that data in the header array
+	bmp.read(header.data(), header.size());
+	
+	//auto fileSize = *reinterpret_cast<uint32_t *>(&header[2]);
+	auto dataOffset = *reinterpret_cast<uint32_t *>(&header[10]);
+	auto width = *reinterpret_cast<uint32_t *>(&header[18]);
+	auto height = *reinterpret_cast<uint32_t *>(&header[22]);
+	//auto depth = *reinterpret_cast<uint16_t *>(&header[28]);
+	
+	//cout << "file size: " << fileSize << endl;
+	//cout << "dataOffset: " << dataOffset << endl;
+	//cout << "width: " << width << endl;
+	//cout << "height: " << height << endl;
+	//cout << "depth: " << depth << "-bit" << endl;
+	
+	// now get the image pixel data
+	vector<char> img(dataOffset - HEADER_SIZE);
+	bmp.read(img.data(), img.size());
+	
+	// width*4 because each pixel is 4 bytes (32-bit bmp)
+	auto dataSize = ((width*4 + 3) & (~3)) * height;
+	img.resize(dataSize);
+	bmp.read(img.data(), img.size());
+	
+	// need to swap R and B (img[i] and img[i+2]) so that the sequence is RGB, not BGR
+	// also, notice that each pixel is represented by 4 bytes, not 3, because
+	// the bmp images are 32-bit
+	for(int i = dataSize - 4; i >= 0; i -= 4){
+		char temp = img[i];
+		img[i] = img[i+2];
+		img[i+2] = temp;
+	}
+	
+	// change char vector to uint8_t vector
+	// be careful! bmp image data is stored upside-down :<
+	// so traverse backwards, but also, for each row, invert the row also!
+	vector<uint8_t> image;
+	int widthSize = 4 * (int)width;
+	for(int j = (int)(dataSize - 1); j >= 0; j -= widthSize){
+		for(int k = widthSize - 1; k >= 0; k--){
+			image.push_back((uint8_t)img[j - k]);
+		}
+	}
+	
+	return image;
+}
+
 
 int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
 {
@@ -86,23 +149,19 @@ int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
     ImageCodecInfo* pImageCodecInfo = NULL;
 
     GetImageEncodersSize(&num, &size);
-    if(size == 0)
-    {
+    if(size == 0){
         return -1;  // Failure
     }
 
     pImageCodecInfo = (ImageCodecInfo*)(malloc(size));
-    if(pImageCodecInfo == NULL)
-    {
+    if(pImageCodecInfo == NULL){
         return -1;  // Failure
     }
 
     GetImageEncoders(num, size, pImageCodecInfo);
 
-    for(UINT j = 0; j < num; ++j)
-    {
-        if( wcscmp(pImageCodecInfo[j].MimeType, format) == 0 )
-        {
+    for(UINT j = 0; j < num; ++j){
+        if( wcscmp(pImageCodecInfo[j].MimeType, format) == 0 ){
             *pClsid = pImageCodecInfo[j].Clsid;
             free(pImageCodecInfo);
             return j;  // Success
@@ -113,14 +172,14 @@ int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
     return -1;  // Failure
 }
 
-void BitmapToJpg(HBITMAP hbmpImage, int width, int height, string filename)
+void BitmapToBMP(HBITMAP hbmpImage, int width, int height, string filename)
 {
     Bitmap *p_bmp = Bitmap::FromHBITMAP(hbmpImage, NULL);
     //Bitmap *p_bmp = new Bitmap(width, height, PixelFormat32bppARGB);
     
-	// how about pngs?
+	// how about pngs? bmp?
     CLSID pngClsid;
-    int result = GetEncoderClsid(L"image/jpeg", &pngClsid);
+    int result = GetEncoderClsid(L"image/bmp", &pngClsid);  
     if(result != -1){
         std::cout << "Encoder succeeded" << std::endl;
 	}else{
@@ -141,7 +200,7 @@ bool ScreenCapture(int x, int y, int width, int height, const char *filename)
 	HBITMAP hBmp = CreateCompatibleBitmap(GetDC(0), width, height);
 	SelectObject(hDc, hBmp);
 	BitBlt(hDc, 0, 0, width, height, GetDC(0), x, y, SRCCOPY);
-    BitmapToJpg(hBmp, width, height, filename);
+    BitmapToBMP(hBmp, width, height, filename);
 	DeleteObject(hBmp);
 	return true;
 }
@@ -168,18 +227,13 @@ void getSnapshots(int nImages, int delay){
 	for(int i = 0; i < nImages; i++){
 		// put all images in temp folder 
 		// notice x1, y1, x2, and y2 are global variables 
-		name = "temp/screen" + int_to_string(i) + ".jpg";
+		name = "temp/screen" + int_to_string(i) + ".bmp";
 		ScreenCapture(x1, y1, x2 - x1, y2 - y1, name.c_str());
 		Sleep(delay);
     }
 	
     //Shutdown GDI+
     GdiplusShutdown(gdiplusToken);
-	
-	/* this is hard. was going to use gif.h (https://github.com/ginsweater/gif-h), 
-	   but for GifWriteFrame, I need to convert the bmp file 
-	   to an array of uint8_t, which I don't know how to do right now. 
-	   I'm also not really sure what an ARGB frame is :/.
 	
 	// make the gif here! using gif.h 
 	int width = x2 - x1;
@@ -188,22 +242,16 @@ void getSnapshots(int nImages, int delay){
 	
 	// initialize gifWriter
 	// call the gif "test" - it'll be in the same directory as the executable 
-	GifBegin(&gifWriter, "test.gif", width, height, delay/10);
+	GifBegin(&gifWriter, "test.gif", (uint32_t)width, (uint32_t)height, (uint32_t)delay/10);
 	
 	// pass in frames 
 	string nextFrame; 
-	const uint8_t* img;
-	//GifWriteFrame( GifWriter* writer, const uint8_t* image, uint32_t width, uint32_t height, uint32_t delay, int bitDepth = 8, bool dither = false )
 	for(int i = 0; i < nImages; i++){
-		// the argument "img" is supposed to be an array of uint8_t representing an image
-		// https://stackoverflow.com/questions/29058452/how-to-convert-a-bmp-image-into-byte-array-using-c-program
-		//nextFrame = "temp/screen" + int_to_string(i) + ".jpg";
-
-		GifWriteFrame(gifWriter, img, width, height, (delay/10));
+		nextFrame = "temp/screen" + int_to_string(i) + ".bmp";
+		GifWriteFrame(&gifWriter, (uint8_t*)getBMPImageData(nextFrame).data(), (uint32_t)width, (uint32_t)height, (uint32_t)(delay/10));
 	}
 	GifEnd(&gifWriter);
 
-	*/
 }
 
 

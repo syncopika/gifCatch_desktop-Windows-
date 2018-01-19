@@ -1,5 +1,8 @@
 help! - resources I used to help me with this program
 
+// screen capture with GDI
+https://github.com/ebonwheeler/Win32GrabScreen/blob/master/capture.cpp
+
 https://stackoverflow.com/questions/2382464/win32-full-screen-and-hiding-taskbar
 https://stackoverflow.com/questions/1857292/how-do-you-get-the-location-in-x-y-coordinate-pixels-of-a-mouse-click
 https://stackoverflow.com/questions/3970066/creating-a-transparent-window-in-c-win32
@@ -25,3 +28,15 @@ https://msdn.microsoft.com/en-us/library/windows/desktop/ms646311(v=vs.85).aspx
 // yes/no box, prompt user after area selected 
 http://forums.codeguru.com/showthread.php?445032-Determine-if-message-box-button-YES-or-NO-was-clicked-(MB_YESNO)
 https://msdn.microsoft.com/en-us/library/windows/desktop/ms645505(v=vs.85).aspx
+
+// regarding gif making and bmp files
+https://stackoverflow.com/questions/9296059/read-pixel-value-in-bmp-file
+https://stackoverflow.com/questions/29058452/how-to-convert-a-bmp-image-into-byte-array-using-c-program
+http://www.cplusplus.com/articles/GwvU7k9E/ 
+http://paulbourke.net/dataformats/bmp/
+https://stackoverflow.com/questions/5345803/does-gdi-have-standard-image-encoder-clsids
+http://www.dragonwins.com/domains/getteched/bmp/bmpfileformat.htm
+
+// did you know BMP image data is stored upside down!?
+https://stackoverflow.com/questions/8346115/why-are-bmps-stored-upside-down
+
