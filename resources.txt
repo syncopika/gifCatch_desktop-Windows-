@@ -3,6 +3,9 @@ help! - resources I used to help me with this program
 // screen capture with GDI
 https://github.com/ebonwheeler/Win32GrabScreen/blob/master/capture.cpp
 
+// gif-making 
+https://github.com/ginsweater/gif-h/blob/master/gif.h
+
 https://stackoverflow.com/questions/2382464/win32-full-screen-and-hiding-taskbar
 https://stackoverflow.com/questions/1857292/how-do-you-get-the-location-in-x-y-coordinate-pixels-of-a-mouse-click
 https://stackoverflow.com/questions/3970066/creating-a-transparent-window-in-c-win32
