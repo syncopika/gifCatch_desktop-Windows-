@@ -27,4 +27,7 @@ current screenshots:
 ### you can find the finished gif (called "test" - can't choose name yet, sorry!) in the currect folder as the program, as well as its frames in the "temp" directory.    
 ![find your gif](screenshots/done.png "find the gif and its frames")    
     
+### here's my result:    
+![gif result](screenshots/test.gif "Joey Alexander performing 'Pannonica'")    
+    
 feel free to check out my Chrome extension that does pretty much the same thing (but is not as neat): https://github.com/syncopika/gifCatch_extension    
