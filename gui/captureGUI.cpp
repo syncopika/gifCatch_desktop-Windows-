@@ -41,6 +41,8 @@
 #define ID_SELECT_SCREENAREA_BUTTON 106 
 #define ID_START_BUTTON 107
 
+#define ID_PROGRESS_MSG 108
+
 using namespace Gdiplus;
 using namespace std;
 
@@ -88,6 +90,7 @@ vector<uint8_t> getBMPImageData(const string filename){
 	
 	static constexpr size_t HEADER_SIZE = 54;
 	
+	// read in bmp file as stream
 	ifstream bmp(filename, ios::binary);
 	
 	// this represents the header of the bmp file 
@@ -263,8 +266,7 @@ DO Win32 GUI STUFF HERE
 *****************/
 /* 
 
-	the window procedure 
-	this handles the functionality of the window it's attached to 
+	the window procedure for the GUI
 	
 */
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
@@ -274,12 +276,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 		case WM_COMMAND:
 			/* LOWORD takes the lower 16 bits of wParam => the element clicked on */
 			switch(LOWORD(wParam)){
-
 				case ID_SELECT_SCREENAREA_BUTTON:
 				{
-					//implement me!
 					// make a new window to select the area 
-					// hide this window until selection has been made 
 					int x = GetSystemMetrics(SM_CXSCREEN);
 					int y = GetSystemMetrics(SM_CYSCREEN);
 					selectionWindow = CreateWindowEx(
@@ -302,12 +301,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 					// show window
 					ShowWindow(selectionWindow, SW_MAXIMIZE);
 					UpdateWindow(selectionWindow);
-					
 				}
 				break;
 				case ID_START_BUTTON:
 				{	
-					// implement me!
 					// get the parameters 
 					HWND frames = GetDlgItem(hwnd, ID_NUMFRAMES_TEXTBOX);
 					HWND delay = GetDlgItem(hwnd, ID_DELAY_TEXTBOX);
@@ -325,9 +322,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 					//cout << "num frames: " << int_to_string(nFrames) << endl;
 					//cout << "delay: " << int_to_string(tDelay) << endl;
 					
-					// get window parameters 
-					// by default screenshot whole screen
+					// indicate process started 
+					SetDlgItemText(hwnd, ID_PROGRESS_MSG, "processing...");
+					
+					// if no window selection occurred, screenshot whole screen
 					getSnapshots(nFrames, tDelay);
+					
+					// if at this point, task is done 
+					SetDlgItemText(hwnd, ID_PROGRESS_MSG, "processing successful!");
+					
 				}
 				break;
 			}
@@ -368,10 +371,13 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 		case WM_LBUTTONDOWN:
 		{
 			SetCapture(hwnd);
-			bDrag = true; // need button down to initiate mousemove step 
+			
+			// need button down to initiate mousemove step 
+			bDrag = true;
 
 			// log the coordinates 
 			GetCursorPos(&ptCurr);
+			
 			// check out the difference between ScreenToClient vs ClientToScreen 
 			ScreenToClient(hwnd, &ptCurr);
 		}
@@ -544,7 +550,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	hwnd = CreateWindowEx(
 		WS_EX_CLIENTEDGE,
 		g_szClassName,
-		"gifGetter",
+		"gifCatch",
 		WS_TILEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT, 400, 400,
 		NULL, NULL, hInstance, NULL
@@ -558,7 +564,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	/* make a title label */
 	CreateWindow(
 		TEXT("STATIC"),
-		TEXT(" gif getter \n nch "),
+		TEXT(" gifCatch \n nch 2018 "),
 		WS_VISIBLE | WS_CHILD | SS_LEFT,
 		10, 10,
 		200, 40,
@@ -668,6 +674,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		80, 20, 
 		hwnd,
 		(HMENU)ID_START_BUTTON,
+		hInstance,
+		NULL
+	);
+	
+	/* text indicator/message for gif processing progress */
+	CreateWindow(
+		TEXT("STATIC"),
+		TEXT(""),
+		WS_VISIBLE | WS_CHILD | WS_BORDER,
+		80, 300,  /* x, y coords */
+		220, 20, /* width, height */
+		hwnd,
+		(HMENU)ID_PROGRESS_MSG,
 		hInstance,
 		NULL
 	);

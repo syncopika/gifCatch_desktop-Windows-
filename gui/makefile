@@ -12,7 +12,7 @@ LINK_FLAGS = -mwindows -static-libstdc++ -static-libgcc $(LIB)
 
 OBJ = capture.o
 
-EXE = capture.exe
+EXE = gifcatch.exe
 
 all: $(EXE)
 
