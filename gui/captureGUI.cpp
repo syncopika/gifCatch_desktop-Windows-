@@ -10,22 +10,22 @@
     maybe give fps option and length of gif, not choose delay and number of frames.
 
     check out resources.txt in the main directory outside this one for helpful links/resources!
+    
 */
 
-#include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <array>
-#include <fstream>
-#include <iterator>
-#include <windows.h>
-#include <gdiplus.h>
-#include <memory>
-#include "gif.h"
-//#include "resource.h"
+// for improving GUI appearance
+// these definitions have to be declared here 
+#define _WIN32_WINNT 0x0601
+#define _WIN32_IE 0x0900
+
+#include <stdlib.h>  // for atoi 
+
+// this also brings in windows.h, gdiplus.h, and everything else 
+#include "capture.hh"
+
+// for improving GUI appearance
+// defined here since it needs to come after windows.h
+#include <commctrl.h> 
 
 // give some identifiers for the GUI components 
 #define ID_TITLE_LABEL 99
@@ -43,12 +43,10 @@
 
 #define ID_PROGRESS_MSG 108
 
-using namespace Gdiplus;
-using namespace std;
 
 /*****************
 
-    global variables
+global variables
 
 *****************/
 
@@ -74,189 +72,11 @@ HWND hwnd;
 HWND selectionWindow;
 
 
-
-// convert an integer to string 
-string int_to_string(int i){
-    stringstream ss;
-    ss << i;
-    string i_str = ss.str();
-    return i_str;
-}
-
-
-// get a bmp image and extract the image data into a uint8_t array 
-// which will be passed to gif functions from gif.h to create the gif 
-vector<uint8_t> getBMPImageData(const string filename){
-    
-    static constexpr size_t HEADER_SIZE = 54;
-    
-    // read in bmp file as stream
-    ifstream bmp(filename, ios::binary);
-    
-    // this represents the header of the bmp file 
-    array<char, HEADER_SIZE> header;
-    
-    // read in 54 bytes of the file and put that data in the header array
-    bmp.read(header.data(), header.size());
-    
-    //auto fileSize = *reinterpret_cast<uint32_t *>(&header[2]);
-    auto dataOffset = *reinterpret_cast<uint32_t *>(&header[10]);
-    auto width = *reinterpret_cast<uint32_t *>(&header[18]);
-    auto height = *reinterpret_cast<uint32_t *>(&header[22]);
-    //auto depth = *reinterpret_cast<uint16_t *>(&header[28]);
-    
-    //cout << "file size: " << fileSize << endl;
-    //cout << "dataOffset: " << dataOffset << endl;
-    //cout << "width: " << width << endl;
-    //cout << "height: " << height << endl;
-    //cout << "depth: " << depth << "-bit" << endl;
-    
-    // now get the image pixel data
-    vector<char> img(dataOffset - HEADER_SIZE);
-    bmp.read(img.data(), img.size());
-    
-    // width*4 because each pixel is 4 bytes (32-bit bmp)
-    auto dataSize = ((width*4 + 3) & (~3)) * height;
-    img.resize(dataSize);
-    bmp.read(img.data(), img.size());
-    
-    // need to swap R and B (img[i] and img[i+2]) so that the sequence is RGB, not BGR
-    // also, notice that each pixel is represented by 4 bytes, not 3, because
-    // the bmp images are 32-bit
-    for(int i = dataSize - 4; i >= 0; i -= 4){
-        char temp = img[i];
-        img[i] = img[i+2];
-        img[i+2] = temp;
-    }
-    
-    // change char vector to uint8_t vector
-    // be careful! bmp image data is stored upside-down :<
-    // so traverse backwards, but also, for each row, invert the row also!
-    vector<uint8_t> image;
-    int widthSize = 4 * (int)width;
-    for(int j = (int)(dataSize - 1); j >= 0; j -= widthSize){
-        for(int k = widthSize - 1; k >= 0; k--){
-            image.push_back((uint8_t)img[j - k]);
-        }
-    }
-    
-    return image;
-}
-
-
-int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
-{
-    UINT num = 0;          // number of image encoders
-    UINT size = 0;         // size of the image encoder array in bytes
-
-    ImageCodecInfo* pImageCodecInfo = NULL;
-
-    GetImageEncodersSize(&num, &size);
-    if(size == 0){
-        return -1;  // Failure
-    }
-
-    pImageCodecInfo = (ImageCodecInfo*)(malloc(size));
-    if(pImageCodecInfo == NULL){
-        return -1;  // Failure
-    }
-
-    GetImageEncoders(num, size, pImageCodecInfo);
-
-    for(UINT j = 0; j < num; ++j){
-        if( wcscmp(pImageCodecInfo[j].MimeType, format) == 0 ){
-            *pClsid = pImageCodecInfo[j].Clsid;
-            free(pImageCodecInfo);
-            return j;  // Success
-        }    
-    }
-
-    free(pImageCodecInfo);
-    return -1;  // Failure
-}
-
-void BitmapToBMP(HBITMAP hbmpImage, int width, int height, string filename)
-{
-    Bitmap *p_bmp = Bitmap::FromHBITMAP(hbmpImage, NULL);
-    //Bitmap *p_bmp = new Bitmap(width, height, PixelFormat32bppARGB);
-    
-    // how about pngs? bmp?
-    CLSID pngClsid;
-    int result = GetEncoderClsid(L"image/bmp", &pngClsid);  
-    if(result != -1){
-        std::cout << "Encoder succeeded" << std::endl;
-    }else{
-        std::cout << "Encoder failed" << std::endl;
-    }
-    
-    // convert filename to a wstring first
-    wstring fname = wstring(filename.begin(), filename.end());
-    
-    // use .c_str to convert to wchar_t*
-    p_bmp->Save(fname.c_str(), &pngClsid, NULL);
-    delete p_bmp;
-}
-
-bool ScreenCapture(int x, int y, int width, int height, const char *filename)
-{
-    HDC hDc = CreateCompatibleDC(0);
-    HBITMAP hBmp = CreateCompatibleBitmap(GetDC(0), width, height);
-    SelectObject(hDc, hBmp);
-    BitBlt(hDc, 0, 0, width, height, GetDC(0), x, y, SRCCOPY);
-    BitmapToBMP(hBmp, width, height, filename);
-    DeleteObject(hBmp);
-    return true;
-}
-
-void getSnapshots(int nImages, int delay){
-    // Initialize GDI+.
-    GdiplusStartupInput gdiplusStartupInput;
-    ULONG_PTR gdiplusToken;
-    GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-    
-    // make a temp directory 
-    string dirName = "temp";
-    if(CreateDirectory(dirName.c_str(), NULL)){
-        // do nothing
-    }else if(ERROR_ALREADY_EXISTS == GetLastError()){
-        // if it exists, empty out the directory
-    }else{
-        // directory couldn't be made
-    }
-    
-    // need to be able to move the images to the temp directory! (or not?) 
-    string name;
-    
-    for(int i = 0; i < nImages; i++){
-        // put all images in temp folder 
-        // notice x1, y1, x2, and y2 are global variables 
-        name = "temp/screen" + int_to_string(i) + ".bmp";
-        ScreenCapture(x1, y1, x2 - x1, y2 - y1, name.c_str());
-        Sleep(delay);
-    }
-    
-    //Shutdown GDI+
-    GdiplusShutdown(gdiplusToken);
-    
-    // make the gif here! using gif.h 
-    int width = x2 - x1;
-    int height = y2 - y1;
-    GifWriter gifWriter;
-    
-    // initialize gifWriter
-    // call the gif "test" - it'll be in the same directory as the executable 
-    GifBegin(&gifWriter, "test.gif", (uint32_t)width, (uint32_t)height, (uint32_t)delay/10);
-    
-    // pass in frames 
-    string nextFrame; 
-    for(int i = 0; i < nImages; i++){
-        nextFrame = "temp/screen" + int_to_string(i) + ".bmp";
-        GifWriteFrame(&gifWriter, (uint8_t*)getBMPImageData(nextFrame).data(), (uint32_t)width, (uint32_t)height, (uint32_t)(delay/10));
-    }
-    GifEnd(&gifWriter);
-
-}
-
+// use Tahoma font for the text 
+// this HFONT object needs to be deleted (via DeleteObject) when program ends 
+HFONT hFont = CreateFont(16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, 
+      OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, 
+      DEFAULT_PITCH | FF_DONTCARE, TEXT("Tahoma"));
 
 
 /******************
@@ -264,6 +84,7 @@ void getSnapshots(int nImages, int delay){
 DO Win32 GUI STUFF HERE 
 
 *****************/
+
 /* 
 
     the window procedure for the GUI
@@ -318,15 +139,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
                     int nFrames = atoi(numFrames);
                     int tDelay = atoi(timeDelay);
                     
-                    /* for debugging */
-                    //cout << "num frames: " << int_to_string(nFrames) << endl;
-                    //cout << "delay: " << int_to_string(tDelay) << endl;
-                    
                     // indicate process started 
                     SetDlgItemText(hwnd, ID_PROGRESS_MSG, "processing...");
                     
+                    // collect snapshots given the current dimensions 
                     // if no window selection occurred, screenshot whole screen
-                    getSnapshots(nFrames, tDelay);
+                    getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1));
                     
                     // if at this point, task is done 
                     SetDlgItemText(hwnd, ID_PROGRESS_MSG, "processing successful!");
@@ -337,11 +155,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
         break;
         case WM_CLOSE:
         {
+			DeleteObject(hFont);
             DestroyWindow(hwnd);
         }
         break;
         case WM_DESTROY:
         {
+            DeleteObject(hFont);
             PostQuitMessage(0);
         }
         break;
@@ -430,6 +250,7 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                     ReleaseCapture();
                     DestroyWindow(hwnd);
                     return 0; 
+                    
                 }else if(response == IDYES){
                     // done, record new parameters 
                     x1 = ptCurr.x;
@@ -446,6 +267,7 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                     DestroyWindow(hwnd);
                     ReleaseCapture();
                     return 0;
+                    
                 }else if(response == IDNO){
                     // need to clear screen!!
                     HDC hdc = GetDC(hwnd);
@@ -457,9 +279,10 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                     ReleaseDC(hwnd, hdc);
                     // reset stuff
                     reset(&ptCurr, &ptNew, &bDrag, &bDraw);
+                    
                 }else{
                     // failure to show message box    
-                    cout << "error with message box!!" << endl;
+                    std::cout << "error with message box!!" << std::endl;
                     ReleaseCapture();
                     DestroyWindow(hwnd);
                     return 0;
@@ -489,7 +312,7 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
 /*************
 
-    GUI CODE
+MAIN METHOD FOR GUI
     
 **************/
 
@@ -498,6 +321,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     /* console attached for debugging */
     //AllocConsole();
     //freopen( "CON", "w", stdout );
+    
+    // for improving the gui appearance (buttons, that is. the font needs to be changed separately) 
+    INITCOMMONCONTROLSEX icc;
+    icc.dwSize = sizeof(icc);
+    icc.dwICC = ICC_STANDARD_CLASSES;
+    InitCommonControlsEx(&icc);
     
     WNDCLASSEX wc; // this is the main GUI window 
     MSG Msg;
@@ -511,7 +340,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     wc.hInstance = hInstance;
     wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
+    wc.hbrBackground = (HBRUSH)(COLOR_BTNFACE+1);
     wc.lpszMenuName = NULL; //MAKEINTRESOURCE(IDR_MYMENU);
     wc.lpszClassName = g_szClassName;
     wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
@@ -533,13 +362,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     
     
     if(!RegisterClassEx(&wc)){
-        cout << "error code: " << GetLastError() << endl;
+        std::cout << "error code: " << GetLastError() << std::endl;
         MessageBox(NULL, "window registration failed!", "Error!", MB_ICONEXCLAMATION | MB_OK);
         return 0;
     }
     
     if(!RegisterClassEx(&wc2)){
-        cout << "error code: " << GetLastError() << endl;
+        std::cout << "error code: " << GetLastError() << std::endl;
         MessageBox(NULL, "window registration failed!", "Error!", MB_ICONEXCLAMATION | MB_OK);
         return 0;
     }
@@ -559,8 +388,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         return 0;
     }
     
+    
     /* make a title label */
-    CreateWindow(
+    HWND title;
+    title = CreateWindow(
         TEXT("STATIC"),
         TEXT(" gifCatch \n nch 2018 "),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
@@ -571,10 +402,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         hInstance,
         NULL
     );
-    
+    // send the gui the font to use 
+    SendMessage(title, WM_SETFONT, (WPARAM)hFont, true);
     
     /* make text box for # FRAMES TO COLLECT (HWND textInputPriorityLabel) */
-    CreateWindow(
+    HWND framesLabel = CreateWindow(
         TEXT("STATIC"),
         TEXT("# frames to collect: "),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
@@ -585,8 +417,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         hInstance,
         NULL
     );
+    SendMessage(framesLabel, WM_SETFONT, (WPARAM)hFont, true);
+    
     /* make text box  ADD NUMBER OF FRAMES TO COLLECT  (HWND textInput)*/
-    CreateWindow(
+    HWND editFrames = CreateWindow(
         TEXT("edit"),
         TEXT(""),
         WS_VISIBLE | WS_CHILD | WS_BORDER,
@@ -597,9 +431,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         hInstance,
         NULL
     );
+    SendMessage(editFrames, WM_SETFONT, (WPARAM)hFont, true);
     /* prepopulate text input */
     SetDlgItemText(hwnd, ID_NUMFRAMES_TEXTBOX, "15");
-    CreateWindow(
+    
+    HWND frameLimit = CreateWindow(
         TEXT("STATIC"),
         TEXT("1 <= frames <= 50"),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
@@ -610,12 +446,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         hInstance,
         NULL
     );
-    
+    SendMessage(frameLimit, WM_SETFONT, (WPARAM)hFont, true);
     
     /* make text box LABEL FOR DELAY (HWND textInputPriorityLabel) */
-    CreateWindow(
+    HWND delayLabel = CreateWindow(
         TEXT("STATIC"),
-        TEXT("# ms delay: "),
+        TEXT("# delay(ms): "),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
         10, 120,
         100, 20,
@@ -624,20 +460,24 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         hInstance,
         NULL
     );
-    CreateWindow(
+    SendMessage(delayLabel, WM_SETFONT, (WPARAM)hFont, true);
+    
+    HWND editDelay = CreateWindow(
         TEXT("edit"),
         TEXT(""),
         WS_VISIBLE | WS_CHILD | WS_BORDER,
-        120, 120,  /* x, y coords */
+        110, 120,  /* x, y coords */
         80, 20, /* width, height */
         hwnd,
         (HMENU)ID_DELAY_TEXTBOX,
         hInstance,
         NULL
     );
+    SendMessage(editDelay, WM_SETFONT, (WPARAM)hFont, true);
     /* prepopulate text input */
     SetDlgItemText(hwnd, ID_DELAY_TEXTBOX, "100");
-    CreateWindow(
+    
+    HWND delayLimit = CreateWindow(
         TEXT("STATIC"),
         TEXT("10 <= ms <= 1000"),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
@@ -648,10 +488,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         hInstance,
         NULL
     );
-    
+    SendMessage(delayLimit, WM_SETFONT, (WPARAM)hFont, true);
     
     /* button to select area of screen  */
-    CreateWindow(
+    HWND selectAreaButton = CreateWindow(
         TEXT("button"),
         TEXT("select area"),
         WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
@@ -662,9 +502,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         hInstance,
         NULL
     );
+    SendMessage(selectAreaButton, WM_SETFONT, (WPARAM)hFont, true);
     
     /* button to start the screen capture */
-    CreateWindow(
+    HWND startButton = CreateWindow(
         TEXT("button"),
         TEXT("start"),
         WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
@@ -675,9 +516,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         hInstance,
         NULL
     );
+    SendMessage(startButton, WM_SETFONT, (WPARAM)hFont, true);
     
     /* text indicator/message for gif processing progress */
-    CreateWindow(
+    HWND progressBar = CreateWindow(
         TEXT("STATIC"),
         TEXT(""),
         WS_VISIBLE | WS_CHILD | WS_BORDER,
@@ -688,6 +530,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         hInstance,
         NULL
     );
+    SendMessage(progressBar, WM_SETFONT, (WPARAM)hFont, true);
     
     ShowWindow(hwnd, nCmdShow);
     UpdateWindow(hwnd);
@@ -699,11 +542,4 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
     return Msg.wParam;
 }
-
-
-
-
-
-
-
 

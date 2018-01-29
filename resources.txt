@@ -40,3 +40,10 @@ http://www.dragonwins.com/domains/getteched/bmp/bmpfileformat.htm
 // did you know BMP image data is stored upside down!?
 https://stackoverflow.com/questions/8346115/why-are-bmps-stored-upside-down
 
+// make the gui look better 
+https://www.transmissionzero.co.uk/computing/win32-apps-with-mingw/
+http://geekthis.net/post/visual-styles-in-win32-api-c-gcc-mingw/
+https://stackoverflow.com/questions/3275989/disable-window-resizing-win32
+https://msdn.microsoft.com/en-us/library/windows/desktop/aa374191(v=vs.85).aspx
+https://stackoverflow.com/questions/221411/how-can-i-specify-a-font-for-a-window-created-through-createwindow
+https://social.msdn.microsoft.com/Forums/en-US/079f74f3-6e40-47d0-a083-0cb6f9b54cdd/sendmessage-to-set-fonts?forum=Vsexpressvc

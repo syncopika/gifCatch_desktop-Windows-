@@ -2,15 +2,15 @@
 
 CXX = g++
 
-LIB = -lgdi32 -luser32 -lgdiplus
+LIB = -lgdi32 -luser32 -lgdiplus -lcomctl32
 
 # include gdiplus headers 
 INCLUDE = -IC:\MinGW\include\gdiplus
 
-FLAGS = -Wall -c -std=c++14 $(INCLUDE)
+FLAGS = -Wall -g -c -std=c++14 $(INCLUDE)
 LINK_FLAGS = -mwindows -static-libstdc++ -static-libgcc $(LIB)
 
-OBJ = capture.o
+OBJ = captureGUI.o capture.o resources.o
 
 EXE = gifcatch.exe
 
@@ -19,13 +19,15 @@ all: $(EXE)
 $(EXE): $(OBJ)
 	$(CXX) $(OBJ) $(LINK_FLAGS) -o $@
 
-# don't need a resource file unless you have an icon or something else.
 # compile the resource file with windres 
-# the compiled rc file will have a .o extension (but convention uses res?)
-#gui.o: captureGUI.rc
-#	windres captureGUI.rc -o gui.o 
-	
-capture.o: captureGUI.cpp gif.h
+# the compiled rc file will have a .o extension 
+resources.o: resources.rc
+	windres resources.rc -o resources.o 
+
+capture.o: capture.cpp capture.hh gif.h
+	$(CXX) $(FLAGS) $< -o $@
+
+captureGUI.o: captureGUI.cpp capture.hh
 	$(CXX) $(FLAGS) $< -o  $@
 	
 clean:
