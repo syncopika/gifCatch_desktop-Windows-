@@ -1,18 +1,20 @@
 ## capture screenshots on your Windows desktop and create a gif!    
     
-this application lets you select what part of the screen to screenshot.    
+this application lets you select what part of the screen to screenshot, specify how many screenshots to take with delay, and creates a gif from them.    
 this is a work-in-progress.     
+    
+current look:    
+![current look of the gui](screenshots/current.png "current look - note the icon")    
     
 things to do:    
 - clean up gui (maybe eventually move to Qt)        
-- can I get better quality images? different formats?    
+- can I get better quality images? different formats (right now it just outputs bmps and uses bmps for gif creation)?    
 - allow gif naming / output directory naming?    
-- different colors for selection screen?    
-- the height of the area doesn't quite reflect the selection exactly    
+- different colors for selection screen?     
     
 thanks to Philip Goh (https://github.com/cotidian/Win32GrabScreen) for the screen capture code, and Charlie Tangora (https://github.com/ginsweater/gif-h/blob/master/gif.h) for the gif-making code.        
     
-current screenshots:    
+screenshots:    
 ### adjust the settings to your liking (i.e. number of frames, the time delay between frames) and click on the 'select area' button to choose an area on the screen to screenshot. by default it should capture the whole screen.    
 ![start](screenshots/start.png "the gui")    
      
@@ -31,4 +33,4 @@ current screenshots:
 ### here's my result:    
 ![gif result](screenshots/test.gif "food!'")    
     
-feel free to check out my Chrome extension that does pretty much the same thing (but is not as neat): https://github.com/syncopika/gifCatch_extension    
+feel free to check out my Chrome extension that does pretty much the same thing (but is not as neat, and the timing of screenshots is a bit worse I think): https://github.com/syncopika/gifCatch_extension    

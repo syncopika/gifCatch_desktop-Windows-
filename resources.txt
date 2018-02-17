@@ -1,5 +1,8 @@
 help! - resources I looked at to help me with this program
 
+// win32 basics 
+http://www.winprog.org/tutorial/start.html
+
 // screen capture with GDI
 https://github.com/ebonwheeler/Win32GrabScreen/blob/master/capture.cpp
 

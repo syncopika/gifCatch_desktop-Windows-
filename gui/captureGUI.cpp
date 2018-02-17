@@ -28,20 +28,7 @@
 #include <commctrl.h> 
 
 // give some identifiers for the GUI components 
-#define ID_TITLE_LABEL 99
-
-#define ID_NUMFRAMES_LABEL 100
-#define ID_NUMFRAMES_TEXTBOX 101
-#define ID_ADD_NUMFRAMES 102 
-
-#define ID_DELAY_LABEL 103 
-#define ID_DELAY_TEXTBOX 104
-#define ID_ADD_DELAY 105
-
-#define ID_SELECT_SCREENAREA_BUTTON 106 
-#define ID_START_BUTTON 107
-
-#define ID_PROGRESS_MSG 108
+#include "resources.h"
 
 
 /*****************
@@ -259,9 +246,12 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                     y2 = ptNew.y;
                     
                     // do some correction to take into account the title bar height 
-                    if(ptCurr.y > 0){
+                    if(y1 > 0){
                         y1 = y1 + GetSystemMetrics(SM_CYCAPTION);
                     }
+					
+					// don't forget about y2, the endpoint for the y-coord - needs to be adjusted too
+					y2 = y2 + GetSystemMetrics(SM_CYCAPTION);
                     
                     reset(&ptCurr, &ptNew, &bDrag, &bDraw);
                     DestroyWindow(hwnd);
@@ -343,10 +333,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     wc.hbrBackground = (HBRUSH)(COLOR_BTNFACE+1);
     wc.lpszMenuName = NULL; //MAKEINTRESOURCE(IDR_MYMENU);
     wc.lpszClassName = g_szClassName;
-    wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+    wc.hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON));
+	wc.hIconSm = (HICON)LoadImage(GetModuleHandle(NULL),  MAKEINTRESOURCE(IDI_ICON), IMAGE_ICON, 16, 16, 0);
     
-    WNDCLASSEX wc2;
     /* register the second window class */
+	WNDCLASSEX wc2;
     wc2.cbSize = sizeof(WNDCLASSEX);
     wc2.style = 0;
     wc2.lpfnWndProc = WndProcSelection;

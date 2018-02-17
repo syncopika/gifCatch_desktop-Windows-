@@ -21,13 +21,13 @@ $(EXE): $(OBJ)
 
 # compile the resource file with windres 
 # the compiled rc file will have a .o extension 
-resources.o: resources.rc
+resources.o: resources.rc resources.h
 	windres resources.rc -o resources.o 
 
 capture.o: capture.cpp capture.hh gif.h
 	$(CXX) $(FLAGS) $< -o $@
 
-captureGUI.o: captureGUI.cpp capture.hh
+captureGUI.o: captureGUI.cpp capture.hh resources.h
 	$(CXX) $(FLAGS) $< -o  $@
 	
 clean:
