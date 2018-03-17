@@ -22,6 +22,7 @@
 
 // this also brings in windows.h, gdiplus.h, and everything else 
 #include "capture.hh"
+#include "bmpHelper.hh"
 
 // for improving GUI appearance
 // defined here since it needs to come after windows.h
@@ -125,14 +126,40 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
                     
                     int nFrames = atoi(numFrames);
                     int tDelay = atoi(timeDelay);
+					
+					// validate values!! 
+					if(nFrames < 1){
+						nFrames = 1;
+					}else if(nFrames > 50){
+						nFrames = 50;
+					}
+					
+					if(tDelay < 10){
+						tDelay = 10;
+					}else if(tDelay > 1000){
+						tDelay = 1000;
+					}
                     
                     // indicate process started 
                     SetDlgItemText(hwnd, ID_PROGRESS_MSG, "processing...");
                     
                     // collect snapshots given the current dimensions 
                     // if no window selection occurred, screenshot whole screen
-                    getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1));
-                    
+					// also, get the currently selected filter and apply it 
+					HWND filterbox = GetDlgItem(hwnd, ID_FILTERS_COMBOBOX);
+					int currFilterIndex = SendMessage(filterbox, CB_GETCURSEL, 0, 0);
+					
+					if(currFilterIndex == 0){
+						// no filter
+						getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageData);
+					}else if(currFilterIndex == 1){
+						// color inversion filter
+						getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataInverted);
+					}else{
+						// saturation filter
+						getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataSaturated);
+                    }
+					
                     // if at this point, task is done 
                     SetDlgItemText(hwnd, ID_PROGRESS_MSG, "processing successful!");
                     
@@ -302,7 +329,7 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
 /*************
 
-MAIN METHOD FOR GUI
+	MAIN METHOD FOR GUI
     
 **************/
 
@@ -424,7 +451,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     );
     SendMessage(editFrames, WM_SETFONT, (WPARAM)hFont, true);
     /* prepopulate text input */
-    SetDlgItemText(hwnd, ID_NUMFRAMES_TEXTBOX, "15");
+    SetDlgItemText(hwnd, ID_NUMFRAMES_TEXTBOX, "10");
     
     HWND frameLimit = CreateWindow(
         TEXT("STATIC"),
@@ -466,7 +493,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     );
     SendMessage(editDelay, WM_SETFONT, (WPARAM)hFont, true);
     /* prepopulate text input */
-    SetDlgItemText(hwnd, ID_DELAY_TEXTBOX, "100");
+    SetDlgItemText(hwnd, ID_DELAY_TEXTBOX, "120");
     
     HWND delayLimit = CreateWindow(
         TEXT("STATIC"),
@@ -480,7 +507,41 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         NULL
     );
     SendMessage(delayLimit, WM_SETFONT, (WPARAM)hFont, true);
-    
+	
+	/* combobox to select image filter LABEL */
+	HWND filterComboBoxLabel = CreateWindow(
+		TEXT("STATIC"),
+        TEXT("filter options: "),
+        WS_VISIBLE | WS_CHILD | SS_LEFT,
+        10, 155,
+        80, 20,
+        hwnd, /* parent window */
+        (HMENU)ID_FILTERS_LABEL,
+        hInstance,
+        NULL
+	);
+	SendMessage(filterComboBoxLabel, WM_SETFONT, (WPARAM)hFont, true);
+	
+	/* combobox to select image filter */
+	HWND filterComboBox = CreateWindow(
+		WC_COMBOBOX,
+		TEXT(""),
+		CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE, 
+		110, 150, 
+		80, 20,
+		hwnd,
+		(HMENU)ID_FILTERS_COMBOBOX,
+		hInstance,
+		NULL
+	);
+	SendMessage(filterComboBox, WM_SETFONT, (WPARAM)hFont, true);
+	// for now provide these 3 options: none, inverted, and saturated 
+	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"none");
+	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"inverted");
+	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"saturated");
+    // initially the filter is set to "none"
+	SendMessage(filterComboBox, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);
+	
     /* button to select area of screen  */
     HWND selectAreaButton = CreateWindow(
         TEXT("button"),

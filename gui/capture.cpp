@@ -1,8 +1,9 @@
 // capture.cpp 
 
 #include "capture.hh"  // function declarations
+#include "bmpHelper.hh"
 #include "gif.h"    // needs gif.h to create the gif (https://github.com/ginsweater/gif-h/blob/master/gif.h)
-
+	
 // probably should convert to non-namespace later 
 using namespace Gdiplus;
 
@@ -12,66 +13,6 @@ std::string int_to_string(int i){
     ss << i;
     std::string i_str = ss.str();
     return i_str;
-}
-
-
-// get a bmp image and extract the image data into a uint8_t array 
-// which will be passed to gif functions from gif.h to create the gif 
-std::vector<uint8_t> getBMPImageData(const std::string filename){
-    
-    static constexpr size_t HEADER_SIZE = 54;
-    
-    // read in bmp file as stream
-    std::ifstream bmp(filename, std::ios::binary);
-    
-    // this represents the header of the bmp file 
-    std::array<char, HEADER_SIZE> header;
-    
-    // read in 54 bytes of the file and put that data in the header array
-    bmp.read(header.data(), header.size());
-    
-    //auto fileSize = *reinterpret_cast<uint32_t *>(&header[2]);
-    auto dataOffset = *reinterpret_cast<uint32_t *>(&header[10]);
-    auto width = *reinterpret_cast<uint32_t *>(&header[18]);
-    auto height = *reinterpret_cast<uint32_t *>(&header[22]);
-    //auto depth = *reinterpret_cast<uint16_t *>(&header[28]);
-    
-    //std::cout << "file size: " << fileSize << std::endl;
-    //std::cout << "dataOffset: " << dataOffset << std::endl;
-    //std::cout << "width: " << width << std::endl;
-    //std::cout << "height: " << height << std::endl;
-    //std::cout << "depth: " << depth << "-bit" << std::endl;
-    
-    // now get the image pixel data
-    std::vector<char> img(dataOffset - HEADER_SIZE);
-    bmp.read(img.data(), img.size());
-    
-    // width*4 because each pixel is 4 bytes (32-bit bmp)
-    auto dataSize = ((width*4 + 3) & (~3)) * height;
-    img.resize(dataSize);
-    bmp.read(img.data(), img.size());
-    
-    // need to swap R and B (img[i] and img[i+2]) so that the sequence is RGB, not BGR
-    // also, notice that each pixel is represented by 4 bytes, not 3, because
-    // the bmp images are 32-bit
-    for(int i = dataSize - 4; i >= 0; i -= 4){
-        char temp = img[i];
-        img[i] = img[i+2];
-        img[i+2] = temp;
-    }
-    
-    // change char vector to uint8_t vector
-    // be careful! bmp image data is stored upside-down :<
-    // so traverse backwards, but also, for each row, invert the row also!
-    std::vector<uint8_t> image;
-    int widthSize = 4 * (int)width;
-    for(int j = (int)(dataSize - 1); j >= 0; j -= widthSize){
-        for(int k = widthSize - 1; k >= 0; k--){
-            image.push_back((uint8_t)img[j - k]);
-        }
-    }
-    
-    return image;
 }
 
 
@@ -136,7 +77,8 @@ bool ScreenCapture(int x, int y, int width, int height, const char *filename){
     return true;
 }
 
-void getSnapshots(int nImages, int delay, int x, int y, int width, int height){
+// notice this takes a function pointer!
+void getSnapshots(int nImages, int delay, int x, int y, int width, int height, std::vector<uint8_t> (*filter)(const std::string)){
     // Initialize GDI+.
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
@@ -178,7 +120,10 @@ void getSnapshots(int nImages, int delay, int x, int y, int width, int height){
     std::string nextFrame; 
     for(int i = 0; i < nImages; i++){
         nextFrame = "temp/screen" + int_to_string(i) + ".bmp";
-        GifWriteFrame(&gifWriter, (uint8_t*)getBMPImageData(nextFrame).data(), (uint32_t)width, (uint32_t)height, (uint32_t)(delay/10));
+		
+		// get image data and apply a filter  
+		GifWriteFrame(&gifWriter, (uint8_t *)((*filter)(nextFrame).data()), (uint32_t)width, (uint32_t)height, (uint32_t)(delay/10));
+
     }
     GifEnd(&gifWriter);
 
