@@ -7,7 +7,7 @@ current look:
 ![current look of the gui](screenshots/current.png "current look - note the icon")    
     
 things to do:    
-- clean up gui (maybe eventually move to Qt)        
+- clean up gui (maybe eventually move to Qt?)        
 - can I get better quality images? different formats (right now it just outputs bmps and uses bmps for gif creation)?    
 - allow gif naming / output directory naming?    
 - different colors for selection screen?     
@@ -16,6 +16,7 @@ thanks to Philip Goh (https://github.com/cotidian/Win32GrabScreen) for the scree
     
 screenshots:    
 ### adjust the settings to your liking (i.e. number of frames, the time delay between frames) and click on the 'select area' button to choose an area on the screen to screenshot. by default it should capture the whole screen.    
+### note that you can also apply a color filter! currently saturation and inversion filters are available.      
 ![start](screenshots/start.png "the gui")    
      
 ### select a part of the screen by clicking down anywhere on the screen and dragging. (sorry, only red is available right now)    
@@ -31,6 +32,13 @@ screenshots:
 ![find your gif](screenshots/done.png "find the gif and its frames")    
     
 ### here's my result:    
-![gif result](screenshots/test.gif "food!'")    
+![gif result](screenshots/test.gif "f22! wow!'")    
+    
+### with inversion and saturation filters:    
+![gif inverted](screenshots/test_inverted.gif)    
+![gif saturated](screenshots/test_saturated.gif)    
+    
+gifs were taken from this video by Tonkatsu298: https://www.youtube.com/watch?v=D8gwnKApqCE    
+
     
 feel free to check out my Chrome extension that does pretty much the same thing (but is not as neat, and the timing of screenshots is a bit worse I think): https://github.com/syncopika/gifCatch_extension    
