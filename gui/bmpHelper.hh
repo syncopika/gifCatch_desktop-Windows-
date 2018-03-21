@@ -8,6 +8,7 @@
 int correctRGB(int channel);
 
 // get bmp image data 
+std::vector<int> getBMPHeightWidth(const std::string filename);
 std::vector<uint8_t> getBMPImageData(const std::string filename);
 std::vector<uint8_t> getBMPImageDataInverted(const std::string filename);
 std::vector<uint8_t> getBMPImageDataSaturated(const std::string filename);

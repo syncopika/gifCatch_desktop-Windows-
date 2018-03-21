@@ -1,10 +1,12 @@
 ## capture screenshots on your Windows desktop and create a gif!    
     
-this application lets you select what part of the screen to screenshot, specify how many screenshots to take with delay, and creates a gif from them.    
-this is a work-in-progress.     
+This application lets you select what part of the screen to screenshot, specify how many screenshots to take with delay, and creates a gif from them.    
+I used MinGW gcc(5.3.0) to compile this project. Currently a work-in-progress.     
     
 current look:    
+#### this is the most up-to-date image of the application. here you can see adjustable settings, such as the number of frames, the time delay between frames, and color filter choices (currently only saturation and inversion filters are available). additionally, you can create a gif from a folder of .bmp images by specifying the full path to a directory (i.e. C:\Users\Nicholas\Desktop\myFolder).
 ![current look of the gui](screenshots/current.png "current look - note the icon")    
+The subsequent screenshots make use of an older version, but the functionality is the same.
     
 things to do:    
 - clean up gui (maybe eventually move to Qt?)        
@@ -15,8 +17,7 @@ things to do:
 thanks to Philip Goh (https://github.com/cotidian/Win32GrabScreen) for the screen capture code, and Charlie Tangora (https://github.com/ginsweater/gif-h/blob/master/gif.h) for the gif-making code.        
     
 screenshots:    
-### adjust the settings to your liking (i.e. number of frames, the time delay between frames) and click on the 'select area' button to choose an area on the screen to screenshot. by default it should capture the whole screen.    
-### note that you can also apply a color filter! currently saturation and inversion filters are available.      
+### adjust the settings to your liking and click on the 'select area' button to choose an area on the screen to screenshot. by default it should capture the whole screen.      
 ![start](screenshots/start.png "the gui")    
      
 ### select a part of the screen by clicking down anywhere on the screen and dragging. (sorry, only red is available right now)    

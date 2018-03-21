@@ -11,6 +11,28 @@ int correctRGB(int channel){
 	return channel;
 }
 
+// get the height and width of a BMP image 
+std::vector<int> getBMPHeightWidth(const std::string filename){
+	
+    static constexpr size_t HEADER_SIZE = 54;
+    
+    std::ifstream bmp(filename, std::ios::binary);
+    
+    std::array<char, HEADER_SIZE> header;
+    
+    bmp.read(header.data(), header.size());
+    
+    auto width = *reinterpret_cast<uint32_t *>(&header[18]);
+    auto height = *reinterpret_cast<uint32_t *>(&header[22]);
+	
+	// height and width will be placed in that order in the vector 
+	std::vector<int> dimensions;
+	dimensions.push_back((int)height);
+	dimensions.push_back((int)width);
+	
+	return dimensions;
+}
+
 /***
 
 	inversion filter
@@ -83,6 +105,7 @@ void saturationFilter(float saturationVal, std::vector<char>& imageData){
 // which will be passed to gif functions from gif.h to create the gif 
 std::vector<uint8_t> getBMPImageData(const std::string filename){
     
+	// bmp's have a 54 byte header 
     static constexpr size_t HEADER_SIZE = 54;
     
     // read in bmp file as stream
@@ -99,13 +122,7 @@ std::vector<uint8_t> getBMPImageData(const std::string filename){
     auto width = *reinterpret_cast<uint32_t *>(&header[18]);
     auto height = *reinterpret_cast<uint32_t *>(&header[22]);
     //auto depth = *reinterpret_cast<uint16_t *>(&header[28]);
-    
-    //std::cout << "file size: " << fileSize << std::endl;
-    //std::cout << "dataOffset: " << dataOffset << std::endl;
-    //std::cout << "width: " << width << std::endl;
-    //std::cout << "height: " << height << std::endl;
-    //std::cout << "depth: " << depth << "-bit" << std::endl;
-    
+
     // now get the image pixel data
     std::vector<char> img(dataOffset - HEADER_SIZE);
     bmp.read(img.data(), img.size());

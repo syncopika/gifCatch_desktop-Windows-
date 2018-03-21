@@ -28,6 +28,9 @@
 // defined here since it needs to come after windows.h
 #include <commctrl.h> 
 
+// for directory finding 
+#include <dirent.h>
+
 // give some identifiers for the GUI components 
 #include "resources.h"
 
@@ -149,19 +152,108 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 					HWND filterbox = GetDlgItem(hwnd, ID_FILTERS_COMBOBOX);
 					int currFilterIndex = SendMessage(filterbox, CB_GETCURSEL, 0, 0);
 					
-					if(currFilterIndex == 0){
-						// no filter
-						getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageData);
-					}else if(currFilterIndex == 1){
-						// color inversion filter
-						getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataInverted);
-					}else{
-						// saturation filter
-						getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataSaturated);
-                    }
+					// also check if user has specified a directory to create the gif from 
+					// if so, don't get any screenshots 
+					HWND directory = GetDlgItem(hwnd, ID_CHOOSE_DIR);
+					TCHAR dir[38];	// max is 38 chars!!!
+					GetWindowText(directory, dir, 38);
+					std::string theDir = std::string(dir);
+					//std::cout << "directory path: " + theDir << std::endl;
+					//std::cout << "is directory path empty string?: " << theDir.compare("") << std::endl;
 					
-                    // if at this point, task is done 
-                    SetDlgItemText(hwnd, ID_PROGRESS_MSG, "processing successful!");
+					if(theDir.compare("") != 0){
+						struct dirent *dir_entry;
+						DIR *pd = 0;
+						
+						pd = opendir(theDir.c_str());
+						if(pd == NULL){
+							std::cout << "unable to open directory..." << std::endl;
+							SetDlgItemText(hwnd, ID_PROGRESS_MSG, "unable to open directory");
+							break;
+						}
+						
+						// check directory contents 
+						// indicate to user that images are being looked through 
+						SetDlgItemText(hwnd, ID_PROGRESS_MSG, "collecting images from directory...");
+						
+						// images1 will hold any images numbered from 0 to 9. 
+						// images2 will hold images numbered after 9. 
+						std::vector<std::string> images1;
+						std::vector<std::string> images2;
+						
+						// use this to keep track of filename lengths. ideally they should be consistent, with the only variation being the number at the end
+						// i.e. screen0, screen1, screen2, ... -> this is the scheme I follow when generating screenshots
+						int filenameLength = -1;
+						while((dir_entry = readdir(pd)) != NULL){
+							//images.push_back(std::string(dir_entry->d_name));
+							std::string filename = dir_entry->d_name;
+							if(filename.compare(".") != 0 && filename.compare("..") != 0){
+								// look for bmp images only 
+								int len = filename.size();
+								if(len < 3){
+									continue;
+								}else{
+									std::string last3chars = filename.substr(len - 3);
+									if(last3chars.compare("bmp") == 0){
+										
+										if(filenameLength == -1){
+											filenameLength = len;
+											// put first file in images1 
+											images1.push_back(theDir + "\\" + filename);
+										}else if(len > filenameLength){
+											images2.push_back(theDir + "\\" + filename);
+										}else{
+											images1.push_back(theDir + "\\" + filename);
+										}
+									}
+								}
+							}
+						}
+						closedir(pd);
+						
+						// process images now 
+						if(images1.size() == 0 && images2.size() == 0){
+							// no bmp images found 
+							SetDlgItemText(hwnd, ID_PROGRESS_MSG, "no bmp images were found");
+							break;
+						}else{
+							
+							std::vector<std::string> allImages; // add images from images1 and images2 to here
+							int i, j;
+							int images1len = images1.size();
+							int images2len = images2.size();
+							for(i = 0; i < images1len; i++){
+								allImages.push_back(images1[i]);
+								//std::cout << images1[i] << std::endl;
+							}
+							
+							for(j = 0; j < images2len; j++){
+								allImages.push_back(images2[j]);
+								//std::cout << images2[j] << std::endl;
+							}
+							
+							// now create gif from images 
+							SetDlgItemText(hwnd, ID_PROGRESS_MSG, "assembling gif...");
+							assembleGif(nFrames, tDelay, allImages, getBMPImageData); // implement apply filters later 
+						}
+						
+					}else{
+					
+						// capture screenshots 				
+						if(currFilterIndex == 0){
+							// no filter
+							getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageData);
+						}else if(currFilterIndex == 1){
+							// color inversion filter
+							getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataInverted);
+						}else{
+							// saturation filter
+							getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataSaturated);
+						}
+					}
+						
+					// if at this point, task is done 
+					SetDlgItemText(hwnd, ID_PROGRESS_MSG, "processing successful!");
                     
                 }
                 break;
@@ -358,7 +450,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
     wc.hbrBackground = (HBRUSH)(COLOR_BTNFACE+1);
-    wc.lpszMenuName = NULL; //MAKEINTRESOURCE(IDR_MYMENU);
+    wc.lpszMenuName = NULL; 
     wc.lpszClassName = g_szClassName;
     wc.hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON));
 	wc.hIconSm = (HICON)LoadImage(GetModuleHandle(NULL),  MAKEINTRESOURCE(IDI_ICON), IMAGE_ICON, 16, 16, 0);
@@ -426,10 +518,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     /* make text box for # FRAMES TO COLLECT (HWND textInputPriorityLabel) */
     HWND framesLabel = CreateWindow(
         TEXT("STATIC"),
-        TEXT("# frames to collect: "),
+        TEXT("# frames to get: "),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 90,
-        130, 20,
+        10, 60,
+        110, 20,
         hwnd, /* parent window */
         (HMENU)ID_NUMFRAMES_LABEL,
         hInstance,
@@ -442,7 +534,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         TEXT("edit"),
         TEXT(""),
         WS_VISIBLE | WS_CHILD | WS_BORDER,
-        150, 90,  /* x, y coords */
+        110, 60,  /* x, y coords */
         80, 20, /* width, height */
         hwnd,
         (HMENU)ID_NUMFRAMES_TEXTBOX,
@@ -457,7 +549,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         TEXT("STATIC"),
         TEXT("1 <= frames <= 50"),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
-        240, 90,
+        210, 60,
         130, 20,
         hwnd, /* parent window */
         NULL,
@@ -471,7 +563,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         TEXT("STATIC"),
         TEXT("# delay(ms): "),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 120,
+        10, 90,
         100, 20,
         hwnd, /* parent window */
         (HMENU)ID_DELAY_LABEL,
@@ -484,7 +576,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         TEXT("edit"),
         TEXT(""),
         WS_VISIBLE | WS_CHILD | WS_BORDER,
-        110, 120,  /* x, y coords */
+        110, 90,  /* x, y coords */
         80, 20, /* width, height */
         hwnd,
         (HMENU)ID_DELAY_TEXTBOX,
@@ -499,7 +591,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         TEXT("STATIC"),
         TEXT("10 <= ms <= 1000"),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
-        210, 120,
+        210, 90,
         130, 20,
         hwnd, /* parent window */
         NULL,
@@ -513,7 +605,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		TEXT("STATIC"),
         TEXT("filter options: "),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 155,
+        10, 125,
         80, 20,
         hwnd, /* parent window */
         (HMENU)ID_FILTERS_LABEL,
@@ -527,7 +619,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		WC_COMBOBOX,
 		TEXT(""),
 		CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE, 
-		110, 150, 
+		110, 120, 
 		80, 20,
 		hwnd,
 		(HMENU)ID_FILTERS_COMBOBOX,
@@ -541,6 +633,35 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"saturated");
     // initially the filter is set to "none"
 	SendMessage(filterComboBox, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);
+	
+	
+	/* let user select a directory of images to create gif from */
+    HWND createGifFromDir = CreateWindow(
+        TEXT("STATIC"),
+        TEXT("specify full directory path of images to generate gif from: "),
+        WS_VISIBLE | WS_CHILD | SS_LEFT,
+        10, 150,
+        340, 20,
+        hwnd, /* parent window */
+        NULL,
+        hInstance,
+        NULL
+    );
+    SendMessage(createGifFromDir, WM_SETFONT, (WPARAM)hFont, true);
+	
+	HWND editImageDirectory = CreateWindow(
+		TEXT("edit"),
+		TEXT(""),
+		WS_VISIBLE | WS_CHILD | WS_BORDER,
+		10, 180,  /* x, y coords */
+		280, 20, /* width, height */
+		hwnd,
+		(HMENU)ID_CHOOSE_DIR,
+		hInstance,
+		NULL
+    );
+    SendMessage(editImageDirectory, WM_SETFONT, (WPARAM)hFont, true);
+	
 	
     /* button to select area of screen  */
     HWND selectAreaButton = CreateWindow(
