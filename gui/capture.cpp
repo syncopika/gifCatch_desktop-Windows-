@@ -1,7 +1,7 @@
 // capture.cpp 
 
 #include "capture.hh"  // function declarations
-#include "bmpHelper.hh"
+#include "bmpHelper.hh" // function declarations
 #include "gif.h"    // needs gif.h to create the gif (https://github.com/ginsweater/gif-h/blob/master/gif.h)
 	
 // probably should convert to non-namespace later 
@@ -131,22 +131,13 @@ void getSnapshots(int nImages, int delay, int x, int y, int width, int height, s
 // this function assembles the gif from bmp images in a specified directory 
 void assembleGif(int nImages, int delay, std::vector<std::string> images, std::vector<uint8_t> (*filter)(const std::string)){
 
-    /* make a temp directory 
-    std::string dirName = "temp";
-    if(CreateDirectory(dirName.c_str(), NULL)){
-        // do nothing
-    }else if(ERROR_ALREADY_EXISTS == GetLastError()){
-        // if it exists, empty out the directory
-    }else{
-        // directory couldn't be made
-    }*/
-
     GifWriter gifWriter;
     
     // initialize gifWriter
     // call the gif "test" - it'll be in the same directory as the executable 
 	// set the gif to have the dimensions of the first image in the vector (ideally they should all have the same width and height)
 	std::vector<int> initialD = getBMPHeightWidth(images[0]);
+	
     GifBegin(&gifWriter, "test.gif", (uint32_t)initialD[1], (uint32_t)initialD[0], (uint32_t)delay/10);
     
     // pass in frames 
@@ -159,7 +150,7 @@ void assembleGif(int nImages, int delay, std::vector<std::string> images, std::v
         nextFrame = images[i];
 		
 		//std::vector<int> dimensions = getBMPHeightWidth(images[i]);
-		
+		std::cout << nextFrame << std::endl;
 		// get image data and apply a filter  
 		GifWriteFrame(&gifWriter, (uint8_t *)((*filter)(nextFrame).data()), (uint32_t)initialD[1], (uint32_t)initialD[0], (uint32_t)(delay/10));
 

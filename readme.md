@@ -1,22 +1,25 @@
 ## capture screenshots on your Windows desktop and create a gif!    
     
 This application lets you select what part of the screen to screenshot, specify how many screenshots to take with delay, and creates a gif from them.    
-I used MinGW gcc(5.3.0) to compile this project. Currently a work-in-progress.     
+I used MinGW gcc(5.3.0) to make/compile this project. Currently a work-in-progress.     
     
-current look:    
-#### this is the most up-to-date image of the application. here you can see adjustable settings, such as the number of frames, the time delay between frames, and color filter choices (currently only saturation and inversion filters are available). additionally, you can create a gif from a folder of .bmp images by specifying the full path to a directory (i.e. C:\Users\Nicholas\Desktop\myFolder).
-![current look of the gui](screenshots/current.png "current look - note the icon")    
-The subsequent screenshots make use of an older version, but the functionality is the same.
+#### this is the current look of the application:     
+![current look of the gui](screenshots/current.png "current look")    
+ 
+There are adjustable settings, such as the <b>number of frames</b>, the <b>time delay between frames</b>, and <b>color filter choices</b> (currently only saturation and inversion filters are available).    
+
+Additionally, you can create a gif from a folder of .bmp images by specifying the full path to a directory (i.e. C:\Users\Nicholas\Desktop\myFolder). However, this feature can only handle 32-bit bmps well right now, and 24-bit bmps partially. Also, it is assumed that the images in the specified directory will be named consistently and with a number at the end, i.e. screen0, screen1, etc.   
     
 things to do:    
 - clean up gui (maybe eventually move to Qt?)        
 - can I get better quality images? different formats (right now it just outputs bmps and uses bmps for gif creation)?    
 - allow gif naming / output directory naming?    
 - different colors for selection screen?     
+- the gif creation from a specified folder of images needs to be fixed (at least fix handling of 24-bit bmps). 
     
 thanks to Philip Goh (https://github.com/cotidian/Win32GrabScreen) for the screen capture code, and Charlie Tangora (https://github.com/ginsweater/gif-h/blob/master/gif.h) for the gif-making code.        
     
-screenshots:    
+screenshots (these show use of an older version of the application, but the functionality is the same):    
 ### adjust the settings to your liking and click on the 'select area' button to choose an area on the screen to screenshot. by default it should capture the whole screen.      
 ![start](screenshots/start.png "the gui")    
      

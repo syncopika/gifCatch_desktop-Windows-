@@ -121,38 +121,121 @@ std::vector<uint8_t> getBMPImageData(const std::string filename){
     auto dataOffset = *reinterpret_cast<uint32_t *>(&header[10]);
     auto width = *reinterpret_cast<uint32_t *>(&header[18]);
     auto height = *reinterpret_cast<uint32_t *>(&header[22]);
-    //auto depth = *reinterpret_cast<uint16_t *>(&header[28]);
+    auto depth = *reinterpret_cast<uint16_t *>(&header[28]);
+	
+	// now get the image pixel data
+	// not sure this part is necessary since dataOffset comes out to be 54 
+	// which is the header size, when I test it
+	std::vector<char> img(dataOffset - HEADER_SIZE);
+	bmp.read(img.data(), img.size());
+	
+	// use this vector to store all the pixel data, which will be returned
+	std::vector<uint8_t> image;
+	
+	if((int)depth == 24){
+		
+		// this has some good info: https://www.codeguru.com/cpp/g-m/bitmap/article.php/c4909/Exploring-the-Internal-Structure-of-a-24Bit-Uncompressed-Bitmap-File.htm
+		// about 24-bit bitmaps 
+		
+		// since 24-bit bmps round up to nearest width divisible by 4, 
+		// there might be some extra padding at the end of each pixel row 
+		int paddedWidth = (int)width * 3;
+		
+		while(paddedWidth % 4 != 0){
+			paddedWidth++;
+		}
+		
+		// find out how much padding there is 
+		int padding = paddedWidth - ((int)width * 3);
 
-    // now get the image pixel data
-    std::vector<char> img(dataOffset - HEADER_SIZE);
-    bmp.read(img.data(), img.size());
-    
-    // width*4 because each pixel is 4 bytes (32-bit bmp)
-    auto dataSize = ((width*4 + 3) & (~3)) * height;
-    img.resize(dataSize);
-    bmp.read(img.data(), img.size());
-    
-    // need to swap R and B (img[i] and img[i+2]) so that the sequence is RGB, not BGR
-    // also, notice that each pixel is represented by 4 bytes, not 3, because
-    // the bmp images are 32-bit
-    for(int i = dataSize - 4; i >= 0; i -= 4){
-        char temp = img[i];
-        img[i] = img[i+2];
-        img[i+2] = temp;
-    }
-    
-    // change char vector to uint8_t vector
-    // be careful! bmp image data is stored upside-down :<
-    // so traverse backwards, but also, for each row, invert the row also!
-    std::vector<uint8_t> image;
-    int widthSize = 4 * (int)width;
-    for(int j = (int)(dataSize - 1); j >= 0; j -= widthSize){
-        for(int k = widthSize - 1; k >= 0; k--){
-            image.push_back((uint8_t)img[j - k]);
-        }
-    }
-    
-    return image;
+		// figure out the size of the pixel data, which includes the padding 
+		auto dataSize = (3 * width * height) + (height * padding);
+		img.resize(dataSize);
+		bmp.read(img.data(), img.size());
+		
+		// this proves that there is extra padding added 
+		/*
+		for(int i = ((int)(width*3) + padding - 20); i < (int)(width*3) + padding; i++){
+			std::cout << (int)img[i] << std::endl;
+		}*/
+
+		int counter = 0;
+		int widthCount = 0;
+		for(int i = (int)dataSize - 1; i >= 0; i--){
+			
+			// INVESTIGATE THIS PART HERE 
+			// why does adding 840 correct the image? (but not color)
+			if(widthCount >= (3*(int)width) + 840 + padding){
+				i -= padding;
+				widthCount = 0;
+			}else{		
+				if(counter % 3 == 0 && i != 0 && i != (int)dataSize - 1){
+					image.push_back((char)255);
+					image.push_back(img[i]);
+					counter = 1;
+				}else{
+					image.push_back(img[i]);
+					counter++;
+				}
+				widthCount++;
+			}
+		}
+		int imageSize = (int)image.size();
+		
+		for(int i = imageSize - 4; i >= 0; i -= 4){
+			uint8_t temp = image[i];
+			image[i] = image[i+2];
+			image[i+2] = temp;
+		}
+		
+		return image;
+		
+		/*
+		int widthSize = 4 * (int)width;
+		int totalSize = image.size();
+		
+		std::vector<uint8_t> finalImage;
+		for(int j = totalSize - 1; j >= 0; j -= widthSize){
+			for(int k = widthSize - 1; k >= 0; k--){
+				finalImage.push_back((uint8_t)image[j - k]);
+			}
+		}
+		
+		return finalImage;
+		*/
+		
+	}else if((int)depth == 32){
+
+		// width*4 because each pixel is 4 bytes (32-bit bmp)
+		auto dataSize = ((width*4 + 3) & (~3)) * height;
+		img.resize(dataSize);
+		bmp.read(img.data(), img.size());
+		
+		// need to swap R and B (img[i] and img[i+2]) so that the sequence is RGB, not BGR
+		// also, notice that each pixel is represented by 4 bytes, not 3, because
+		// the bmp images are 32-bit
+		for(int i = dataSize - 4; i >= 0; i -= 4){
+			char temp = img[i];
+			img[i] = img[i+2];
+			img[i+2] = temp;
+		}
+		
+		// change char vector to uint8_t vector
+		// be careful! bmp image data is stored upside-down :<
+		// so traverse backwards, but also, for each row, invert the row also!
+		int widthSize = 4 * (int)width;
+		for(int j = (int)(dataSize - 1); j >= 0; j -= widthSize){
+			for(int k = widthSize - 1; k >= 0; k--){
+				image.push_back((uint8_t)img[j - k]);
+			}
+		}
+		
+		return image;
+		
+	}else{
+		// return an empty vector 
+		return image;
+	}
 }
 
 /***
