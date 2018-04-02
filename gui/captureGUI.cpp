@@ -162,6 +162,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 					//std::cout << "is directory path empty string?: " << theDir.compare("") << std::endl;
 					
 					if(theDir.compare("") != 0){
+						// user wants to assemble a gif from some already made bmps!
 						struct dirent *dir_entry;
 						DIR *pd = 0;
 						

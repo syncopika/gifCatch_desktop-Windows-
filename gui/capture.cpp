@@ -128,6 +128,93 @@ void getSnapshots(int nImages, int delay, int x, int y, int width, int height, s
     GifEnd(&gifWriter);
 }
 
+// this function resize bmp images. it's used to make sure all frames being fed to the gif generator 
+// are the same dimension.  
+// takes in a number indicating how many images to check for resize, and a width and height to resize to
+// it returns an integer indicating if anything was resized (1 = something was resized);
+// for now, create a new folder called temp_resized to store this new set of images (including the ones that weren't resized)
+int resizeBMPs(int nImages, std::vector<std::string> images, int width, int height){
+	
+	int resizeResult = 0;
+	
+	// initialize gdiplus 
+	GdiplusStartupInput gdiplusStartupInput;
+    ULONG_PTR gdiplusToken;
+    GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+	
+	 // make a temp_resized directory 
+    std::string dirName = "temp_resized";
+    if(CreateDirectory(dirName.c_str(), NULL)){
+        // do nothing
+    }else if(ERROR_ALREADY_EXISTS == GetLastError()){
+        // if it exists, empty out the directory
+    }else{
+        // directory couldn't be made
+    }
+	
+	for(int i = 0; i < nImages; i++){
+		
+		std::string filename = images[i];
+		std::wstring wstr = std::wstring(filename.begin(), filename.end());
+		const wchar_t *widestr = wstr.c_str();
+		
+		Bitmap* bmp = new Bitmap(widestr, false);
+		int h = bmp->GetHeight();
+		int w = bmp->GetWidth();
+		
+		CLSID pngClsid;
+		
+		if(h == height && w == width){
+			
+			int result = GetEncoderClsid(L"image/bmp", &pngClsid);  
+			if(result == -1){
+				std::cout << "Encoder failed" << std::endl;
+			}
+			
+			filename = "temp_resized/screen" + int_to_string(i) + ".bmp";
+			std::wstring fname = std::wstring(filename.begin(), filename.end());
+			bmp->Save(fname.c_str(), &pngClsid, NULL);
+			delete bmp;
+			continue;
+			
+		}
+		
+		// make a new empty bmp with the new dimensions
+		Bitmap* newBMP = new Bitmap(width, height, bmp->GetPixelFormat());
+		
+		// resize the original bmp 
+		Graphics graphics(newBMP); // the new bitmap is the new canvas to draw the resized image on 
+		graphics.DrawImage(bmp, 0, 0, width, height);
+		// delete bmp 
+		delete bmp;
+		
+		// overwite old file with this new one
+		int result = GetEncoderClsid(L"image/bmp", &pngClsid);  
+		if(result != -1){
+			//std::cout << "Encoder succeeded" << std::endl;
+		}else{
+			std::cout << "Encoder failed" << std::endl;
+		}
+		
+		// convert filename to a wstring first
+		//filename = filename.substr(0, filename.size() - 4);
+		filename = "temp_resized/screen" + int_to_string(i) + ".bmp";
+		std::wstring fname = std::wstring(filename.begin(), filename.end());
+		
+		newBMP->Save(fname.c_str(), &pngClsid, NULL);
+		//std::cout << "status: " << newBMP->Save(fname.c_str(), &pngClsid, NULL) << std::endl;
+	
+		resizeResult = 1;
+	
+		delete newBMP;
+	}
+	
+	// shutdown gdiplus 
+	GdiplusShutdown(gdiplusToken);
+	
+	return resizeResult;
+}
+
 // this function assembles the gif from bmp images in a specified directory 
 void assembleGif(int nImages, int delay, std::vector<std::string> images, std::vector<uint8_t> (*filter)(const std::string)){
 
@@ -145,7 +232,19 @@ void assembleGif(int nImages, int delay, std::vector<std::string> images, std::v
 		nImages = images.size();
 	}
 	
+	// resize bmps if needed 
+	int res = resizeBMPs(nImages, images, initialD[1], initialD[0]);
+	
     std::string nextFrame; 
+	
+	if(res == 1){
+		images = std::vector<std::string>();
+		for(int i = 0; i < nImages; i++){
+			std::string fn = "temp_resized/screen" + int_to_string(i) + ".bmp";
+			images.push_back(fn);
+		}
+	}
+	
     for(int i = 0; i < nImages; i++){
         nextFrame = images[i];
 		
@@ -155,6 +254,7 @@ void assembleGif(int nImages, int delay, std::vector<std::string> images, std::v
 		GifWriteFrame(&gifWriter, (uint8_t *)((*filter)(nextFrame).data()), (uint32_t)initialD[1], (uint32_t)initialD[0], (uint32_t)(delay/10));
 
     }
+	
     GifEnd(&gifWriter);
 }
 

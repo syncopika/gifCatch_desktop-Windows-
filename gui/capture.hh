@@ -23,6 +23,9 @@ bool ScreenCapture(int x, int y, int width, int height, const char *filename);
 // the result is creating a temp folder and populating it with screenshots
 void getSnapshots(int nImages, int delay, int x, int y, int width, int height, std::vector<uint8_t> (*filter)(const std::string));
 
+// this function helps resize any bmps. it doesn't respect ratios though currently so it might produce not-so-good frames.
+int resizeBMPs(int nImages, std::vector<std::string> images, int width, int height);
+
 // this function assembles the gif from bmp images in a specified directory 
 void assembleGif(int nImages, int delay, std::vector<std::string> images, std::vector<uint8_t> (*filter)(const std::string));
 

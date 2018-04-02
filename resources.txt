@@ -50,3 +50,9 @@ https://stackoverflow.com/questions/3275989/disable-window-resizing-win32
 https://msdn.microsoft.com/en-us/library/windows/desktop/aa374191(v=vs.85).aspx
 https://stackoverflow.com/questions/221411/how-can-i-specify-a-font-for-a-window-created-through-createwindow
 https://social.msdn.microsoft.com/Forums/en-US/079f74f3-6e40-47d0-a083-0cb6f9b54cdd/sendmessage-to-set-fonts?forum=Vsexpressvc
+
+// string to wchar (i.e. when passing a string for a file path to a gdi function like the Bitmap::Bitmap() constructor)
+https://stackoverflow.com/questions/246806/i-want-to-convert-stdstring-into-a-const-wchar-t/246818 
+
+// about resizing bmps
+http://colonelpanic.net/2010/11/resizing-an-image-with-gdi-with-cpp/
