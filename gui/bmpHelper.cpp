@@ -134,9 +134,6 @@ std::vector<uint8_t> getBMPImageData(const std::string filename){
 	
 	if((int)depth == 24){
 		
-		// this has some good info: https://www.codeguru.com/cpp/g-m/bitmap/article.php/c4909/Exploring-the-Internal-Structure-of-a-24Bit-Uncompressed-Bitmap-File.htm
-		// about 24-bit bitmaps 
-		
 		// since 24-bit bmps round up to nearest width divisible by 4, 
 		// there might be some extra padding at the end of each pixel row 
 		int paddedWidth = (int)width * 3;
@@ -145,68 +142,71 @@ std::vector<uint8_t> getBMPImageData(const std::string filename){
 			paddedWidth++;
 		}
 		
-		// find out how much padding there is 
+		// find out how much padding there is per row 
 		int padding = paddedWidth - ((int)width * 3);
-
+		
 		// figure out the size of the pixel data, which includes the padding 
 		auto dataSize = (3 * width * height) + (height * padding);
 		img.resize(dataSize);
 		bmp.read(img.data(), img.size());
-		
-		// this proves that there is extra padding added 
-		/*
-		for(int i = ((int)(width*3) + padding - 20); i < (int)(width*3) + padding; i++){
-			std::cout << (int)img[i] << std::endl;
-		}*/
 
-		int counter = 0;
+		int RGBcounter = 0;
 		int widthCount = 0;
-		for(int i = (int)dataSize - 1; i >= 0; i--){
+		//int rowCount = 0;
+		
+		for(int i = (int)dataSize - 1 ; i >= 0; i--){
 			
-			// INVESTIGATE THIS PART HERE 
-			// why does adding 840 correct the image? (but not color)
-			if(widthCount >= (3*(int)width) + 840 + padding){
-				i -= padding;
-				widthCount = 0;
-			}else{		
-				if(counter % 3 == 0 && i != 0 && i != (int)dataSize - 1){
-					image.push_back((char)255);
-					image.push_back(img[i]);
-					counter = 1;
-				}else{
-					image.push_back(img[i]);
-					counter++;
-				}
-				widthCount++;
+			// after every third element, add a 255 (this is for the alpha channel)
+			image.push_back(img[i]);
+			RGBcounter++;
+			
+			if(RGBcounter == 3){
+				image.push_back(255);
+				RGBcounter = 0;
 			}
+			
+			widthCount++;
+			// check if we've already gotten all the color channels for a row (if so, skip the padding!)
+			if(widthCount == ((int)width * 3)){
+				widthCount = 0;
+				
+				// skip the padding
+				i -= padding;
+				//std::cout << "at row number: " << rowCount++ << std::endl;
+			}
+			
 		}
+
 		int imageSize = (int)image.size();
 		
 		for(int i = imageSize - 4; i >= 0; i -= 4){
-			uint8_t temp = image[i];
+			char temp = image[i];
 			image[i] = image[i+2];
 			image[i+2] = temp;
 		}
 		
-		return image;
+		int widthSize = 4*(int)width; // total num channels/values per row 
+		std::vector<uint8_t> image2;
 		
-		/*
-		int widthSize = 4 * (int)width;
-		int totalSize = image.size();
-		
-		std::vector<uint8_t> finalImage;
-		for(int j = totalSize - 1; j >= 0; j -= widthSize){
-			for(int k = widthSize - 1; k >= 0; k--){
-				finalImage.push_back((uint8_t)image[j - k]);
+		// flip image horizontally to get the right orientation since it's flipped currently
+		// mind the alpha channel! push them after the rgb channels, not before.
+		for(int j = 0; j < imageSize; j += widthSize){
+			for(int k = widthSize - 1; k >= 0; k-=4){
+				// swap b and g 
+				image2.push_back(image[j + k-3]); 
+				image2.push_back(image[j + k-1]);
+				image2.push_back(image[j + k-2]);
+				image2.push_back(image[j + k]); // push back alpha channel last
 			}
+		
 		}
 		
-		return finalImage;
-		*/
+		return image2;
 		
 	}else if((int)depth == 32){
 
 		// width*4 because each pixel is 4 bytes (32-bit bmp)
+		// ((width*4 + 3) & (~3)) * height; -> this uses bit masking to get the width as a multiple of 4
 		auto dataSize = ((width*4 + 3) & (~3)) * height;
 		img.resize(dataSize);
 		bmp.read(img.data(), img.size());

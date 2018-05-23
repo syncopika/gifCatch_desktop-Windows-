@@ -8,14 +8,13 @@ I used MinGW gcc(5.3.0) to make/compile this project. Currently a work-in-progre
  
 There are adjustable settings, such as the <b>number of frames</b>, the <b>time delay between frames</b>, and <b>color filter choices</b> (currently only saturation and inversion filters are available).    
 
-Additionally, you can create a gif from a folder of .bmp images by specifying the full path to a directory (i.e. C:\Users\Nicholas\Desktop\myFolder). However, this feature can only handle 32-bit bmps well right now, and 24-bit bmps partially. Also, it is assumed that the images in the specified directory will be named consistently and with a number at the end, i.e. screen0, screen1, etc.   
+Additionally, you can create a gif from a folder of .bmp images (24-bit and 32-bit!) by specifying the full path to a directory (i.e. C:\Users\Nicholas\Desktop\myFolder). This feature is particularly useful if you have some bmp images that you have edited (i.e. in MS Paint, which on my machine automatically outputs 24-bit bmps) and want to put them together in a gif.    
     
 things to do:    
 - clean up gui (maybe eventually move to Qt?)        
 - can I get better quality images? different formats (right now it just outputs bmps and uses bmps for gif creation)?    
 - allow gif naming / output directory naming?    
-- different colors for selection screen?     
-- the gif creation from a specified folder of images needs to be fixed (at least fix handling of 24-bit bmps). 
+- different colors for selection screen?      
     
 thanks to Philip Goh (https://github.com/cotidian/Win32GrabScreen) for the screen capture code, and Charlie Tangora (https://github.com/ginsweater/gif-h/blob/master/gif.h) for the gif-making code.        
     

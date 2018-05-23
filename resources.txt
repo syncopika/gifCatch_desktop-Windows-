@@ -39,9 +39,14 @@ http://www.cplusplus.com/articles/GwvU7k9E/
 http://paulbourke.net/dataformats/bmp/
 https://stackoverflow.com/questions/5345803/does-gdi-have-standard-image-encoder-clsids
 http://www.dragonwins.com/domains/getteched/bmp/bmpfileformat.htm
+http://www.di.unito.it/~marcog/SM/BMPformat-Wiki.pdf
+https://www.codeguru.com/cpp/g-m/bitmap/article.php/c4909/Exploring-the-Internal-Structure-of-a-24Bit-Uncompressed-Bitmap-File.htm
 
 // did you know BMP image data is stored upside down!?
 https://stackoverflow.com/questions/8346115/why-are-bmps-stored-upside-down
+
+// about resizing bmps
+http://colonelpanic.net/2010/11/resizing-an-image-with-gdi-with-cpp/
 
 // make the gui look better 
 https://www.transmissionzero.co.uk/computing/win32-apps-with-mingw/
@@ -54,5 +59,3 @@ https://social.msdn.microsoft.com/Forums/en-US/079f74f3-6e40-47d0-a083-0cb6f9b54
 // string to wchar (i.e. when passing a string for a file path to a gdi function like the Bitmap::Bitmap() constructor)
 https://stackoverflow.com/questions/246806/i-want-to-convert-stdstring-into-a-const-wchar-t/246818 
 
-// about resizing bmps
-http://colonelpanic.net/2010/11/resizing-an-image-with-gdi-with-cpp/
