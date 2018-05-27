@@ -235,7 +235,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 							
 							// now create gif from images 
 							SetDlgItemText(hwnd, ID_PROGRESS_MSG, "assembling gif...");
-							assembleGif(nFrames, tDelay, allImages, getBMPImageData); // implement apply filters later 
+							
+							// apply specified filter 
+							if(currFilterIndex == 0){ 
+								assembleGif(nFrames, tDelay, allImages, getBMPImageData);
+							}else if(currFilterIndex == 1){
+								assembleGif(nFrames, tDelay, allImages, getBMPImageDataInverted);
+							}else{
+								assembleGif(nFrames, tDelay, allImages, getBMPImageDataSaturated);
+							}
+							
 						}
 						
 					}else{
