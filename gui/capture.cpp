@@ -128,8 +128,8 @@ void getSnapshots(int nImages, int delay, int x, int y, int width, int height, s
     GifEnd(&gifWriter);
 }
 
-// this function resize bmp images. it's used to make sure all frames being fed to the gif generator 
-// are the same dimension.  
+// this function resizes bmp images. it's used to make sure all frames being fed to the gif generator 
+// are the same dimension. this occurs when a user specifies a directory of bmps to generate a gif from.
 // takes in a number indicating how many images to check for resize, and a width and height to resize to
 // it returns an integer indicating if anything was resized (1 = something was resized);
 // for now, create a new folder called temp_resized to store this new set of images (including the ones that weren't resized)
@@ -164,6 +164,9 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 		
 		CLSID pngClsid;
 		
+		
+		// if dimensions of current image match the initial image, just skip this one 
+		// but add it to the new temp directory
 		if(h == height && w == width){
 			
 			int result = GetEncoderClsid(L"image/bmp", &pngClsid);  
@@ -187,6 +190,40 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 		graphics.DrawImage(bmp, 0, 0, width, height);
 		// delete bmp 
 		delete bmp;
+		
+		/* testing for writing text to bmp - i.e. memefying 
+		// https://msdn.microsoft.com/en-us/library/windows/desktop/ms535993(v=vs.85).aspx
+		// https://msdn.microsoft.com/en-us/library/windows/desktop/ms536170(v=vs.85).aspx
+		// https://stackoverflow.com/questions/7299196/drawing-text-with-gdi
+		// https://stackoverflow.com/questions/44265273/drawtext-with-outline-using-gdi-c
+		// https://www.codeproject.com/Articles/42529/Outline-Text#singleoutline1  -> very helpful!
+		
+		// WCHAR string[] = L"F%^& YEAH";
+		// Font impactFont(L"impact", 28);
+		// SolidBrush brush(Color(255,0,0,0));
+		// Status st = graphics.DrawString(string, 9, &impactFont, PointF(w/3, h/2 + (h/3)), &brush);
+		// std::cout << "status: " << st << std::endl;
+		
+		wchar_t string[] = L"BLAH BLAH BLAH";
+		FontFamily impactFont(L"Impact");
+		StringFormat strFormat;
+		GraphicsPath gpath; 						// use this to hold the outline of the string we want to draw 
+		gpath.AddString(string, 					// the string
+						wcslen(string), 			// length of string
+						&impactFont, 				// font family
+						FontStyleRegular,  			// style of type face 
+						30, 						// font size 
+						Point(w/3, (h/2 + h/3)),	// where to put the string 
+						&strFormat 					// layout information for the string 
+						);
+		Pen pen(Color(0,0,0), 2); 					// color and width of pen 
+		graphics.DrawPath(&pen, &gpath);
+		SolidBrush brush(Color(255,255,255,255));
+		graphics.FillPath(&brush, &gpath);
+		
+		// end testing
+		
+		*/
 		
 		// overwite old file with this new one
 		int result = GetEncoderClsid(L"image/bmp", &pngClsid);  
