@@ -241,8 +241,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 								assembleGif(nFrames, tDelay, allImages, getBMPImageData);
 							}else if(currFilterIndex == 1){
 								assembleGif(nFrames, tDelay, allImages, getBMPImageDataInverted);
-							}else{
+							}else if(currFilterIndex == 2){
 								assembleGif(nFrames, tDelay, allImages, getBMPImageDataSaturated);
+							}else{
+								assembleGif(nFrames, tDelay, allImages, getBMPImageDataWeird);
 							}
 							
 						}
@@ -256,9 +258,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 						}else if(currFilterIndex == 1){
 							// color inversion filter
 							getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataInverted);
-						}else{
+						}else if(currFilterIndex == 2){
 							// saturation filter
 							getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataSaturated);
+						}else{
+							getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataWeird);
 						}
 					}
 						
@@ -641,6 +645,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"none");
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"inverted");
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"saturated");
+	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"weird");
     // initially the filter is set to "none"
 	SendMessage(filterComboBox, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);
 	

@@ -98,6 +98,42 @@ void saturationFilter(float saturationVal, std::vector<char>& imageData){
 
 /***
 
+	weird filter 
+
+***/
+void weirdFilter(std::vector<char>& imageData){
+	
+	unsigned int dataSize = imageData.size();
+	
+	// reorder the rgb channels since it's currently bgr
+	for(unsigned int i = 0; i <= dataSize - 4; i+=4){
+		char temp = imageData[i];
+        imageData[i] = imageData[i+2];
+        imageData[i+2] = temp;
+	}
+	
+	// do the filtering stuff
+	for(unsigned int i = 0; i < dataSize - 1; i++){
+		
+		// a bit misleading, since we go through every channel, and not pixel for each 
+		// iteration of the loop. so in other words, each channel gets treated as r 
+		// and the following channel gets treated as g, but they are not necessarily 
+		// the r and g channels 
+        unsigned char r = imageData[i];
+		unsigned char g = imageData[i+1];
+
+		if(g > 100 && g < 200){
+			imageData[i+1] = (unsigned char)0;
+		}
+		if(r < 100){
+			imageData[i] = (unsigned char)imageData[i]*2;
+		}
+    }
+	
+}
+
+/***
+
 	regular bmp image (no filters)
 
 ***/
@@ -240,10 +276,10 @@ std::vector<uint8_t> getBMPImageData(const std::string filename){
 
 /***
 
-	invert image color
+	generic function to get filtered image data from any filter 
 
 ***/
-std::vector<uint8_t> getBMPImageDataInverted(const std::string filename){
+std::vector<uint8_t> getBMPImageDataFiltered(const std::string filename, const std::string filtername){
     
     static constexpr size_t HEADER_SIZE = 54;
     
@@ -271,13 +307,21 @@ std::vector<uint8_t> getBMPImageDataInverted(const std::string filename){
     img.resize(dataSize);
     bmp.read(img.data(), img.size());
 	
-	/** do inversion filter **/
+	/** do filter **/
     
     // need to swap R and B (img[i] and img[i+2]) so that the sequence is RGB, not BGR
     // also, notice that each pixel is represented by 4 bytes, not 3, because
     // the bmp images are 32-bit
-    inversionFilter(img);
-    
+	// this swapping is done in each filtering function 
+	
+	if(filtername == "inverted"){
+		inversionFilter(img);
+    }else if(filtername == "saturated"){
+		saturationFilter(2.1, img);
+	}else if(filtername == "weird"){
+		weirdFilter(img);
+	}
+	
     // change char vector to uint8_t vector
     // be careful! bmp image data is stored upside-down :<
     // so traverse backwards, but also, for each row, invert the row also!
@@ -291,54 +335,29 @@ std::vector<uint8_t> getBMPImageDataInverted(const std::string filename){
     
     return image;
 }
+
 
 /***
 
-	saturate image color
+	invert image color
 
 ***/
-std::vector<uint8_t> getBMPImageDataSaturated(const std::string filename){
-    
-    static constexpr size_t HEADER_SIZE = 54;
-    
-    // read in bmp file as stream
-    std::ifstream bmp(filename, std::ios::binary);
-    
-    // this represents the header of the bmp file 
-    std::array<char, HEADER_SIZE> header;
-    
-    // read in 54 bytes of the file and put that data in the header array
-    bmp.read(header.data(), header.size());
-    
-    //auto fileSize = *reinterpret_cast<uint32_t *>(&header[2]);
-    auto dataOffset = *reinterpret_cast<uint32_t *>(&header[10]);
-    auto width = *reinterpret_cast<uint32_t *>(&header[18]);
-    auto height = *reinterpret_cast<uint32_t *>(&header[22]);
-    auto depth = *reinterpret_cast<uint16_t *>(&header[28]);
-	std::cout << "the depth is: " << depth << std::endl;
-	
-    // now get the image pixel data
-    std::vector<char> img(dataOffset - HEADER_SIZE);
-    bmp.read(img.data(), img.size());
-    
-    // width*4 because each pixel is 4 bytes (32-bit bmp)
-    auto dataSize = ((width*4 + 3) & (~3)) * height;
-    img.resize(dataSize);
-    bmp.read(img.data(), img.size());
-	
-	/** do saturation filter **/
-    saturationFilter(2.1, img);
-    
-    // change char vector to uint8_t vector
-    // be careful! bmp image data is stored upside-down :<
-    // so traverse backwards, but also, for each row, invert the row also!
-    std::vector<uint8_t> image;
-    int widthSize = 4 * (int)width;
-    for(int j = (int)(dataSize - 1); j >= 0; j -= widthSize){
-        for(int k = widthSize - 1; k >= 0; k--){
-            image.push_back((uint8_t)img[j - k]);
-        }
-    }
-    
-    return image;
+std::vector<uint8_t> getBMPImageDataInverted(const std::string filename){
+	return getBMPImageDataFiltered(filename, "inverted");
 }
+   
+
+/***
+	saturate image 
+***/
+std::vector<uint8_t> getBMPImageDataSaturated(const std::string filename){
+    return getBMPImageDataFiltered(filename, "saturated");
+}
+
+/***
+	weird image filter 
+***/
+std::vector<uint8_t> getBMPImageDataWeird(const std::string filename){
+    return getBMPImageDataFiltered(filename, "weird");
+}
+
