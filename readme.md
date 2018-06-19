@@ -8,7 +8,8 @@ I used MinGW gcc(5.3.0) to make/compile this project. Currently a work-in-progre
  
 There are adjustable settings, such as the <b>number of frames</b>, the <b>time delay between frames</b>, and <b>color filter choices</b> (currently only saturation and inversion filters are available).    
 
-Additionally, you can create a gif from a folder of .bmp images (24-bit and 32-bit!) by specifying the full path to a directory (i.e. C:\Users\Nicholas\Desktop\myFolder). This feature is particularly useful if you have some bmp images that you have edited (i.e. in MS Paint, which on my machine automatically outputs 24-bit bmps) and want to put them together in a gif.    
+Additionally, you can create a gif from a folder of .bmp images (24-bit and 32-bit!) by specifying the full path to a directory on your Desktop (i.e. C:\Users\Nicholas\Desktop\myFolder - not quite sure right now why the directory must be on the Desktop). This feature is particularly useful if you have some bmp images that you have edited (i.e. in MS Paint, which on my machine automatically outputs 24-bit bmps) and want to put them together in a gif.
+If recreating a gif from pre-collected bmps, you also have the option of adding a caption! (but currently only Impact font is used, with size 32)    
     
 things to do:    
 - clean up gui (maybe eventually move to Qt?)        
@@ -40,6 +41,9 @@ screenshots (these show use of an older version of the application, but the func
 ### with inversion and saturation filters:    
 ![gif inverted](screenshots/test_inverted.gif)    
 ![gif saturated](screenshots/test_saturated.gif)    
+    
+### with saturation and a caption:    
+![gif with caption](screenshots/caption_demo.gif)    
     
 gifs were taken from this video by Tonkatsu298: https://www.youtube.com/watch?v=D8gwnKApqCE    
 

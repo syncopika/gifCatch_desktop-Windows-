@@ -37,7 +37,7 @@
 
 /*****************
 
-global variables
+	global variables
 
 *****************/
 
@@ -195,8 +195,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 									continue;
 								}else{
 									std::string last3chars = filename.substr(len - 3);
-									if(last3chars.compare("bmp") == 0){
-										
+									if(last3chars.compare("bmp") == 0){		
 										if(filenameLength == -1){
 											filenameLength = len;
 											// put first file in images1 
@@ -233,18 +232,25 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 								//std::cout << images2[j] << std::endl;
 							}
 							
+							// check if user wants to memefy! if there's text entered in the textbox for ID_MEMEFY_MSG,
+							// pass it to assembleGif 
+							HWND memefyText = GetDlgItem(hwnd, ID_MEMEFY_MSG);
+							TCHAR mtext[38];	// max is 38 chars!!!
+							GetWindowText(memefyText, mtext, 38);
+							std::string theText = std::string(mtext);
+							
 							// now create gif from images 
 							SetDlgItemText(hwnd, ID_PROGRESS_MSG, "assembling gif...");
 							
 							// apply specified filter 
 							if(currFilterIndex == 0){ 
-								assembleGif(nFrames, tDelay, allImages, getBMPImageData);
+								assembleGif(nFrames, tDelay, allImages, getBMPImageData, theText);
 							}else if(currFilterIndex == 1){
-								assembleGif(nFrames, tDelay, allImages, getBMPImageDataInverted);
+								assembleGif(nFrames, tDelay, allImages, getBMPImageDataInverted, theText);
 							}else if(currFilterIndex == 2){
-								assembleGif(nFrames, tDelay, allImages, getBMPImageDataSaturated);
+								assembleGif(nFrames, tDelay, allImages, getBMPImageDataSaturated, theText);
 							}else{
-								assembleGif(nFrames, tDelay, allImages, getBMPImageDataWeird);
+								assembleGif(nFrames, tDelay, allImages, getBMPImageDataWeird, theText);
 							}
 							
 						}
@@ -503,7 +509,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         g_szClassName,
         "gifCatch",
         WS_TILEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT, 400, 400,
+        CW_USEDEFAULT, CW_USEDEFAULT, 400, 430,
         NULL, NULL, hInstance, NULL
     );
     
@@ -641,7 +647,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		NULL
 	);
 	SendMessage(filterComboBox, WM_SETFONT, (WPARAM)hFont, true);
-	// for now provide these 3 options: none, inverted, and saturated 
+	// for now provide these 4 options: none, inverted, and saturated, weird
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"none");
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"inverted");
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"saturated");
@@ -655,7 +661,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         TEXT("STATIC"),
         TEXT("specify full directory path of images to generate gif from: "),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 150,
+        10, 170,
         340, 20,
         hwnd, /* parent window */
         NULL,
@@ -668,7 +674,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		TEXT("edit"),
 		TEXT(""),
 		WS_VISIBLE | WS_CHILD | WS_BORDER,
-		10, 180,  /* x, y coords */
+		10, 190,  /* x, y coords */
 		280, 20, /* width, height */
 		hwnd,
 		(HMENU)ID_CHOOSE_DIR,
@@ -677,13 +683,46 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     );
     SendMessage(editImageDirectory, WM_SETFONT, (WPARAM)hFont, true);
 	
+	/* 
+		let user memefy their gif. for now, it'll be a bit limited in that the text 
+		will automatically be placed towards the bottom of the gif. 
+		it will however, be centered (and so some calculations are needed)
+		the amount of text will vary depending on gif size as well
+		font will also be Impact and size will be determined by program 
+	*/
+	HWND memefyOption = CreateWindow(
+        TEXT("STATIC"),
+        TEXT("specify a message to show at bottom of gif: "),
+        WS_VISIBLE | WS_CHILD | SS_LEFT,
+        10, 220,
+        340, 20,
+        hwnd,
+        NULL,
+        hInstance,
+        NULL
+    );
+    SendMessage(memefyOption, WM_SETFONT, (WPARAM)hFont, true);
+	
+	HWND memefyMsg = CreateWindow(
+		TEXT("edit"),
+		TEXT(""),
+		WS_VISIBLE | WS_CHILD | WS_BORDER,
+		10, 240,
+		280, 20, 
+		hwnd,
+		(HMENU)ID_MEMEFY_MSG,
+		hInstance,
+		NULL
+	);
+	SendMessage(memefyMsg, WM_SETFONT, (WPARAM)hFont, true);
+	
 	
     /* button to select area of screen  */
     HWND selectAreaButton = CreateWindow(
         TEXT("button"),
         TEXT("select area"),
         WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-        150, 220,
+        150, 280,
         80, 20, 
         hwnd,
         (HMENU)ID_SELECT_SCREENAREA_BUTTON,
@@ -697,7 +736,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         TEXT("button"),
         TEXT("start"),
         WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-        150, 250,
+        150, 310,
         80, 20, 
         hwnd,
         (HMENU)ID_START_BUTTON,
@@ -711,7 +750,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         TEXT("STATIC"),
         TEXT(""),
         WS_VISIBLE | WS_CHILD | WS_BORDER,
-        80, 300,  /* x, y coords */
+        80, 350,  /* x, y coords */
         220, 20, /* width, height */
         hwnd,
         (HMENU)ID_PROGRESS_MSG,

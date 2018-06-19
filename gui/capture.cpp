@@ -133,7 +133,8 @@ void getSnapshots(int nImages, int delay, int x, int y, int width, int height, s
 // takes in a number indicating how many images to check for resize, and a width and height to resize to
 // it returns an integer indicating if anything was resized (1 = something was resized);
 // for now, create a new folder called temp_resized to store this new set of images (including the ones that weren't resized)
-int resizeBMPs(int nImages, std::vector<std::string> images, int width, int height){
+// last argument is memeText, which is a string that, if not empty (""), will be written near the bottom of each frame  
+int resizeBMPs(int nImages, std::vector<std::string> images, int width, int height, std::string memeText){
 	
 	int resizeResult = 0;
 	
@@ -167,8 +168,8 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 		
 		// if dimensions of current image match the initial image, just skip this one 
 		// but add it to the new temp directory
-		if(h == height && w == width){
-			
+		if(h == height && w == width && memeText == ""){
+			std::cout << "dfkjsdnkfjndsjkfnkds" << std::endl;
 			int result = GetEncoderClsid(L"image/bmp", &pngClsid);  
 			if(result == -1){
 				std::cout << "Encoder failed" << std::endl;
@@ -203,27 +204,29 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 		// SolidBrush brush(Color(255,0,0,0));
 		// Status st = graphics.DrawString(string, 9, &impactFont, PointF(w/3, h/2 + (h/3)), &brush);
 		// std::cout << "status: " << st << std::endl;
-		
-		wchar_t string[] = L"BLAH BLAH BLAH";
-		FontFamily impactFont(L"Impact");
-		StringFormat strFormat;
-		GraphicsPath gpath; 						// use this to hold the outline of the string we want to draw 
-		gpath.AddString(string, 					// the string
-						wcslen(string), 			// length of string
-						&impactFont, 				// font family
-						FontStyleRegular,  			// style of type face 
-						30, 						// font size 
-						Point(w/3, (h/2 + h/3)),	// where to put the string 
-						&strFormat 					// layout information for the string 
-						);
-		Pen pen(Color(0,0,0), 2); 					// color and width of pen 
-		graphics.DrawPath(&pen, &gpath);
-		SolidBrush brush(Color(255,255,255,255));
-		graphics.FillPath(&brush, &gpath);
-		
-		// end testing
-		
 		*/
+		
+		if(memeText != ""){
+			std::wstring mtext = std::wstring(memeText.begin(), memeText.end());
+			const wchar_t* string = mtext.c_str(); //L"BLAH BLAH BLAH";
+			FontFamily impactFont(L"Impact");
+			StringFormat strFormat;
+			GraphicsPath gpath; 						// use this to hold the outline of the string we want to draw 
+			gpath.AddString(string, 					// the string
+							wcslen(string), 			// length of string
+							&impactFont, 				// font family
+							FontStyleRegular,  			// style of type face 
+							32, 						// font size 
+							Point(w/3, (h/2 + h/3)),	// where to put the string 
+							&strFormat 					// layout information for the string 
+							);
+			Pen pen(Color(0,0,0), 2); 					// color and width of pen 
+			pen.SetLineJoin(LineJoinRound);				// prevent sharp pointers from occurring on some chars 
+			graphics.DrawPath(&pen, &gpath);
+			SolidBrush brush(Color(255,255,255,255));
+			graphics.FillPath(&brush, &gpath);
+		}
+		// end testing
 		
 		// overwite old file with this new one
 		int result = GetEncoderClsid(L"image/bmp", &pngClsid);  
@@ -253,7 +256,7 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 }
 
 // this function assembles the gif from bmp images in a specified directory 
-void assembleGif(int nImages, int delay, std::vector<std::string> images, std::vector<uint8_t> (*filter)(const std::string)){
+void assembleGif(int nImages, int delay, std::vector<std::string> images, std::vector<uint8_t> (*filter)(const std::string), std::string memeText){
 
     GifWriter gifWriter;
     
@@ -270,7 +273,7 @@ void assembleGif(int nImages, int delay, std::vector<std::string> images, std::v
 	}
 	
 	// resize bmps if needed 
-	int res = resizeBMPs(nImages, images, initialD[1], initialD[0]);
+	int res = resizeBMPs(nImages, images, initialD[1], initialD[0], memeText);
 	
     std::string nextFrame; 
 	
