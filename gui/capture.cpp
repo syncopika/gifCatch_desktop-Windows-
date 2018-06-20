@@ -3,6 +3,7 @@
 #include "capture.hh"  // function declarations
 #include "bmpHelper.hh" // function declarations
 #include "gif.h"    // needs gif.h to create the gif (https://github.com/ginsweater/gif-h/blob/master/gif.h)
+#include <ctime>	// for getting current time and using that to name the resulting gif 
 	
 // probably should convert to non-namespace later 
 using namespace Gdiplus;
@@ -113,8 +114,17 @@ void getSnapshots(int nImages, int delay, int x, int y, int width, int height, s
     GifWriter gifWriter;
     
     // initialize gifWriter
-    // call the gif "test" - it'll be in the same directory as the executable 
-    GifBegin(&gifWriter, "test.gif", (uint32_t)width, (uint32_t)height, (uint32_t)delay/10);
+    // name the gif the current time - it'll be in the same directory as the executable 
+	std::time_t timeNow = std::time(NULL);
+	std::tm* ptm = std::localtime(&timeNow);
+	
+	char buff[32];
+	std::strftime(buff, 32, "%d-%m-%Y_%H%M%S", ptm);
+	std::string currTime = std::string(buff);
+	//std::cout << "the time is: " << currTime << std::endl;
+	
+	std::string gifName = currTime + ".gif";
+    GifBegin(&gifWriter, gifName.c_str(), (uint32_t)width, (uint32_t)height, (uint32_t)delay/10);
     
     // pass in frames 
     std::string nextFrame; 
@@ -143,7 +153,7 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
     ULONG_PTR gdiplusToken;
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 	
-	 // make a temp_resized directory 
+	// make a temp_resized directory 
     std::string dirName = "temp_resized";
     if(CreateDirectory(dirName.c_str(), NULL)){
         // do nothing
@@ -165,11 +175,9 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 		
 		CLSID pngClsid;
 		
-		
 		// if dimensions of current image match the initial image, just skip this one 
 		// but add it to the new temp directory
 		if(h == height && w == width && memeText == ""){
-			std::cout << "dfkjsdnkfjndsjkfnkds" << std::endl;
 			int result = GetEncoderClsid(L"image/bmp", &pngClsid);  
 			if(result == -1){
 				std::cout << "Encoder failed" << std::endl;
@@ -180,7 +188,6 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 			bmp->Save(fname.c_str(), &pngClsid, NULL);
 			delete bmp;
 			continue;
-			
 		}
 		
 		// make a new empty bmp with the new dimensions
@@ -191,21 +198,8 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 		graphics.DrawImage(bmp, 0, 0, width, height);
 		// delete bmp 
 		delete bmp;
-		
-		/* testing for writing text to bmp - i.e. memefying 
-		// https://msdn.microsoft.com/en-us/library/windows/desktop/ms535993(v=vs.85).aspx
-		// https://msdn.microsoft.com/en-us/library/windows/desktop/ms536170(v=vs.85).aspx
-		// https://stackoverflow.com/questions/7299196/drawing-text-with-gdi
-		// https://stackoverflow.com/questions/44265273/drawtext-with-outline-using-gdi-c
-		// https://www.codeproject.com/Articles/42529/Outline-Text#singleoutline1  -> very helpful!
-		
-		// WCHAR string[] = L"F%^& YEAH";
-		// Font impactFont(L"impact", 28);
-		// SolidBrush brush(Color(255,0,0,0));
-		// Status st = graphics.DrawString(string, 9, &impactFont, PointF(w/3, h/2 + (h/3)), &brush);
-		// std::cout << "status: " << st << std::endl;
-		*/
-		
+	
+		// memefy if there's text in the specified box 
 		if(memeText != ""){
 			std::wstring mtext = std::wstring(memeText.begin(), memeText.end());
 			const wchar_t* string = mtext.c_str(); //L"BLAH BLAH BLAH";
@@ -226,7 +220,6 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 			SolidBrush brush(Color(255,255,255,255));
 			graphics.FillPath(&brush, &gpath);
 		}
-		// end testing
 		
 		// overwite old file with this new one
 		int result = GetEncoderClsid(L"image/bmp", &pngClsid);  
@@ -265,7 +258,16 @@ void assembleGif(int nImages, int delay, std::vector<std::string> images, std::v
 	// set the gif to have the dimensions of the first image in the vector (ideally they should all have the same width and height)
 	std::vector<int> initialD = getBMPHeightWidth(images[0]);
 	
-    GifBegin(&gifWriter, "test.gif", (uint32_t)initialD[1], (uint32_t)initialD[0], (uint32_t)delay/10);
+	// make a function for this step 
+	std::time_t timeNow = std::time(NULL);
+	std::tm* ptm = std::localtime(&timeNow);
+	char buff[32];
+	std::strftime(buff, 32, "%d-%m-%Y_%H%M%S", ptm);
+	std::string currTime = std::string(buff);
+	std::string gifName = currTime + ".gif";
+	
+	// bit depth is 8 by default and dither is false by default 
+    GifBegin(&gifWriter, gifName.c_str(), (uint32_t)initialD[1], (uint32_t)initialD[0], (uint32_t)delay/10);
     
     // pass in frames 
 	if(nImages > (int)images.size()){

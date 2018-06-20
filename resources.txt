@@ -59,3 +59,12 @@ https://social.msdn.microsoft.com/Forums/en-US/079f74f3-6e40-47d0-a083-0cb6f9b54
 // string to wchar (i.e. when passing a string for a file path to a gdi function like the Bitmap::Bitmap() constructor)
 https://stackoverflow.com/questions/246806/i-want-to-convert-stdstring-into-a-const-wchar-t/246818 
 
+// memefying/adding a caption
+https://msdn.microsoft.com/en-us/library/windows/desktop/ms535993(v=vs.85).aspx
+https://msdn.microsoft.com/en-us/library/windows/desktop/ms536170(v=vs.85).aspx
+https://stackoverflow.com/questions/7299196/drawing-text-with-gdi
+https://stackoverflow.com/questions/44265273/drawtext-with-outline-using-gdi-c
+https://www.codeproject.com/Articles/42529/Outline-Text#singleoutline1  -> very helpful!
+		
+// getting current time 
+https://stackoverflow.com/questions/997512/string-representation-of-time-t

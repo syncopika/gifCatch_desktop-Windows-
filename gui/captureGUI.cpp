@@ -155,13 +155,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 					// also check if user has specified a directory to create the gif from 
 					// if so, don't get any screenshots 
 					HWND directory = GetDlgItem(hwnd, ID_CHOOSE_DIR);
-					TCHAR dir[38];	// max is 38 chars!!!
-					GetWindowText(directory, dir, 38);
+					
+					// this is tricky!! each character is not the same width, so you could end up with varying possible max lengths! for now, set max to 43 chars
+					TCHAR dir[43];
+					GetWindowText(directory, dir, 43);
 					std::string theDir = std::string(dir);
 					//std::cout << "directory path: " + theDir << std::endl;
 					//std::cout << "is directory path empty string?: " << theDir.compare("") << std::endl;
 					
-					if(theDir.compare("") != 0){
+					if(theDir != ""){
 						// user wants to assemble a gif from some already made bmps!
 						struct dirent *dir_entry;
 						DIR *pd = 0;
@@ -235,7 +237,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 							// check if user wants to memefy! if there's text entered in the textbox for ID_MEMEFY_MSG,
 							// pass it to assembleGif 
 							HWND memefyText = GetDlgItem(hwnd, ID_MEMEFY_MSG);
-							TCHAR mtext[38];	// max is 38 chars!!!
+							TCHAR mtext[38];	// max is 38 chars for now 
 							GetWindowText(memefyText, mtext, 38);
 							std::string theText = std::string(mtext);
 							

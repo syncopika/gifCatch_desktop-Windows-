@@ -1,14 +1,14 @@
 ## capture screenshots on your Windows desktop and create a gif!    
     
 This application lets you select what part of the screen to screenshot, specify how many screenshots to take with delay, and creates a gif from them.    
-I used MinGW gcc(5.3.0) to make/compile this project. Currently a work-in-progress.     
+I use MinGW gcc(5.3.0) to make/compile this project. Currently a work-in-progress.     
     
 #### this is the current look of the application:     
 ![current look of the gui](screenshots/current.png "current look")    
  
 There are adjustable settings, such as the <b>number of frames</b>, the <b>time delay between frames</b>, and <b>color filter choices</b> (currently only saturation and inversion filters are available).    
 
-Additionally, you can create a gif from a folder of .bmp images (24-bit and 32-bit!) by specifying the full path to a directory on your Desktop (i.e. C:\Users\Nicholas\Desktop\myFolder - not quite sure right now why the directory must be on the Desktop). This feature is particularly useful if you have some bmp images that you have edited (i.e. in MS Paint, which on my machine automatically outputs 24-bit bmps) and want to put them together in a gif.
+Additionally, you can create a gif from a folder of .bmp images (24-bit and 32-bit!) by specifying the full path to a directory (there's a 44-character limit on the full path currently that I need to fix). This feature is particularly useful if you have some bmp images that you have edited (i.e. in MS Paint, which on my machine automatically outputs 24-bit bmps) and want to put them together in a gif.
 If recreating a gif from pre-collected bmps, you also have the option of adding a caption! (but currently only Impact font is used, with size 32)    
     
 things to do:    
@@ -16,10 +16,11 @@ things to do:
 - can I get better quality images? different formats (right now it just outputs bmps and uses bmps for gif creation)?    
 - allow gif naming / output directory naming?    
 - different colors for selection screen?      
+- fix character limit on directory to make gif from?    
     
 thanks to Philip Goh (https://github.com/cotidian/Win32GrabScreen) for the screen capture code, and Charlie Tangora (https://github.com/ginsweater/gif-h/blob/master/gif.h) for the gif-making code.        
     
-screenshots (these show use of an older version of the application, but the functionality is the same):    
+__**screenshots (these show use of an older version of the application, but the functionality is the same):**__    
 ### adjust the settings to your liking and click on the 'select area' button to choose an area on the screen to screenshot. by default it should capture the whole screen.      
 ![start](screenshots/start.png "the gui")    
      
@@ -32,7 +33,7 @@ screenshots (these show use of an older version of the application, but the func
 ### then if everything worked out, a successful processing message should show 
 ![done](screenshots/process_successful.png "finished processing")    
     
-### you can find the finished gif (called "test" - can't choose name yet, sorry!) in the same folder as the program, as well as its frames in the "temp" directory.    
+### you can find the finished gif (will be automatically named the current date and time, i.e. "19-06-2018_200620.gif") in the same folder as the application, as well as its frames in the "temp" directory.    
 ![find your gif](screenshots/done.png "find the gif and its frames")    
     
 ### here's my result:    
