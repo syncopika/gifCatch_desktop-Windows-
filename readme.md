@@ -20,7 +20,7 @@ things to do:
     
 thanks to Philip Goh (https://github.com/cotidian/Win32GrabScreen) for the screen capture code, and Charlie Tangora (https://github.com/ginsweater/gif-h/blob/master/gif.h) for the gif-making code.        
     
-__**screenshots (these show use of an older version of the application, but the functionality is the same):**__    
+**screenshots (these show use of an older version of the application, but the functionality is the same):**
 ### adjust the settings to your liking and click on the 'select area' button to choose an area on the screen to screenshot. by default it should capture the whole screen.      
 ![start](screenshots/start.png "the gui")    
      
