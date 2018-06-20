@@ -34,4 +34,4 @@ captureGUI.o: captureGUI.cpp capture.hh bmpHelper.hh resources.h
 	$(CXX) $(FLAGS) $< -o  $@
 	
 clean:
-	rm -f *.o && rm -f $(EXE)
+	rm -f *.o

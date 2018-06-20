@@ -156,11 +156,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 					// if so, don't get any screenshots 
 					HWND directory = GetDlgItem(hwnd, ID_CHOOSE_DIR);
 					
-					// this is tricky!! each character is not the same width, so you could end up with varying possible max lengths! for now, set max to 43 chars
-					TCHAR dir[43];
-					GetWindowText(directory, dir, 43);
+					// get the text from the window
+					int textLen = GetWindowTextLength(directory);
+					TCHAR dir[textLen + 1]; // +1 for null term 
+					GetWindowText(directory, dir, textLen + 1);
 					std::string theDir = std::string(dir);
-					//std::cout << "directory path: " + theDir << std::endl;
+					std::cout << "directory path: " + theDir << std::endl;
 					//std::cout << "is directory path empty string?: " << theDir.compare("") << std::endl;
 					
 					if(theDir != ""){
@@ -237,8 +238,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 							// check if user wants to memefy! if there's text entered in the textbox for ID_MEMEFY_MSG,
 							// pass it to assembleGif 
 							HWND memefyText = GetDlgItem(hwnd, ID_MEMEFY_MSG);
-							TCHAR mtext[38];	// max is 38 chars for now 
-							GetWindowText(memefyText, mtext, 38);
+							
+							int textLen = GetWindowTextLength(directory);
+							TCHAR mtext[textLen + 1];	
+							GetWindowText(memefyText, mtext, textLen + 1);
 							std::string theText = std::string(mtext);
 							
 							// now create gif from images 
@@ -675,7 +678,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HWND editImageDirectory = CreateWindow(
 		TEXT("edit"),
 		TEXT(""),
-		WS_VISIBLE | WS_CHILD | WS_BORDER,
+		WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL,
 		10, 190,  /* x, y coords */
 		280, 20, /* width, height */
 		hwnd,
@@ -708,7 +711,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HWND memefyMsg = CreateWindow(
 		TEXT("edit"),
 		TEXT(""),
-		WS_VISIBLE | WS_CHILD | WS_BORDER,
+		WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL,
 		10, 240,
 		280, 20, 
 		hwnd,

@@ -6,17 +6,16 @@ I use MinGW gcc(5.3.0) to make/compile this project. Currently a work-in-progres
 #### this is the current look of the application:     
 ![current look of the gui](screenshots/current.png "current look")    
  
-There are adjustable settings, such as the <b>number of frames</b>, the <b>time delay between frames</b>, and <b>color filter choices</b> (currently only saturation and inversion filters are available).    
+There are adjustable settings, such as the <b>number of frames</b>, the <b>time delay between frames</b>, and some <b>color filter choices</b>.    
 
-Additionally, you can create a gif from a folder of .bmp images (24-bit and 32-bit!) by specifying the full path to a directory (there's a 44-character limit on the full path currently that I need to fix). This feature is particularly useful if you have some bmp images that you have edited (i.e. in MS Paint, which on my machine automatically outputs 24-bit bmps) and want to put them together in a gif.
-If recreating a gif from pre-collected bmps, you also have the option of adding a caption! (but currently only Impact font is used, with size 32)    
+Additionally, you can create a gif from a folder of .bmp images (24-bit and 32-bit!) by specifying the full path to a directory. This feature is particularly useful if you have some bmp images that you have edited (i.e. in MS Paint, which on my machine automatically outputs 24-bit bmps) and want to put them together in a gif.
+If recreating a gif from pre-collected bmps, you also have the option of adding a caption! (but currently only Impact font is used, with size 32, and placement is near the bottom of the gif, centered)    
     
 things to do:    
 - clean up gui (maybe eventually move to Qt?)        
 - can I get better quality images? different formats (right now it just outputs bmps and uses bmps for gif creation)?    
 - allow gif naming / output directory naming?    
 - different colors for selection screen?      
-- fix character limit on directory to make gif from?    
     
 thanks to Philip Goh (https://github.com/cotidian/Win32GrabScreen) for the screen capture code, and Charlie Tangora (https://github.com/ginsweater/gif-h/blob/master/gif.h) for the gif-making code.        
     
