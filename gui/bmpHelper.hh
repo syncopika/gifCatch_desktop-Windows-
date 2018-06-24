@@ -14,8 +14,10 @@ std::vector<uint8_t> getBMPImageDataFiltered(const std::string filename, const s
 std::vector<uint8_t> getBMPImageDataInverted(const std::string filename);
 std::vector<uint8_t> getBMPImageDataSaturated(const std::string filename);
 std::vector<uint8_t> getBMPImageDataWeird(const std::string filename);
+std::vector<uint8_t> getBMPImageDataGrayscale(const std::string filename);
 
 // filters 
 void inversionFilter(std::vector<char>& imageData);
 void saturationFilter(float saturationVal, std::vector<char>& imageData);
 void weirdFilter(std::vector<char>& imageData);
+void grayscaleFilter(std::vector<char>& imageData);

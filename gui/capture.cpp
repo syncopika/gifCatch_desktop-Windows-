@@ -216,6 +216,7 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 							);
 			Pen pen(Color(0,0,0), 2); 					// color and width of pen 
 			pen.SetLineJoin(LineJoinRound);				// prevent sharp pointers from occurring on some chars 
+			graphics.SetSmoothingMode(SmoothingModeAntiAlias); // antialias the text so the outline doesn't look choppy
 			graphics.DrawPath(&pen, &gpath);
 			SolidBrush brush(Color(255,255,255,255));
 			graphics.FillPath(&brush, &gpath);

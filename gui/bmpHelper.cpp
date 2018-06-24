@@ -73,7 +73,7 @@ void saturationFilter(float saturationVal, std::vector<char>& imageData){
 	double g2 = (1 - saturationValue) * lumG;
 	double b2 = (1 - saturationValue) * lumB;	
 	
-    for(unsigned int i = 0; i <= dataSize - 4; i+=4){
+    for(unsigned int i = dataSize - 4; i > 0; i-=4){
         char temp = imageData[i];
         imageData[i] = imageData[i+2];
         imageData[i+2] = temp;
@@ -106,7 +106,7 @@ void weirdFilter(std::vector<char>& imageData){
 	unsigned int dataSize = imageData.size();
 	
 	// reorder the rgb channels since it's currently bgr
-	for(unsigned int i = 0; i <= dataSize - 4; i+=4){
+	for(unsigned int i = dataSize - 4; i > 0; i-=4){
 		char temp = imageData[i];
         imageData[i] = imageData[i+2];
         imageData[i+2] = temp;
@@ -131,6 +131,33 @@ void weirdFilter(std::vector<char>& imageData){
     }
 	
 }
+
+/***
+	
+	grayscale filter 
+	
+***/
+void grayscaleFilter(std::vector<char>& imageData){
+	
+	unsigned int dataSize = imageData.size();
+	
+	// for each pixel, set each channel's value to the average of the RGB channels 
+	for(unsigned int i = dataSize - 4; i > 0; i-=4){
+		
+		unsigned char r = imageData[i]; 
+		unsigned char g = imageData[i+1];
+		unsigned char b = imageData[i+2];
+		
+		unsigned char avg = (r+g+b) / 3;
+		
+		imageData[i] = avg;
+		imageData[i+1] = avg;
+		imageData[i+2] = avg;	
+
+	}
+	
+}
+
 
 /***
 
@@ -190,8 +217,8 @@ std::vector<uint8_t> getBMPImageData(const std::string filename){
 		int widthCount = 0;
 		//int rowCount = 0;
 		
-		for(int i = (int)dataSize - 1 ; i >= 0; i--){
-			
+		for(int i = (int)dataSize - 1 ; i >= 0; i--){		
+		
 			// after every third element, add a 255 (this is for the alpha channel)
 			image.push_back(img[i]);
 			RGBcounter++;
@@ -250,6 +277,7 @@ std::vector<uint8_t> getBMPImageData(const std::string filename){
 		// need to swap R and B (img[i] and img[i+2]) so that the sequence is RGB, not BGR
 		// also, notice that each pixel is represented by 4 bytes, not 3, because
 		// the bmp images are 32-bit
+		// reading backwards gets you BGRA instead of ARGB if reading from index 0 
 		for(int i = dataSize - 4; i >= 0; i -= 4){
 			char temp = img[i];
 			img[i] = img[i+2];
@@ -310,18 +338,20 @@ std::vector<uint8_t> getBMPImageDataFiltered(const std::string filename, const s
 	/** do filter **/
     
     // need to swap R and B (img[i] and img[i+2]) so that the sequence is RGB, not BGR
-    // also, notice that each pixel is represented by 4 bytes, not 3, because
-    // the bmp images are 32-bit
-	// this swapping is done in each filtering function 
-	
+	// need to keep in mind where the alpha channel is relative to RGB as well. this matters because depending 
+	// on how you read the pixel data (i.e. starting from index 0 or the end), alpha might be the first value 
+    // also, notice that each pixel is represented by 4 bytes, not 3, because the bmp images are 32-bit
+	// this swapping is done in each filtering function (except grayscale, since RGB order does not matter in the end)
 	if(filtername == "inverted"){
 		inversionFilter(img);
     }else if(filtername == "saturated"){
 		saturationFilter(2.1, img);
 	}else if(filtername == "weird"){
 		weirdFilter(img);
+	}else if(filtername == "grayscale"){
+		grayscaleFilter(img);
 	}
-	
+
     // change char vector to uint8_t vector
     // be careful! bmp image data is stored upside-down :<
     // so traverse backwards, but also, for each row, invert the row also!
@@ -359,5 +389,12 @@ std::vector<uint8_t> getBMPImageDataSaturated(const std::string filename){
 ***/
 std::vector<uint8_t> getBMPImageDataWeird(const std::string filename){
     return getBMPImageDataFiltered(filename, "weird");
+}
+
+/***
+	grayscale image filter 
+***/
+std::vector<uint8_t> getBMPImageDataGrayscale(const std::string filename){
+    return getBMPImageDataFiltered(filename, "grayscale");
 }
 

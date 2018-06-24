@@ -161,7 +161,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 					TCHAR dir[textLen + 1]; // +1 for null term 
 					GetWindowText(directory, dir, textLen + 1);
 					std::string theDir = std::string(dir);
-					std::cout << "directory path: " + theDir << std::endl;
+					
+					//std::cout << "directory path: " + theDir << std::endl;
 					//std::cout << "is directory path empty string?: " << theDir.compare("") << std::endl;
 					
 					if(theDir != ""){
@@ -247,34 +248,37 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 							// now create gif from images 
 							SetDlgItemText(hwnd, ID_PROGRESS_MSG, "assembling gif...");
 							
-							// apply specified filter 
-							if(currFilterIndex == 0){ 
-								assembleGif(nFrames, tDelay, allImages, getBMPImageData, theText);
-							}else if(currFilterIndex == 1){
-								assembleGif(nFrames, tDelay, allImages, getBMPImageDataInverted, theText);
-							}else if(currFilterIndex == 2){
-								assembleGif(nFrames, tDelay, allImages, getBMPImageDataSaturated, theText);
-							}else{
-								assembleGif(nFrames, tDelay, allImages, getBMPImageDataWeird, theText);
+							
+							switch(currFilterIndex){
+								case 0: assembleGif(nFrames, tDelay, allImages, getBMPImageData, theText);
+										break;
+								case 1: assembleGif(nFrames, tDelay, allImages, getBMPImageDataInverted, theText);
+										break;
+								case 2: assembleGif(nFrames, tDelay, allImages, getBMPImageDataSaturated, theText);
+										break;
+								case 3: assembleGif(nFrames, tDelay, allImages, getBMPImageDataWeird, theText);
+										break;
+								case 4: assembleGif(nFrames, tDelay, allImages, getBMPImageDataGrayscale, theText);
+										break;		
 							}
 							
 						}
 						
 					}else{
-					
-						// capture screenshots 				
-						if(currFilterIndex == 0){
-							// no filter
-							getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageData);
-						}else if(currFilterIndex == 1){
-							// color inversion filter
-							getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataInverted);
-						}else if(currFilterIndex == 2){
-							// saturation filter
-							getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataSaturated);
-						}else{
-							getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataWeird);
+						
+						switch(currFilterIndex){
+							case 0: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageData);
+									break;
+							case 1: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataInverted);
+									break;
+							case 2: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataSaturated);
+									break;
+							case 3: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataWeird);
+									break;
+							case 4: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataGrayscale);
+									break;		
 						}
+				
 					}
 						
 					// if at this point, task is done 
@@ -657,6 +661,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"inverted");
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"saturated");
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"weird");
+	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"grayscale");
     // initially the filter is set to "none"
 	SendMessage(filterComboBox, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);
 	
