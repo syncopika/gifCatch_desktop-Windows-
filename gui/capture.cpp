@@ -203,6 +203,12 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 		if(memeText != ""){
 			std::wstring mtext = std::wstring(memeText.begin(), memeText.end());
 			const wchar_t* string = mtext.c_str(); //L"BLAH BLAH BLAH";
+			int stringLen = mtext.size();
+			
+			// decide where to place the text, x-coordinate-wise 
+			// assume each char in the string takes up 15 pixels?
+			int xCoord = (w/2) - ((stringLen*15)/2);
+			
 			FontFamily impactFont(L"Impact");
 			StringFormat strFormat;
 			GraphicsPath gpath; 						// use this to hold the outline of the string we want to draw 
@@ -211,7 +217,7 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 							&impactFont, 				// font family
 							FontStyleRegular,  			// style of type face 
 							32, 						// font size 
-							Point(w/3, (h/2 + h/3)),	// where to put the string 
+							Point(xCoord, (h/2 + h/3)),	// where to put the string 
 							&strFormat 					// layout information for the string 
 							);
 			Pen pen(Color(0,0,0), 2); 					// color and width of pen 

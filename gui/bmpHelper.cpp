@@ -340,7 +340,7 @@ std::vector<uint8_t> getBMPImageDataFiltered(const std::string filename, const s
     // need to swap R and B (img[i] and img[i+2]) so that the sequence is RGB, not BGR
 	// need to keep in mind where the alpha channel is relative to RGB as well. this matters because depending 
 	// on how you read the pixel data (i.e. starting from index 0 or the end), alpha might be the first value 
-    // also, notice that each pixel is represented by 4 bytes, not 3, because the bmp images are 32-bit
+    // also, notice that each pixel is represented by 4 bytes, not 3, because the bmp images are 32-bit (RGBA)
 	// this swapping is done in each filtering function (except grayscale, since RGB order does not matter in the end)
 	if(filtername == "inverted"){
 		inversionFilter(img);
