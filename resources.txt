@@ -68,3 +68,15 @@ https://www.codeproject.com/Articles/42529/Outline-Text#singleoutline1  -> very 
 		
 // getting current time 
 https://stackoverflow.com/questions/997512/string-representation-of-time-t
+
+// processing might take a while, but Windows thinks application is stuck and not responding. help?
+https://stackoverflow.com/questions/402832/avoiding-not-responding-label-in-windows-while-processing-lots-of-data-in-on
+https://docs.microsoft.com/en-us/windows/desktop/win7appqual/preventing-hangs-in-windows-applications
+
+// threads can't access the window (i.e. they can't get dialog text) 
+https://stackoverflow.com/questions/42317343/c-updating-windows-window-from-async-thread
+https://stackoverflow.com/questions/8735830/c-multithreaded-windows-gui-accessing-the-forms
+https://stackoverflow.com/questions/13505467/best-way-to-update-progress-bar-from-thread
+https://docs.microsoft.com/en-us/windows/desktop/winmsg/using-messages-and-message-queues
+http://www.cplusplus.com/forum/windows/107251/
+https://blogs.msdn.microsoft.com/oldnewthing/20080424-00/?p=22603 // possibly relevant...

@@ -18,6 +18,16 @@
 #define _WIN32_WINNT 0x0601
 #define _WIN32_IE 0x0900
 
+// IDs for signalling certain progress messages
+// see application-defined msgs
+// https://docs.microsoft.com/en-us/windows/desktop/winmsg/about-messages-and-message-queues#application-defined-messages
+#define ID_IN_PROGRESS 		 (WM_APP + 0)
+#define ID_FINISHED 		 (WM_APP + 1)
+#define ID_UNABLE_TO_OPEN	 (WM_APP + 2)
+#define ID_NO_BMPS_FOUND 	 (WM_APP + 3)
+#define ID_ASSEMBLING_GIF 	 (WM_APP + 4)
+#define ID_COLLECTING_IMAGES (WM_APP + 5)
+
 #include <stdlib.h>  // for atoi 
 
 // this also brings in windows.h, gdiplus.h, and everything else 
@@ -59,8 +69,8 @@ const char g_szClassName[] = "mainGUI";
 const char g_szClassName2[] = "selectionWindow";
 
 // handler variables for the windows 
-HWND hwnd;
-HWND selectionWindow;
+HWND hwnd;	// this is the main GUI window handle
+HWND selectionWindow;	// this is the handle for the rubber-banding selection window 
 
 
 // use Tahoma font for the text 
@@ -76,6 +86,162 @@ DO Win32 GUI STUFF HERE
 
 *****************/
 
+// struct to provide arguments needed for gif creation 
+struct windowInfo {
+	int numFrames;
+	int timeDelay;
+	int selectedFilter;
+	std::string directory;
+	std::string memeText;
+	HWND mainWindow; // main window so the worker thread can post messages to its queue 
+} arguments;
+
+void makeGif(windowInfo* args){
+	
+	HWND mainWindow = args->mainWindow;
+	
+	PostMessage(mainWindow, ID_IN_PROGRESS, 0, 0);
+	
+	int nFrames = args->numFrames;
+	//std::cout << "frames: " << nFrames << std::endl;
+	
+	int tDelay = args->timeDelay;
+	//std::cout << "delay: " << tDelay << std::endl;
+	
+	int currFilterIndex = args->selectedFilter;
+	//std::cout << "currFilterIndex: " << currFilterIndex << std::endl;
+	
+	std::string theDir = args->directory;
+	//std::cout << "directory: " << theDir << std::endl;
+	
+	std::string theText = args->memeText;
+	//std::cout << "memetext: " << theText << std::endl;
+	
+	// indicate process started 
+	PostMessage(mainWindow, ID_IN_PROGRESS, 0, 0);
+	
+	if(theDir != ""){
+		// user wants to assemble a gif from some already made bmps!
+		struct dirent *dir_entry;
+		DIR *pd = 0;
+		
+		pd = opendir(theDir.c_str());
+		if(pd == NULL){
+			std::cout << "unable to open directory..." << std::endl;
+			//PostMessage(mainWindow, ID_UNABLE_TO_OPEN, 0, 0);
+			delete args;
+			return;
+		}
+		
+		// check directory contents 
+		// indicate to user that images are being looked through 
+		PostMessage(mainWindow, ID_COLLECTING_IMAGES, 0, 0);
+		
+		// images1 will hold any images numbered from 0 to 9. 
+		// images2 will hold images numbered after 9. 
+		std::vector<std::string> images1;
+		std::vector<std::string> images2;
+		
+		// use this to keep track of filename lengths. ideally they should be consistent, with the only variation being the number at the end
+		// i.e. screen0, screen1, screen2, ... -> this is the scheme I follow when generating screenshots
+		int filenameLength = -1;
+		while((dir_entry = readdir(pd)) != NULL){
+			//images.push_back(std::string(dir_entry->d_name));
+			std::string filename = dir_entry->d_name;
+			if(filename.compare(".") != 0 && filename.compare("..") != 0){
+				// look for bmp images only 
+				int len = filename.size();
+				if(len < 3){
+					continue;
+				}else{
+					std::string last3chars = filename.substr(len - 3);
+					if(last3chars.compare("bmp") == 0){		
+						if(filenameLength == -1){
+							filenameLength = len;
+							// put first file in images1 
+							images1.push_back(theDir + "\\" + filename);
+						}else if(len > filenameLength){
+							images2.push_back(theDir + "\\" + filename);
+						}else{
+							images1.push_back(theDir + "\\" + filename);
+						}
+					}
+				}
+			}
+		}
+		closedir(pd);
+		
+		// process images now 
+		if(images1.size() == 0 && images2.size() == 0){
+			// no bmp images found 
+			PostMessage(mainWindow, ID_NO_BMPS_FOUND, 0, 0);
+			delete args;
+			return;
+		}else{
+			
+			std::vector<std::string> allImages; // add images from images1 and images2 to here
+			int images1len = images1.size();
+			int images2len = images2.size();
+			for(int i = 0; i < images1len; i++){
+				allImages.push_back(images1[i]);
+			}
+			
+			for(int j = 0; j < images2len; j++){
+				allImages.push_back(images2[j]);
+			}
+			
+			// now create gif from images 
+			PostMessage(mainWindow, ID_ASSEMBLING_GIF, 0, 0);
+			
+			switch(currFilterIndex){
+				case 0: assembleGif(nFrames, tDelay, allImages, getBMPImageData, theText);
+						break;
+				case 1: assembleGif(nFrames, tDelay, allImages, getBMPImageDataInverted, theText);
+						break;
+				case 2: assembleGif(nFrames, tDelay, allImages, getBMPImageDataSaturated, theText);
+						break;
+				case 3: assembleGif(nFrames, tDelay, allImages, getBMPImageDataWeird, theText);
+						break;
+				case 4: assembleGif(nFrames, tDelay, allImages, getBMPImageDataGrayscale, theText);
+						break;		
+			}
+			
+			PostMessage(mainWindow, ID_FINISHED, 0, 0);
+		}
+	}else{
+		// this applies to gif-generation from a specified part of the screen (not using already made images)
+		switch(currFilterIndex){
+			case 0: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageData);
+					break;
+			case 1: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataInverted);
+					break;
+			case 2: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataSaturated);
+					break;
+			case 3: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataWeird);
+					break;
+			case 4: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataGrayscale);
+					break;		
+		}
+		PostMessage(mainWindow, ID_FINISHED, 0, 0);
+	}
+	
+	// free memory associated with the arguments struct 
+	delete args;
+}
+
+
+/*
+
+	the function, which does the gif generation, that is executed by a new thread.
+	pass it a pointer to a bool flag that will be updated when process is finished 
+
+*/
+DWORD WINAPI processGifThread(LPVOID lpParam){
+	makeGif((windowInfo*)lpParam);
+	return 0;
+}
+
+
 /* 
 
     the window procedure for the GUI
@@ -88,6 +254,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
         case WM_COMMAND:
             /* LOWORD takes the lower 16 bits of wParam => the element clicked on */
             switch(LOWORD(wParam)){
+				
                 case ID_SELECT_SCREENAREA_BUTTON:
                 {
                     // make a new window to select the area 
@@ -115,20 +282,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
                     UpdateWindow(selectionWindow);
                 }
                 break;
+				
                 case ID_START_BUTTON:
-                {    
-                    // get the parameters 
-                    HWND frames = GetDlgItem(hwnd, ID_NUMFRAMES_TEXTBOX);
-                    HWND delay = GetDlgItem(hwnd, ID_DELAY_TEXTBOX);
-                    
-                    TCHAR numFrames[3];
-                    TCHAR timeDelay[5];
-                    
-                    GetWindowText(frames, numFrames, 3);
-                    GetWindowText(delay, timeDelay, 5);
-                    
-                    int nFrames = atoi(numFrames);
-                    int tDelay = atoi(timeDelay);
+                {
+					
+					// get the parameters 
+					HWND frames = GetDlgItem(hwnd, ID_NUMFRAMES_TEXTBOX);
+					HWND delay = GetDlgItem(hwnd, ID_DELAY_TEXTBOX);
+					
+					TCHAR numFrames[3];
+					TCHAR timeDelay[5];
+					
+					GetWindowText(frames, numFrames, 3);
+					GetWindowText(delay, timeDelay, 5);
+					
+					int nFrames = atoi(numFrames);
+					int tDelay = atoi(timeDelay);
 					
 					// validate values!! 
 					if(nFrames < 1){
@@ -142,164 +311,93 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 					}else if(tDelay > 1000){
 						tDelay = 1000;
 					}
-                    
-                    // indicate process started 
-                    SetDlgItemText(hwnd, ID_PROGRESS_MSG, "processing...");
-                    
-                    // collect snapshots given the current dimensions 
-                    // if no window selection occurred, screenshot whole screen
-					// also, get the currently selected filter and apply it 
+					
+					// also, get the currently selected filter
 					HWND filterbox = GetDlgItem(hwnd, ID_FILTERS_COMBOBOX);
 					int currFilterIndex = SendMessage(filterbox, CB_GETCURSEL, 0, 0);
 					
 					// also check if user has specified a directory to create the gif from 
-					// if so, don't get any screenshots 
 					HWND directory = GetDlgItem(hwnd, ID_CHOOSE_DIR);
-					
-					// get the text from the window
 					int textLen = GetWindowTextLength(directory);
 					TCHAR dir[textLen + 1]; // +1 for null term 
 					GetWindowText(directory, dir, textLen + 1);
 					std::string theDir = std::string(dir);
 					
-					//std::cout << "directory path: " + theDir << std::endl;
-					//std::cout << "is directory path empty string?: " << theDir.compare("") << std::endl;
+					// check if user wants to memefy! if there's text entered in the textbox for ID_MEMEFY_MSG,
+					// pass it to assembleGif 
+					HWND memefyText = GetDlgItem(hwnd, ID_MEMEFY_MSG);
+					TCHAR mtext[textLen + 1];	
+					GetWindowText(memefyText, mtext, textLen + 1);
+					std::string theText = std::string(mtext);
 					
-					if(theDir != ""){
-						// user wants to assemble a gif from some already made bmps!
-						struct dirent *dir_entry;
-						DIR *pd = 0;
-						
-						pd = opendir(theDir.c_str());
-						if(pd == NULL){
-							std::cout << "unable to open directory..." << std::endl;
-							SetDlgItemText(hwnd, ID_PROGRESS_MSG, "unable to open directory");
-							break;
-						}
-						
-						// check directory contents 
-						// indicate to user that images are being looked through 
-						SetDlgItemText(hwnd, ID_PROGRESS_MSG, "collecting images from directory...");
-						
-						// images1 will hold any images numbered from 0 to 9. 
-						// images2 will hold images numbered after 9. 
-						std::vector<std::string> images1;
-						std::vector<std::string> images2;
-						
-						// use this to keep track of filename lengths. ideally they should be consistent, with the only variation being the number at the end
-						// i.e. screen0, screen1, screen2, ... -> this is the scheme I follow when generating screenshots
-						int filenameLength = -1;
-						while((dir_entry = readdir(pd)) != NULL){
-							//images.push_back(std::string(dir_entry->d_name));
-							std::string filename = dir_entry->d_name;
-							if(filename.compare(".") != 0 && filename.compare("..") != 0){
-								// look for bmp images only 
-								int len = filename.size();
-								if(len < 3){
-									continue;
-								}else{
-									std::string last3chars = filename.substr(len - 3);
-									if(last3chars.compare("bmp") == 0){		
-										if(filenameLength == -1){
-											filenameLength = len;
-											// put first file in images1 
-											images1.push_back(theDir + "\\" + filename);
-										}else if(len > filenameLength){
-											images2.push_back(theDir + "\\" + filename);
-										}else{
-											images1.push_back(theDir + "\\" + filename);
-										}
-									}
-								}
-							}
-						}
-						closedir(pd);
-						
-						// process images now 
-						if(images1.size() == 0 && images2.size() == 0){
-							// no bmp images found 
-							SetDlgItemText(hwnd, ID_PROGRESS_MSG, "no bmp images were found");
-							break;
-						}else{
-							
-							std::vector<std::string> allImages; // add images from images1 and images2 to here
-							int i, j;
-							int images1len = images1.size();
-							int images2len = images2.size();
-							for(i = 0; i < images1len; i++){
-								allImages.push_back(images1[i]);
-								//std::cout << images1[i] << std::endl;
-							}
-							
-							for(j = 0; j < images2len; j++){
-								allImages.push_back(images2[j]);
-								//std::cout << images2[j] << std::endl;
-							}
-							
-							// check if user wants to memefy! if there's text entered in the textbox for ID_MEMEFY_MSG,
-							// pass it to assembleGif 
-							HWND memefyText = GetDlgItem(hwnd, ID_MEMEFY_MSG);
-							
-							int textLen = GetWindowTextLength(directory);
-							TCHAR mtext[textLen + 1];	
-							GetWindowText(memefyText, mtext, textLen + 1);
-							std::string theText = std::string(mtext);
-							
-							// now create gif from images 
-							SetDlgItemText(hwnd, ID_PROGRESS_MSG, "assembling gif...");
-							
-							
-							switch(currFilterIndex){
-								case 0: assembleGif(nFrames, tDelay, allImages, getBMPImageData, theText);
-										break;
-								case 1: assembleGif(nFrames, tDelay, allImages, getBMPImageDataInverted, theText);
-										break;
-								case 2: assembleGif(nFrames, tDelay, allImages, getBMPImageDataSaturated, theText);
-										break;
-								case 3: assembleGif(nFrames, tDelay, allImages, getBMPImageDataWeird, theText);
-										break;
-								case 4: assembleGif(nFrames, tDelay, allImages, getBMPImageDataGrayscale, theText);
-										break;		
-							}
-							
-						}
-						
-					}else{
-						
-						switch(currFilterIndex){
-							case 0: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageData);
-									break;
-							case 1: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataInverted);
-									break;
-							case 2: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataSaturated);
-									break;
-							case 3: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataWeird);
-									break;
-							case 4: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataGrayscale);
-									break;		
-						}
-				
-					}
-						
-					// if at this point, task is done 
-					SetDlgItemText(hwnd, ID_PROGRESS_MSG, "processing successful!");
-                    
+					// set up arguments struct to pass to the thread that will generate the gif 
+					// need to allocate on to heap otherwise this data will go out of scope and be unreachable from thread 
+					windowInfo* gifParams = new windowInfo();
+					gifParams->numFrames = nFrames;
+					gifParams->timeDelay = tDelay;
+					gifParams->selectedFilter = currFilterIndex;
+					gifParams->directory = theDir;
+					gifParams->memeText = theText;
+					gifParams->mainWindow = hwnd;
+					
+					// start process in another thread
+					CreateThread(NULL, 0, processGifThread, gifParams, 0, 0);
+					
                 }
                 break;
             }
         break;
+		
+		case ID_IN_PROGRESS:
+		{
+			SetDlgItemText(hwnd, ID_PROGRESS_MSG, "processing...");
+		}
+		break;
+		
+		case ID_FINISHED:
+		{
+			SetDlgItemText(hwnd, ID_PROGRESS_MSG, "processing successful!");
+		}
+		break;
+		
+		case ID_ASSEMBLING_GIF:
+		{
+			SetDlgItemText(hwnd, ID_PROGRESS_MSG, "assembling gif...");
+		}
+		break;
+		
+		case ID_UNABLE_TO_OPEN:
+		{
+			SetDlgItemText(hwnd, ID_PROGRESS_MSG, "unable to open directory");
+		}
+		break;
+		
+		case ID_NO_BMPS_FOUND:
+		{
+			SetDlgItemText(hwnd, ID_PROGRESS_MSG, "no bmp images were found");
+		}
+		break;
+		
+		case ID_COLLECTING_IMAGES:
+		{
+			SetDlgItemText(hwnd, ID_PROGRESS_MSG, "collecting images...");
+		}
+		break;
+			
         case WM_CLOSE:
         {
 			DeleteObject(hFont);
             DestroyWindow(hwnd);
         }
         break;
+		
         case WM_DESTROY:
         {
             DeleteObject(hFont);
             PostQuitMessage(0);
         }
         break;
+		
         default:
             return DefWindowProc(hwnd, msg, wParam, lParam);
     }
@@ -339,6 +437,7 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             ScreenToClient(hwnd, &ptCurr);
         }
         break;
+		
         case WM_MOUSEMOVE:
         {
             if(bDrag){
@@ -356,7 +455,7 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                 
                 HDC hdc = GetDC(hwnd);
                 SelectObject(hdc,GetStockObject(DC_BRUSH));
-                SetDCBrushColor(hdc, RGB(255,0,0)); // set color (red)
+                SetDCBrushColor(hdc, RGB(255,130,140)); // set color to pinkish-red color 
                 
                 SetROP2(hdc, R2_NOTXORPEN);
                 
@@ -374,6 +473,7 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             }
         }
         break;
+		
         case WM_LBUTTONUP:
         {
             if(bDraw){
@@ -428,18 +528,21 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             }
         }
         break;
+		
         case WM_CLOSE:
         {
             DestroyWindow(hwnd);
             return 0;
         }
         break;
+		
         case WM_DESTROY:
         {
             DestroyWindow(hwnd);
             return 0;
         }
         break;
+		
         default:
             return DefWindowProc(hwnd, msg, wParam, lParam);
     }
@@ -482,7 +585,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     wc.lpszMenuName = NULL; 
     wc.lpszClassName = g_szClassName;
     wc.hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON));
-	wc.hIconSm = (HICON)LoadImage(GetModuleHandle(NULL),  MAKEINTRESOURCE(IDI_ICON), IMAGE_ICON, 16, 16, 0);
+	wc.hIconSm = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON), IMAGE_ICON, 16, 16, 0);
     
     /* register the second window class */
 	WNDCLASSEX wc2;

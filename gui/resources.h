@@ -20,6 +20,7 @@
 
 #define ID_MEMEFY_MSG 112
 
+// the textbox that will hold the progress msgs
 #define ID_PROGRESS_MSG 108
 
 #define IDI_ICON 200
