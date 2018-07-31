@@ -129,7 +129,6 @@ void weirdFilter(std::vector<char>& imageData){
 			imageData[i] = (unsigned char)imageData[i]*2;
 		}
     }
-	
 }
 
 /***
@@ -154,6 +153,62 @@ void grayscaleFilter(std::vector<char>& imageData){
 		imageData[i+1] = avg;
 		imageData[i+2] = avg;	
 
+	}
+}
+
+/***
+	
+	edge detection filter 
+	https://blog.saush.com/2011/04/20/edge-detection-with-the-sobel-operator-in-ruby/
+	
+***/
+void edgeDetectionFilter(std::vector<char>& imageData, int width, int height){
+	
+	//unsigned int dataSize = imageData.size();
+	
+	// need to create a copy of the source image
+	// so that the calculations won't get messed up with overwritten values 
+	// use this data for the calculations
+	// it's best to grayscale the image first! that way each channel has the same value for each pixel 
+	std::vector<char> sourceImageCopy(imageData);
+	grayscaleFilter(imageData);
+	
+	// the kernels needed to form the Sobel filter 
+	int xKernel[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
+	int yKernel[3][3] = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
+
+	// cycle through the pixels. since each pixel basically maps to 1 color value thanks 
+	// to grayscaling, we can use 1 channel from each pixel to use in the formula 
+	for(int i = 1; i < height - 1; i++){
+		for(int j = 4; j < 4*width - 4; j+=4){
+			
+			int left = (4*i*width) + (j-4);
+			int right = (4*i*width) + (j+4);
+			int top = (4*(i-1)*width) + j;
+			int bottom = (4*(i+1)*width) + j;
+			int topLeft = (4*(i-1)*width) + (j-4);
+			int topRight = (4*(i-1)*width) + (j+4);
+			int bottomLeft = (4*(i+1)*width) + (j-4);
+			int bottomRight = (4*(i+1)*width) + (j+4);
+			int center = (4*width*i) + j;
+			
+			// use the xKernel to detect edges horizontally 
+			int pX = (xKernel[0][0]*sourceImageCopy[topLeft]) + (xKernel[0][1]*sourceImageCopy[top]) + (xKernel[0][2]*sourceImageCopy[topRight]) + 
+					(xKernel[1][0]*sourceImageCopy[left]) + (xKernel[1][1]*sourceImageCopy[center]) + (xKernel[1][2]*sourceImageCopy[right]) +
+					(xKernel[2][0]*sourceImageCopy[bottomLeft]) + (xKernel[2][1]*sourceImageCopy[bottom]) + (xKernel[2][2]*sourceImageCopy[bottomRight]);
+			
+			// use the yKernel to detect edges vertically 
+			int pY = (yKernel[0][0]*sourceImageCopy[topLeft]) + (yKernel[0][1]*sourceImageCopy[top]) + (yKernel[0][2]*sourceImageCopy[topRight]) + 
+					(yKernel[1][0]*sourceImageCopy[left]) + (yKernel[1][1]*sourceImageCopy[center]) + (yKernel[1][2]*sourceImageCopy[right]) +
+					(yKernel[2][0]*sourceImageCopy[bottomLeft]) + (yKernel[2][1]*sourceImageCopy[bottom]) + (yKernel[2][2]*sourceImageCopy[bottomRight]);
+			
+			// finally set the current pixel to the new value based on the formula 
+			int newVal = (int)( std::ceil( std::sqrt((pX * pX) + (pY * pY)) ) );
+			imageData[center] = newVal;
+			imageData[center+1] = newVal;
+			imageData[center+2] = newVal;
+			imageData[center+3] = 255;
+		}
 	}
 	
 }
@@ -350,6 +405,8 @@ std::vector<uint8_t> getBMPImageDataFiltered(const std::string filename, const s
 		weirdFilter(img);
 	}else if(filtername == "grayscale"){
 		grayscaleFilter(img);
+	}else if(filtername == "edgeDetection"){
+		edgeDetectionFilter(img, (int)width, (int)height);
 	}
 
     // change char vector to uint8_t vector
@@ -396,5 +453,12 @@ std::vector<uint8_t> getBMPImageDataWeird(const std::string filename){
 ***/
 std::vector<uint8_t> getBMPImageDataGrayscale(const std::string filename){
     return getBMPImageDataFiltered(filename, "grayscale");
+}
+
+/***
+	edge detection with Sobel filter 
+***/
+std::vector<uint8_t> getBMPImageDataEdgeDetection(const std::string filename){
+	return getBMPImageDataFiltered(filename, "edgeDetection");
 }
 

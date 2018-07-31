@@ -204,6 +204,8 @@ void makeGif(windowInfo* args){
 						break;
 				case 4: assembleGif(nFrames, tDelay, allImages, getBMPImageDataGrayscale, theText);
 						break;		
+				case 5: assembleGif(nFrames, tDelay, allImages, getBMPImageDataEdgeDetection, theText);
+						break;	
 			}
 			
 			PostMessage(mainWindow, ID_FINISHED, 0, 0);
@@ -221,6 +223,8 @@ void makeGif(windowInfo* args){
 					break;
 			case 4: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataGrayscale);
 					break;		
+			case 5: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataEdgeDetection);
+					break;	
 		}
 		PostMessage(mainWindow, ID_FINISHED, 0, 0);
 	}
@@ -765,6 +769,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"saturated");
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"weird");
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"grayscale");
+	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"edge_detection");
     // initially the filter is set to "none"
 	SendMessage(filterComboBox, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);
 	
