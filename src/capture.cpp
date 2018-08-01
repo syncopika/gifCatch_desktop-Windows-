@@ -175,7 +175,7 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 		
 		CLSID pngClsid;
 		
-		// if dimensions of current image match the initial image, just skip this one 
+		// if dimensions of current image match the initial image and no memetext, just skip this one 
 		// but add it to the new temp directory
 		if(h == height && w == width && memeText == ""){
 			int result = GetEncoderClsid(L"image/bmp", &pngClsid);  
@@ -261,7 +261,7 @@ void assembleGif(int nImages, int delay, std::vector<std::string> images, std::v
     GifWriter gifWriter;
     
     // initialize gifWriter
-    // call the gif "test" - it'll be in the same directory as the executable 
+    // the gif will be in the same directory as the executable 
 	// set the gif to have the dimensions of the first image in the vector (ideally they should all have the same width and height)
 	std::vector<int> initialD = getBMPHeightWidth(images[0]);
 	
@@ -282,23 +282,25 @@ void assembleGif(int nImages, int delay, std::vector<std::string> images, std::v
 	}
 	
 	// resize bmps if needed 
-	int res = resizeBMPs(nImages, images, initialD[1], initialD[0], memeText);
+	resizeBMPs(nImages, images, initialD[1], initialD[0], memeText);
 	
-    std::string nextFrame; 
-	
-	if(res == 1){
-		images = std::vector<std::string>();
-		for(int i = 0; i < nImages; i++){
-			std::string fn = "temp_resized/screen" + int_to_string(i) + ".bmp";
-			images.push_back(fn);
-		}
+	// right now a temp directory of images is created, whether or not resizing occurred at all 
+	// use that temp directory to generate the new gif from 
+	images = std::vector<std::string>();
+	for(int i = 0; i < nImages; i++){
+		std::string fn = "temp_resized/screen" + int_to_string(i) + ".bmp";
+		images.push_back(fn);
 	}
 	
+	// make the gif 
+	std::string nextFrame; 
     for(int i = 0; i < nImages; i++){
+		
         nextFrame = images[i];
 		
 		//std::vector<int> dimensions = getBMPHeightWidth(images[i]);
-		std::cout << nextFrame << std::endl;
+		//std::cout << nextFrame << std::endl;
+		
 		// get image data and apply a filter  
 		GifWriteFrame(&gifWriter, (uint8_t *)((*filter)(nextFrame).data()), (uint32_t)initialD[1], (uint32_t)initialD[0], (uint32_t)(delay/10));
 
