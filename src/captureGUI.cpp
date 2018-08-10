@@ -28,6 +28,9 @@
 #define ID_ASSEMBLING_GIF 	 (WM_APP + 4)
 #define ID_COLLECTING_IMAGES (WM_APP + 5)
 
+// define a color for screen selection 
+#define COLOR RGB(255,130,140)
+
 #include <stdlib.h>  // for atoi 
 
 // this also brings in windows.h, gdiplus.h, and everything else 
@@ -459,7 +462,7 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                 
                 HDC hdc = GetDC(hwnd);
                 SelectObject(hdc,GetStockObject(DC_BRUSH));
-                SetDCBrushColor(hdc, RGB(255,130,140)); // set color to pinkish-red color 
+                SetDCBrushColor(hdc, COLOR); // set color to pinkish-red color 
                 
                 SetROP2(hdc, R2_NOTXORPEN);
                 
@@ -514,7 +517,7 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                     // need to clear screen!!
                     HDC hdc = GetDC(hwnd);
                     SelectObject(hdc,GetStockObject(DC_BRUSH));
-                    SetDCBrushColor(hdc, RGB(255,0,0)); 
+                    SetDCBrushColor(hdc, COLOR); 
                     SetROP2(hdc, R2_NOTXORPEN);
                     // erase old rectangle 
                     Rectangle(hdc, ptCurr.x, ptCurr.y, ptNew.x, ptNew.y);
