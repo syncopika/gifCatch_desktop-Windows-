@@ -42,11 +42,10 @@ void inversionFilter(std::vector<char>& imageData){
 	
 	unsigned int dataSize = imageData.size();
 	
-	for(int i = dataSize - 4; i >= 0; i -= 4){
-        char temp = 255 - imageData[i];
-        imageData[i] = 255 - imageData[i+2];
-        imageData[i+2] = temp;
-		imageData[i+1] = 255 - imageData[i+1];
+	for(unsigned int i = 0; i <= dataSize - 4; i += 4){
+        imageData[i] = 255 - imageData[i];
+        imageData[i+1] = 255 - imageData[i+1];
+		imageData[i+2] = 255 - imageData[i+2];
     }
 }
 
@@ -73,10 +72,7 @@ void saturationFilter(float saturationVal, std::vector<char>& imageData){
 	double g2 = (1 - saturationValue) * lumG;
 	double b2 = (1 - saturationValue) * lumB;	
 	
-    for(unsigned int i = dataSize - 4; i > 0; i-=4){
-        char temp = imageData[i];
-        imageData[i] = imageData[i+2];
-        imageData[i+2] = temp;
+    for(unsigned int i = 0; i <= dataSize - 4; i += 4){
 		
 		unsigned char r = imageData[i];
 		unsigned char g = imageData[i+1];
@@ -104,13 +100,6 @@ void saturationFilter(float saturationVal, std::vector<char>& imageData){
 void weirdFilter(std::vector<char>& imageData){
 	
 	unsigned int dataSize = imageData.size();
-	
-	// reorder the rgb channels since it's currently bgr
-	for(unsigned int i = dataSize - 4; i > 0; i-=4){
-		char temp = imageData[i];
-        imageData[i] = imageData[i+2];
-        imageData[i+2] = temp;
-	}
 	
 	// do the filtering stuff
 	for(unsigned int i = 0; i < dataSize - 1; i++){
