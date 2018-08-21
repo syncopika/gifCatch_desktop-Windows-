@@ -216,12 +216,13 @@ void edgeDetectionFilter(std::vector<char>& imageData, int width, int height){
 
 /***
 
-	regular bmp image (no filters)
+	get bmp image data 
+	also applies a filter to images if needed 
 
 ***/
 // get a bmp image and extract the image data into a uint8_t array 
 // which will be passed to gif functions from gif.h to create the gif 
-std::vector<uint8_t> getBMPImageData(const std::string filename){
+std::vector<uint8_t> getBMPImageData(const std::string filename, const std::string filtername){
     
 	// bmp's have a 54 byte header 
     static constexpr size_t HEADER_SIZE = 54;
@@ -248,7 +249,7 @@ std::vector<uint8_t> getBMPImageData(const std::string filename){
 	bmp.read(img.data(), img.size());
 	
 	// use this vector to store all the pixel data, which will be returned
-	std::vector<uint8_t> image;
+	std::vector<uint8_t> finalImageData;
 	
 	if((int)depth == 24){
 		
@@ -272,7 +273,8 @@ std::vector<uint8_t> getBMPImageData(const std::string filename){
 		int widthCount = 0;
 		//int rowCount = 0;
 		
-		for(int i = (int)dataSize - 1 ; i >= 0; i--){		
+		std::vector<uint8_t> image;
+		for(int i = dataSize - 1 ; i >= 0; i--){		
 		
 			// after every third element, add a 255 (this is for the alpha channel)
 			image.push_back(img[i]);
@@ -295,9 +297,9 @@ std::vector<uint8_t> getBMPImageData(const std::string filename){
 			
 		}
 
-		int imageSize = (int)image.size();
-		
-		for(int i = imageSize - 4; i >= 0; i -= 4){
+		// using std::size_t is dangerous here! if you use it instead of int, you get a segmentation fault :|
+		// I think casting is ok here 
+		for(int i = (int)image.size() - 4; i >= 0; i -= 4){
 			char temp = image[i];
 			image[i] = image[i+2];
 			image[i+2] = temp;
@@ -308,7 +310,7 @@ std::vector<uint8_t> getBMPImageData(const std::string filename){
 		
 		// flip image horizontally to get the right orientation since it's flipped currently
 		// mind the alpha channel! push them after the rgb channels, not before.
-		for(int j = 0; j < imageSize; j += widthSize){
+		for(int j = 0; j < (int)image.size(); j += widthSize){
 			for(int k = widthSize - 1; k >= 0; k-=4){
 				// swap b and g 
 				image2.push_back(image[j + k-3]); 
@@ -319,7 +321,7 @@ std::vector<uint8_t> getBMPImageData(const std::string filename){
 		
 		}
 		
-		return image2;
+		finalImageData = image2;
 		
 	}else if((int)depth == 32){
 
@@ -333,6 +335,7 @@ std::vector<uint8_t> getBMPImageData(const std::string filename){
 		// also, notice that each pixel is represented by 4 bytes, not 3, because
 		// the bmp images are 32-bit
 		// reading backwards gets you BGRA instead of ARGB if reading from index 0 
+		// also, intersting note: if you change int to auto, you get a segmentation fault. :|
 		for(int i = dataSize - 4; i >= 0; i -= 4){
 			char temp = img[i];
 			img[i] = img[i+2];
@@ -342,85 +345,64 @@ std::vector<uint8_t> getBMPImageData(const std::string filename){
 		// change char vector to uint8_t vector
 		// be careful! bmp image data is stored upside-down :<
 		// so traverse backwards, but also, for each row, invert the row also!
+		std::vector<uint8_t> image;
 		int widthSize = 4 * (int)width;
-		for(int j = (int)(dataSize - 1); j >= 0; j -= widthSize){
+		for(int j = (dataSize - 1); j >= 0; j -= widthSize){
 			for(int k = widthSize - 1; k >= 0; k--){
 				image.push_back((uint8_t)img[j - k]);
 			}
 		}
 		
-		return image;
+		finalImageData = image;
 		
 	}else{
 		// return an empty vector 
-		return image;
+		return finalImageData;
 	}
+	
+	// apply filters as needed 
+	if(filtername == "none"){
+		// ready to move on to next step 
+		return finalImageData;
+	}
+	
+	// use this for passing to the filters (which need a char vector)
+	// cast the uint8_t to chars first
+	std::vector<char> imgDataAsChar;
+	for(auto start = finalImageData.begin(), end = finalImageData.end(); start != end; start++){
+		imgDataAsChar.push_back(static_cast<char>(*start));
+	}
+	
+	if(filtername == "inverted"){
+		inversionFilter(imgDataAsChar);
+    }else if(filtername == "saturated"){
+		saturationFilter(2.1, imgDataAsChar);
+	}else if(filtername == "weird"){
+		weirdFilter(imgDataAsChar);
+	}else if(filtername == "grayscale"){
+		grayscaleFilter(imgDataAsChar);
+	}else if(filtername == "edgeDetection"){
+		edgeDetectionFilter(imgDataAsChar, (int)width, (int)height);
+	}
+	
+	// go back to uint8_t from char 
+	for(auto start = imgDataAsChar.begin(), end = imgDataAsChar.end(); start != end; start++){
+		// get the index 
+		auto index = std::distance(imgDataAsChar.begin(), start);
+		finalImageData[index] = *start;
+	}
+	
+	return finalImageData;
+	
 }
 
 /***
 
-	generic function to get filtered image data from any filter 
+	just get image data (no filters)
 
 ***/
-std::vector<uint8_t> getBMPImageDataFiltered(const std::string filename, const std::string filtername){
-    
-    static constexpr size_t HEADER_SIZE = 54;
-    
-    // read in bmp file as stream
-    std::ifstream bmp(filename, std::ios::binary);
-    
-    // this represents the header of the bmp file 
-    std::array<char, HEADER_SIZE> header;
-    
-    // read in 54 bytes of the file and put that data in the header array
-    bmp.read(header.data(), header.size());
-    
-    //auto fileSize = *reinterpret_cast<uint32_t *>(&header[2]);
-    auto dataOffset = *reinterpret_cast<uint32_t *>(&header[10]);
-    auto width = *reinterpret_cast<uint32_t *>(&header[18]);
-    auto height = *reinterpret_cast<uint32_t *>(&header[22]);
-    //auto depth = *reinterpret_cast<uint16_t *>(&header[28]);
-
-    // now get the image pixel data
-    std::vector<char> img(dataOffset - HEADER_SIZE);
-    bmp.read(img.data(), img.size());
-    
-    // width*4 because each pixel is 4 bytes (32-bit bmp)
-    auto dataSize = ((width*4 + 3) & (~3)) * height;
-    img.resize(dataSize);
-    bmp.read(img.data(), img.size());
-	
-	/** do filter **/
-    
-    // need to swap R and B (img[i] and img[i+2]) so that the sequence is RGB, not BGR
-	// need to keep in mind where the alpha channel is relative to RGB as well. this matters because depending 
-	// on how you read the pixel data (i.e. starting from index 0 or the end), alpha might be the first value 
-    // also, notice that each pixel is represented by 4 bytes, not 3, because the bmp images are 32-bit (RGBA)
-	// this swapping is done in each filtering function (except grayscale, since RGB order does not matter in the end)
-	if(filtername == "inverted"){
-		inversionFilter(img);
-    }else if(filtername == "saturated"){
-		saturationFilter(2.1, img);
-	}else if(filtername == "weird"){
-		weirdFilter(img);
-	}else if(filtername == "grayscale"){
-		grayscaleFilter(img);
-	}else if(filtername == "edgeDetection"){
-		edgeDetectionFilter(img, (int)width, (int)height);
-	}
-
-    // change char vector to uint8_t vector
-    // be careful! bmp image data is stored upside-down :<
-    // so traverse backwards, but also, for each row, invert the row also!
-    std::vector<uint8_t> image;
-    int widthSize = 4 * (int)width;
-    for(int j = (int)(dataSize - 1); j >= 0; j -= widthSize){
-        for(int k = widthSize - 1; k >= 0; k--){
-            image.push_back((uint8_t)img[j - k]);
-        }
-    }
-    
-    return image;
+std::vector<uint8_t> getBMPImageData(const std::string filename){
+	return getBMPImageData(filename, "none");
 }
 
 
@@ -430,7 +412,7 @@ std::vector<uint8_t> getBMPImageDataFiltered(const std::string filename, const s
 
 ***/
 std::vector<uint8_t> getBMPImageDataInverted(const std::string filename){
-	return getBMPImageDataFiltered(filename, "inverted");
+	return getBMPImageData(filename, "inverted");
 }
    
 
@@ -438,27 +420,27 @@ std::vector<uint8_t> getBMPImageDataInverted(const std::string filename){
 	saturate image 
 ***/
 std::vector<uint8_t> getBMPImageDataSaturated(const std::string filename){
-    return getBMPImageDataFiltered(filename, "saturated");
+    return getBMPImageData(filename, "saturated");
 }
 
 /***
 	weird image filter 
 ***/
 std::vector<uint8_t> getBMPImageDataWeird(const std::string filename){
-    return getBMPImageDataFiltered(filename, "weird");
+    return getBMPImageData(filename, "weird");
 }
 
 /***
 	grayscale image filter 
 ***/
 std::vector<uint8_t> getBMPImageDataGrayscale(const std::string filename){
-    return getBMPImageDataFiltered(filename, "grayscale");
+    return getBMPImageData(filename, "grayscale");
 }
 
 /***
 	edge detection with Sobel filter 
 ***/
 std::vector<uint8_t> getBMPImageDataEdgeDetection(const std::string filename){
-	return getBMPImageDataFiltered(filename, "edgeDetection");
+	return getBMPImageData(filename, "edgeDetection");
 }
 
