@@ -90,6 +90,7 @@ DO Win32 GUI STUFF HERE
 *****************/
 
 // struct to provide arguments needed for gif creation 
+// notice how in c++ you can declare non-typedef'd structs without struct!
 struct windowInfo {
 	int numFrames;
 	int timeDelay;
@@ -97,7 +98,7 @@ struct windowInfo {
 	std::string directory;
 	std::string memeText;
 	HWND mainWindow; // main window so the worker thread can post messages to its queue 
-} arguments;
+};
 
 void makeGif(windowInfo* args){
 	
@@ -209,6 +210,8 @@ void makeGif(windowInfo* args){
 						break;		
 				case 5: assembleGif(nFrames, tDelay, allImages, getBMPImageDataEdgeDetection, theText);
 						break;	
+				case 6: assembleGif(nFrames, tDelay, allImages, getBMPImageDataMosaic, theText);
+						break;
 			}
 			
 			PostMessage(mainWindow, ID_FINISHED, 0, 0);
@@ -227,6 +230,8 @@ void makeGif(windowInfo* args){
 			case 4: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataGrayscale);
 					break;		
 			case 5: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataEdgeDetection);
+					break;	
+			case 6: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataMosaic);
 					break;	
 		}
 		PostMessage(mainWindow, ID_FINISHED, 0, 0);
@@ -766,13 +771,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		NULL
 	);
 	SendMessage(filterComboBox, WM_SETFONT, (WPARAM)hFont, true);
-	// for now provide these 4 options: none, inverted, and saturated, weird
+	
+	// filter options 
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"none");
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"inverted");
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"saturated");
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"weird");
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"grayscale");
-	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"edge_detection");
+	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"edge_detect");
+	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"mosaic");
+	
     // initially the filter is set to "none"
 	SendMessage(filterComboBox, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);
 	

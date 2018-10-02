@@ -80,3 +80,6 @@ https://stackoverflow.com/questions/13505467/best-way-to-update-progress-bar-fro
 https://docs.microsoft.com/en-us/windows/desktop/winmsg/using-messages-and-message-queues
 http://www.cplusplus.com/forum/windows/107251/
 https://blogs.msdn.microsoft.com/oldnewthing/20080424-00/?p=22603 // possibly relevant...
+
+// image filtering 
+https://blog.saush.com/2011/04/20/edge-detection-with-the-sobel-operator-in-ruby/

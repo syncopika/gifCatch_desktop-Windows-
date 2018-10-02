@@ -148,7 +148,6 @@ void grayscaleFilter(std::vector<char>& imageData){
 /***
 	
 	edge detection filter 
-	https://blog.saush.com/2011/04/20/edge-detection-with-the-sobel-operator-in-ruby/
 	
 ***/
 void edgeDetectionFilter(std::vector<char>& imageData, int width, int height){
@@ -200,6 +199,53 @@ void edgeDetectionFilter(std::vector<char>& imageData, int width, int height){
 		}
 	}
 	
+}
+
+/***
+
+	mosaic filter 
+
+***/
+void mosaicFilter(std::vector<char>& imageData, int width, int height){
+	
+	// make a copy of the data 
+	std::vector<char> sourceImageCopy(imageData);
+	
+	// change sampling size here. lower for higher detail preservation, higher for less detail (because larger chunks)
+	int chunkWidth = 30;
+	int chunkHeight = 30;
+	
+	// make sure chunkWidth can completely divide the image width * 4 
+	while(width % chunkWidth != 0){
+		chunkWidth--;
+		chunkHeight--;
+	}
+
+	// when looking at each chunk of the image, for these 2 outer for loops, 
+	// focus on looking at each chunk as if looking at a single pixel first
+	for(int i = 0; i < width; i += chunkWidth){
+		for(int j = 0; j < height; j += chunkHeight){
+			
+			// 4*i + 4*j*width = index of first pixel in chunk 
+			// get the color of the first pixel in this chunk
+			// multiply by 4 because 4 channels per pixel
+			// multiply by width because all the image data is in a single array and a row is dependent on width
+			int r = sourceImageCopy[4*i+4*j*width];
+			int g = sourceImageCopy[4*i+4*j*width+1];
+			int b = sourceImageCopy[4*i+4*j*width+2];
+			
+			// now for all the other pixels in this chunk, set them to this color 
+			for(int k = i; k < i+chunkWidth; k++){
+				for(int l = j; l < j+chunkHeight; l++){
+					
+					imageData[4*k+4*l*width] = r;
+					imageData[4*k+4*l*width+1] = g;
+					imageData[4*k+4*l*width+2] = b;
+				}
+			}
+		}
+	}
+
 }
 
 
@@ -372,6 +418,8 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, const std::stri
 		grayscaleFilter(imgDataAsChar);
 	}else if(filtername == "edgeDetection"){
 		edgeDetectionFilter(imgDataAsChar, (int)width, (int)height);
+	}else if(filtername == "mosaic"){
+		mosaicFilter(imgDataAsChar, (int)width, (int)height);
 	}
 	
 	// go back to uint8_t from char 
@@ -433,3 +481,9 @@ std::vector<uint8_t> getBMPImageDataEdgeDetection(const std::string filename){
 	return getBMPImageData(filename, "edgeDetection");
 }
 
+/***
+	mosaic filter 
+***/
+std::vector<uint8_t> getBMPImageDataMosaic(const std::string filename){
+	return getBMPImageData(filename, "mosaic");
+}
