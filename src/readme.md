@@ -1,4 +1,4 @@
-as you can see, the executable is available here ^^.    
+the executable is available here! :)    
      
 a bit of an explanation for the files:    
 - **Application.manifest**: needed to update the GUI appearance depending on what version of Windows 

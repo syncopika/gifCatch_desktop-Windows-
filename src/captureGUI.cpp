@@ -212,6 +212,8 @@ void makeGif(windowInfo* args){
 						break;	
 				case 6: assembleGif(nFrames, tDelay, allImages, getBMPImageDataMosaic, theText);
 						break;
+				case 7: assembleGif(nFrames, tDelay, allImages, getBMPImageDataOutline, theText);
+						break;
 			}
 			
 			PostMessage(mainWindow, ID_FINISHED, 0, 0);
@@ -232,7 +234,9 @@ void makeGif(windowInfo* args){
 			case 5: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataEdgeDetection);
 					break;	
 			case 6: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataMosaic);
-					break;	
+					break;
+			case 7: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataOutline);
+					break;
 		}
 		PostMessage(mainWindow, ID_FINISHED, 0, 0);
 	}
@@ -780,6 +784,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"grayscale");
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"edge_detect");
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"mosaic");
+	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"outline");
 	
     // initially the filter is set to "none"
 	SendMessage(filterComboBox, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);

@@ -248,6 +248,80 @@ void mosaicFilter(std::vector<char>& imageData, int width, int height){
 
 }
 
+/***
+
+	outline filter 
+
+***/
+void outlineFilter(std::vector<char>& imageData, int width, int height){
+	
+	// make a copy of the data 
+	std::vector<char> sourceImageCopy(imageData);
+	
+	// for each pixel, check the above pixel (if it exists)
+	// if the above pixel is 'significantly' different (i.e. more than +/- 5 of rgb),
+	// color the above pixel black and the current pixel white. otherwise, both become white. 
+	int limit = 10;
+	
+	bool setSameColor = false;
+	
+	for(int i = 0; i < height; i++){
+		for(int j = 0; j < width; j++){
+			// the current pixel is i*width + j
+			// the above pixel is (i-1)*width + j
+			if(i > 0){
+				
+				int aboveIndexR = (i-1)*width*4 + j*4;
+				int aboveIndexG = (i-1)*width*4 + j*4 + 1;
+				int aboveIndexB = (i-1)*width*4 + j*4 + 2;
+				
+				int currIndexR = i*width*4 + j*4;
+				int currIndexG = i*width*4 + j*4 + 1;
+				int currIndexB = i*width*4 + j*4 + 2;
+				
+				unsigned char aboveR = sourceImageCopy[aboveIndexR];
+				unsigned char aboveG = sourceImageCopy[aboveIndexG];
+				unsigned char aboveB = sourceImageCopy[aboveIndexB];
+			
+				unsigned char currR = sourceImageCopy[currIndexR]; 
+				unsigned char currG = sourceImageCopy[currIndexG];
+				unsigned char currB = sourceImageCopy[currIndexB];
+				
+				if(aboveR - currR < limit && aboveR - currR > -limit){
+					if(aboveG - currG < limit && aboveG - currG > -limit){
+						if(aboveB - currB < limit && aboveB - currB > -limit){
+							setSameColor = true;
+						}else{
+							setSameColor = false;
+						}
+					}else{
+						setSameColor = false;
+					}
+				}else{
+					setSameColor = false;
+				}
+				
+				if(!setSameColor){
+					imageData[aboveIndexR] = 0;
+					imageData[aboveIndexG] = 0;
+					imageData[aboveIndexB] = 0;
+					
+					imageData[currIndexR] = 255; 
+					imageData[currIndexG] = 255; 
+					imageData[currIndexB] = 255; 
+				}else{
+					imageData[aboveIndexR] = 255;
+					imageData[aboveIndexG] = 255;
+					imageData[aboveIndexB] = 255;
+					
+					imageData[currIndexR] = 255; 
+					imageData[currIndexG] = 255; 
+					imageData[currIndexB] = 255; 
+				}
+			}
+		}
+	}
+}
 
 /***
 
@@ -420,6 +494,8 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, const std::stri
 		edgeDetectionFilter(imgDataAsChar, (int)width, (int)height);
 	}else if(filtername == "mosaic"){
 		mosaicFilter(imgDataAsChar, (int)width, (int)height);
+	}else if(filtername == "outline"){
+		outlineFilter(imgDataAsChar, (int)width, (int)height);
 	}
 	
 	// go back to uint8_t from char 
@@ -486,4 +562,11 @@ std::vector<uint8_t> getBMPImageDataEdgeDetection(const std::string filename){
 ***/
 std::vector<uint8_t> getBMPImageDataMosaic(const std::string filename){
 	return getBMPImageData(filename, "mosaic");
+}
+
+/***
+	outline filter 
+***/
+std::vector<uint8_t> getBMPImageDataOutline(const std::string filename){
+	return getBMPImageData(filename, "outline");
 }
