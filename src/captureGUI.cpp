@@ -47,6 +47,25 @@
 // give some identifiers for the GUI components 
 #include "resources.h"
 
+#define ID_MAIN_PAGE 9000
+#define ID_SET_PARAMETERS_PAGE 9001
+
+// struct to provide arguments needed for gif creation 
+// notice how in c++ you can declare non-typedef'd structs without struct!
+struct windowInfo {
+	int numFrames;
+	int timeDelay;
+	int selectedFilter;
+	std::string directory;
+	std::string memeText;
+	HWND mainWindow; // main window so the worker thread can post messages to its queue 
+};
+
+// struct that will hold currently set parameters for things like filters, selection screen color 
+struct currentSettings {
+	COLORREF selectionWindowColor;
+};
+
 
 /*****************
 
@@ -67,12 +86,16 @@ bool bDraw = false;
 POINT ptCurr = {0, 0};
 POINT ptNew = {0, 0};
 
-// register 2 different windows 
+// register 4 different windows 
 const char g_szClassName[] = "mainGUI";
-const char g_szClassName2[] = "selectionWindow";
+const char g_szClassName2[] = "mainPage";
+const char g_szClassName3[] = "parametersPage";
+const char g_szClassName4[] = "selectionWindow";
 
 // handler variables for the windows 
-HWND hwnd;	// this is the main GUI window handle
+HWND hwnd;	// this is the main GUI window handle (the parent window of the main and parameter pages)
+HWND mainPage; // this is the main page of the GUI 
+HWND parameterPage; // this is the window handle for the page where the user can set some parameters 
 HWND selectionWindow;	// this is the handle for the rubber-banding selection window 
 
 
@@ -81,24 +104,18 @@ HWND selectionWindow;	// this is the handle for the rubber-banding selection win
 HFONT hFont = CreateFont(16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, 
       OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, 
       DEFAULT_PITCH | FF_DONTCARE, TEXT("Tahoma"));
+	  
+// default settings 
+currentSettings currSettings {
+	COLOR
+};
 
 
 /******************
 
-DO Win32 GUI STUFF HERE 
+	DO Win32 GUI STUFF HERE 
 
 *****************/
-
-// struct to provide arguments needed for gif creation 
-// notice how in c++ you can declare non-typedef'd structs without struct!
-struct windowInfo {
-	int numFrames;
-	int timeDelay;
-	int selectedFilter;
-	std::string directory;
-	std::string memeText;
-	HWND mainWindow; // main window so the worker thread can post messages to its queue 
-};
 
 void makeGif(windowInfo* args){
 	
@@ -249,7 +266,7 @@ void makeGif(windowInfo* args){
 /*
 
 	the function, which does the gif generation, that is executed by a new thread.
-	pass it a pointer to a bool flag that will be updated when process is finished 
+	pass it a pointer to a struct that contains parameters for creating the gif
 
 */
 DWORD WINAPI processGifThread(LPVOID lpParam){
@@ -266,8 +283,77 @@ DWORD WINAPI processGifThread(LPVOID lpParam){
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
     
     switch(msg){
-
+		
+		case WM_CREATE:
+		{
+			// create the menu tabs (main page, parameter page tabs)
+			HMENU hMenu;
+			hMenu = CreateMenu();
+			AppendMenu(hMenu, MF_STRING, ID_MAIN_PAGE, "Main");
+			AppendMenu(hMenu, MF_STRING, ID_SET_PARAMETERS_PAGE, "Options");
+			SetMenu(hwnd, hMenu);
+		}
+		break;
+		
         case WM_COMMAND:
+		{
+            /* LOWORD takes the lower 16 bits of wParam => the element clicked on */
+            switch(LOWORD(wParam)){
+				
+				case ID_MAIN_PAGE:
+				{
+					// go back to main page 
+					ShowWindow(parameterPage, SW_HIDE);
+					ShowWindow(mainPage, SW_SHOW);
+					UpdateWindow(hwnd);
+				}
+				break;
+				
+				case ID_SET_PARAMETERS_PAGE:
+				{
+					// switch to parameters page 
+					ShowWindow(mainPage, SW_HIDE);
+					ShowWindow(parameterPage, SW_SHOW);
+					UpdateWindow(hwnd);
+				}
+				break;
+	
+				case WM_CLOSE:
+				{
+					DeleteObject(hFont);
+					DestroyWindow(hwnd);
+				}
+				break;
+				
+				case WM_DESTROY:
+				{
+					DeleteObject(hFont);
+					PostQuitMessage(0);
+				}
+				break;
+				
+			}		
+		}
+		break; 
+		
+		default:
+			return DefWindowProc(hwnd, msg, wParam, lParam);
+
+	}	
+    return 0;
+}
+
+/*
+
+	procedure for the main page
+
+*/
+LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
+    
+    switch(msg){
+		
+        case WM_COMMAND:
+		{
             /* LOWORD takes the lower 16 bits of wParam => the element clicked on */
             switch(LOWORD(wParam)){
 				
@@ -278,7 +364,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
                     int y = GetSystemMetrics(SM_CYSCREEN);
                     selectionWindow = CreateWindowEx(
                                         WS_EX_LAYERED,
-                                        g_szClassName2,
+                                        g_szClassName4,
                                         "selection",
                                         WS_TILEDWINDOW,
                                         0, 0, x, y,
@@ -362,7 +448,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
                 }
                 break;
             }
-        break;
+		}
+		break;
 		
 		case ID_IN_PROGRESS:
 		{
@@ -421,6 +508,47 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 }
 
 /*
+
+	window procedure for the parameters page 
+
+*/
+LRESULT CALLBACK WndProcParameterPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
+
+    switch(msg){
+        case WM_LBUTTONDOWN:
+        {
+			case WM_COMMAND:
+			{
+				/* LOWORD takes the lower 16 bits of wParam => the element clicked on */
+				switch(LOWORD(wParam)){
+				}
+			}
+			break;
+		}
+		break;
+		
+        case WM_CLOSE:
+        {
+            DestroyWindow(hwnd);
+            return 0;
+        }
+        break;
+		
+        case WM_DESTROY:
+        {
+            DestroyWindow(hwnd);
+            return 0;
+        }
+        break;
+		
+        default:
+            return DefWindowProc(hwnd, msg, wParam, lParam);
+    }
+    return 0;
+
+}
+
+/*
     
     window procedure for the selection window 
     
@@ -471,7 +599,7 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                 
                 HDC hdc = GetDC(hwnd);
                 SelectObject(hdc,GetStockObject(DC_BRUSH));
-                SetDCBrushColor(hdc, COLOR); // set color to pinkish-red color 
+                SetDCBrushColor(hdc, currSettings.selectionWindowColor); // set color to pinkish-red color 
                 
                 SetROP2(hdc, R2_NOTXORPEN);
                 
@@ -564,97 +692,24 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     }
     return 0;
 
-
 }
 
-/*************
 
-	MAIN METHOD FOR GUI
-    
-**************/
+/*
+	this function creates the UI for the main page/screen
+	it takes a window handler (HWND) as an argument that the UI will be drawn on 
+	and an HINSTANCE
+*/
+void createMainScreen(HWND hwnd, HINSTANCE hInstance){
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow){
-
-    /* console attached for debugging */
-    //AllocConsole();
-    //freopen( "CON", "w", stdout );
-    
-    // for improving the gui appearance (buttons, that is. the font needs to be changed separately) 
-    INITCOMMONCONTROLSEX icc;
-    icc.dwSize = sizeof(icc);
-    icc.dwICC = ICC_STANDARD_CLASSES;
-    InitCommonControlsEx(&icc);
-    
-    WNDCLASSEX wc; // this is the main GUI window 
-    MSG Msg;
-    
-    /* register the window class */
-    wc.cbSize = sizeof(WNDCLASSEX);
-    wc.style = 0;
-    wc.lpfnWndProc = WndProc;
-    wc.cbClsExtra = 0;
-    wc.cbWndExtra = 0;
-    wc.hInstance = hInstance;
-    //wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground = (HBRUSH)(COLOR_BTNFACE+1);
-    wc.lpszMenuName = NULL; 
-    wc.lpszClassName = g_szClassName;
-    wc.hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON));
-	wc.hIconSm = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON), IMAGE_ICON, 16, 16, 0);
-    
-    /* register the second window class */
-	WNDCLASSEX wc2;
-    wc2.cbSize = sizeof(WNDCLASSEX);
-    wc2.style = 0;
-    wc2.lpfnWndProc = WndProcSelection;
-    wc2.cbClsExtra = 0;
-    wc2.cbWndExtra = 0;
-    wc2.hInstance = hInstance;
-    wc2.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-    wc2.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc2.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
-    wc2.lpszMenuName = NULL;
-    wc2.lpszClassName = g_szClassName2;
-    wc2.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
-    
-    
-    if(!RegisterClassEx(&wc)){
-        std::cout << "error code: " << GetLastError() << std::endl;
-        MessageBox(NULL, "window registration failed!", "Error!", MB_ICONEXCLAMATION | MB_OK);
-        return 0;
-    }
-    
-    if(!RegisterClassEx(&wc2)){
-        std::cout << "error code: " << GetLastError() << std::endl;
-        MessageBox(NULL, "window registration failed!", "Error!", MB_ICONEXCLAMATION | MB_OK);
-        return 0;
-    }
-    
-    /* create the window */
-    hwnd = CreateWindowEx(
-        WS_EX_CLIENTEDGE,
-        g_szClassName,
-        "gifCatch",
-        WS_TILEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT, 400, 430,
-        NULL, NULL, hInstance, NULL
-    );
-    
-    if(hwnd == NULL){
-        MessageBox(NULL, "window creation failed!", "Error!", MB_ICONEXCLAMATION | MB_OK);
-        return 0;
-    }
-    
-    
     /* make a title label */
     HWND title;
     title = CreateWindow(
         TEXT("STATIC"),
-        TEXT(" gifCatch \n nch 2018 "),
+        TEXT("nch 2018 | https://github.com/syncopika "),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
         10, 10,
-        200, 40,
+        280, 40,
         hwnd, /* parent window */
         (HMENU)ID_TITLE_LABEL,
         hInstance,
@@ -892,9 +947,197 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         NULL
     );
     SendMessage(progressBar, WM_SETFONT, (WPARAM)hFont, true);
+	
+}
+
+/*
+	this function sets up[ the parameters page, where the user can change certain parameters
+	like for image filters, or to change the color of the selection screen 
+*/
+void createParameterPage(HWND hwnd, HINSTANCE hInstance){
+	
+	HWND setColorLabel = CreateWindow(
+	    TEXT("STATIC"),
+        TEXT("choose selection screen color: "),
+        WS_VISIBLE | WS_CHILD | SS_LEFT,
+        10, 10,
+        180, 20,
+        hwnd,
+        NULL,
+        hInstance,
+        NULL
+	);
+	SendMessage(setColorLabel, WM_SETFONT, (WPARAM)hFont, true);
+	
+	
+}
+
+/*************
+
+	MAIN METHOD FOR GUI
     
-    ShowWindow(hwnd, nCmdShow);
+**************/
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow){
+
+    /* console attached for debugging */
+    //AllocConsole();
+    //freopen( "CON", "w", stdout );
+    
+    // for improving the gui appearance (buttons, that is. the font needs to be changed separately) 
+    INITCOMMONCONTROLSEX icc;
+    icc.dwSize = sizeof(icc);
+    icc.dwICC = ICC_STANDARD_CLASSES;
+    InitCommonControlsEx(&icc);
+    
+    WNDCLASSEX wc; // this is the main GUI window  
+    MSG Msg;
+	
+	/* make a main window */ 
+	wc.cbSize = sizeof(WNDCLASSEX);
+    wc.style = 0;
+    wc.lpfnWndProc = WndProc;
+    wc.cbClsExtra = 0;
+    wc.cbWndExtra = 0;
+    wc.hInstance = hInstance;
+    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wc.hbrBackground = (HBRUSH)(COLOR_BTNFACE+1);
+    wc.lpszMenuName = NULL; 
+    wc.lpszClassName = g_szClassName;
+    wc.hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON));
+	wc.hIconSm = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON), IMAGE_ICON, 16, 16, 0);
+	
+    // register the main screen, which is a child of the main window 
+	WNDCLASSEX wc1;
+    wc1.cbSize = sizeof(WNDCLASSEX);
+    wc1.style = 0;
+    wc1.lpfnWndProc = WndProcMainPage;
+    wc1.cbClsExtra = 0;
+    wc1.cbWndExtra = 0;
+    wc1.hInstance = hInstance;
+    wc1.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wc1.hbrBackground = (HBRUSH)(COLOR_BTNFACE+1);
+    wc1.lpszMenuName = NULL; 
+    wc1.lpszClassName = g_szClassName2;
+	wc1.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+	wc1.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+	
+	// register the second window class - this is the parameters page  
+	WNDCLASSEX wc2;
+    wc2.cbSize = sizeof(WNDCLASSEX);
+    wc2.style = 0;
+    wc2.lpfnWndProc = WndProcParameterPage;
+    wc2.cbClsExtra = 0;
+    wc2.cbWndExtra = 0;
+    wc2.hInstance = hInstance;
+    wc2.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wc2.hbrBackground = (HBRUSH)(COLOR_BTNFACE+1);
+    wc2.lpszMenuName = NULL;
+    wc2.lpszClassName = g_szClassName3;
+	wc2.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+	wc2.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+	
+    // register the third window class - this is the selection window 
+	WNDCLASSEX wc3;
+    wc3.cbSize = sizeof(WNDCLASSEX);
+    wc3.style = 0;
+    wc3.lpfnWndProc = WndProcSelection;
+    wc3.cbClsExtra = 0;
+    wc3.cbWndExtra = 0;
+    wc3.hInstance = hInstance;
+    wc3.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+    wc3.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wc3.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
+    wc3.lpszMenuName = NULL;
+    wc3.lpszClassName = g_szClassName4;
+    wc3.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+    
+    
+    if(!RegisterClassEx(&wc)){
+        std::cout << "error code: " << GetLastError() << std::endl;
+        MessageBox(NULL, "window registration failed for the main GUI!", "Error!", MB_ICONEXCLAMATION | MB_OK);
+        return 0;
+    }
+	
+	if(!RegisterClassEx(&wc1)){
+        std::cout << "error code: " << GetLastError() << std::endl;
+        MessageBox(NULL, "window registration failed for main page!", "Error!", MB_ICONEXCLAMATION | MB_OK);
+        return 0;
+    }
+	
+	if(!RegisterClassEx(&wc2)){
+        std::cout << "error code: " << GetLastError() << std::endl;
+        MessageBox(NULL, "window registration failed!", "Error!", MB_ICONEXCLAMATION | MB_OK);
+        return 0;
+    }
+	
+    if(!RegisterClassEx(&wc3)){
+        std::cout << "error code: " << GetLastError() << std::endl;
+        MessageBox(NULL, "window registration failed for selection screen!", "Error!", MB_ICONEXCLAMATION | MB_OK);
+        return 0;
+    }
+	
+	// create the window
+    hwnd = CreateWindowEx(
+        WS_EX_CLIENTEDGE,
+        g_szClassName,
+        "gifCatch",
+        WS_TILEDWINDOW,
+        CW_USEDEFAULT, CW_USEDEFAULT, 400, 450,
+        NULL, NULL, hInstance, NULL
+    );
+	
+	// create the main screen 
+	mainPage = CreateWindowEx(
+        WS_EX_WINDOWEDGE, // border with raised edge 
+        g_szClassName2,
+        NULL,
+        WS_CHILD,
+        0, 0, 400, 450,
+        hwnd, // parent window 
+		NULL, 
+		hInstance, NULL
+    );
+	
+	// create the parameters page 
+	parameterPage = CreateWindowEx(
+        WS_EX_WINDOWEDGE,
+        g_szClassName3,
+        NULL,
+        WS_CHILD,
+        0, 0, 400, 450,
+        hwnd, // parent window
+		NULL, 
+		hInstance, NULL
+    );
+	
+    if(hwnd == NULL){
+		//std::cout << "error code: " << GetLastError() << std::endl;
+        MessageBox(NULL, "window creation failed for the main GUI!", "Error!", MB_ICONEXCLAMATION | MB_OK);
+        return 0;
+    }
+	
+	if(mainPage == NULL){
+        MessageBox(NULL, "window creation failed!", "Error!", MB_ICONEXCLAMATION | MB_OK);
+        return 0;
+    }
+	
+	if(parameterPage == NULL){
+        MessageBox(NULL, "window creation failed!", "Error!", MB_ICONEXCLAMATION | MB_OK);
+        return 0;
+    }
+    
+	// make and show main GUI window
+    ShowWindow(hwnd, nCmdShow); // show the GUI 
     UpdateWindow(hwnd);
+	
+	// show the main screen on the GUI 
+	createMainScreen(mainPage, hInstance); // create the main screen
+	ShowWindow(mainPage, SW_SHOW);
+	UpdateWindow(hwnd);
+	
+	// create the parameter page (but don't show it yet)
+	createParameterPage(parameterPage, hInstance);
     
     /* message loop */
     while(GetMessage(&Msg, NULL, 0, 0) > 0){
