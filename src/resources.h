@@ -1,5 +1,8 @@
 // hold the IDs used for the GUI and icon
 
+#define ID_MAIN_PAGE 9000
+#define ID_SET_PARAMETERS_PAGE 9001
+
 #define ID_TITLE_LABEL 99
 
 #define ID_NUMFRAMES_LABEL 100
@@ -24,3 +27,8 @@
 #define ID_PROGRESS_MSG 108
 
 #define IDI_ICON 200
+
+
+// IDs for the parameters page 
+#define ID_SELECTION_COLOR 201
+#define ID_SAVE_PARAMETERS 202

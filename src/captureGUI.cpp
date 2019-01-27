@@ -28,7 +28,7 @@
 #define ID_ASSEMBLING_GIF 	 (WM_APP + 4)
 #define ID_COLLECTING_IMAGES (WM_APP + 5)
 
-// define a color for screen selection 
+// define a default color for screen selection (light red)
 #define COLOR RGB(255,130,140)
 
 #include <stdlib.h>  // for atoi 
@@ -46,9 +46,6 @@
 
 // give some identifiers for the GUI components 
 #include "resources.h"
-
-#define ID_MAIN_PAGE 9000
-#define ID_SET_PARAMETERS_PAGE 9001
 
 // struct to provide arguments needed for gif creation 
 // notice how in c++ you can declare non-typedef'd structs without struct!
@@ -263,23 +260,23 @@ void makeGif(windowInfo* args){
 }
 
 
-/*
+/***
 
-	the function, which does the gif generation, that is executed by a new thread.
+	this function, which does the gif generation, is executed by a new thread.
 	pass it a pointer to a struct that contains parameters for creating the gif
 
-*/
+***/
 DWORD WINAPI processGifThread(LPVOID lpParam){
 	makeGif((windowInfo*)lpParam);
 	return 0;
 }
 
 
-/* 
+/***
 
     the window procedure for the GUI
     
-*/
+***/
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
     
     switch(msg){
@@ -343,11 +340,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
     return 0;
 }
 
-/*
+/***
 
 	procedure for the main page
 
-*/
+***/
 LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
     
     switch(msg){
@@ -359,6 +356,7 @@ LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				
                 case ID_SELECT_SCREENAREA_BUTTON:
                 {
+					
                     // make a new window to select the area 
                     int x = GetSystemMetrics(SM_CXSCREEN);
                     int y = GetSystemMetrics(SM_CYSCREEN);
@@ -395,8 +393,9 @@ LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 					TCHAR numFrames[3];
 					TCHAR timeDelay[5];
 					
-					GetWindowText(frames, numFrames, 3);
-					GetWindowText(delay, timeDelay, 5);
+					// because numFrames and timeDelay are initialized as arrays, we can use sizeof to get the number of bytes they occupy
+					GetWindowText(frames, numFrames, sizeof(numFrames));
+					GetWindowText(delay, timeDelay, sizeof(timeDelay));
 					
 					int nFrames = atoi(numFrames);
 					int tDelay = atoi(timeDelay);
@@ -507,11 +506,25 @@ LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
     return 0;
 }
 
-/*
+/***
 
 	window procedure for the parameters page 
 
-*/
+***/
+
+// return the selected color for the selection screen 
+COLORREF getSelectedColor(HWND selectBox){
+	int currColorIndex = SendMessage(selectBox, CB_GETCURSEL, 0, 0);
+	//std::cout << "currColorIndex: " << currColorIndex << std::endl;
+	if(currColorIndex == 1){
+		return (COLORREF)RGB(140,180,255);
+	}else if(currColorIndex == 2){
+		return (COLORREF)RGB(140,255,180);
+	}
+	
+	return COLOR;
+}
+
 LRESULT CALLBACK WndProcParameterPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 
     switch(msg){
@@ -521,6 +534,13 @@ LRESULT CALLBACK WndProcParameterPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 			{
 				/* LOWORD takes the lower 16 bits of wParam => the element clicked on */
 				switch(LOWORD(wParam)){
+					// there should be a save button option
+					case ID_SAVE_PARAMETERS:
+					{
+						// get the selected color for the screen! 
+						HWND colorSelect = GetDlgItem(hwnd, ID_SELECTION_COLOR);
+						currSettings.selectionWindowColor = getSelectedColor(colorSelect);
+					}
 				}
 			}
 			break;
@@ -548,11 +568,11 @@ LRESULT CALLBACK WndProcParameterPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 
 }
 
-/*
+/***
     
     window procedure for the selection window 
     
-*/
+***/
 
 // reset helper function 
 void reset(POINT *p1, POINT *p2, bool *drag, bool *draw){
@@ -596,7 +616,7 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                 bDrag = false;
             
             }else if(bDraw){
-                
+				      
                 HDC hdc = GetDC(hwnd);
                 SelectObject(hdc,GetStockObject(DC_BRUSH));
                 SetDCBrushColor(hdc, currSettings.selectionWindowColor); // set color to pinkish-red color 
@@ -654,7 +674,7 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                     // need to clear screen!!
                     HDC hdc = GetDC(hwnd);
                     SelectObject(hdc,GetStockObject(DC_BRUSH));
-                    SetDCBrushColor(hdc, COLOR); 
+                    SetDCBrushColor(hdc, currSettings.selectionWindowColor); 
                     SetROP2(hdc, R2_NOTXORPEN);
                     // erase old rectangle 
                     Rectangle(hdc, ptCurr.x, ptCurr.y, ptNew.x, ptNew.y);
@@ -695,11 +715,11 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 }
 
 
-/*
+/***
 	this function creates the UI for the main page/screen
 	it takes a window handler (HWND) as an argument that the UI will be drawn on 
 	and an HINSTANCE
-*/
+***/
 void createMainScreen(HWND hwnd, HINSTANCE hInstance){
 
     /* make a title label */
@@ -950,17 +970,17 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
 	
 }
 
-/*
+/***
 	this function sets up[ the parameters page, where the user can change certain parameters
 	like for image filters, or to change the color of the selection screen 
-*/
+***/
 void createParameterPage(HWND hwnd, HINSTANCE hInstance){
 	
 	HWND setColorLabel = CreateWindow(
 	    TEXT("STATIC"),
         TEXT("choose selection screen color: "),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 10,
+        10, 12,
         180, 20,
         hwnd,
         NULL,
@@ -968,7 +988,37 @@ void createParameterPage(HWND hwnd, HINSTANCE hInstance){
         NULL
 	);
 	SendMessage(setColorLabel, WM_SETFONT, (WPARAM)hFont, true);
+		
+	HWND setColorBox = CreateWindow(
+		WC_COMBOBOX,
+		TEXT(""),
+		CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE, 
+		210, 10,  /* x, y coords */
+		85, 20, /* width, height */
+		hwnd,
+		(HMENU)ID_SELECTION_COLOR,
+		hInstance,
+		NULL
+	);
+	SendMessage(setColorBox, WM_SETFONT, (WPARAM)hFont, true);
+	SendMessage(setColorBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"light red");
+	SendMessage(setColorBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"light blue");
+	SendMessage(setColorBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"light green");
+	SendMessage(setColorBox, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);
 	
+	
+	HWND saveParameters = CreateWindow(
+		TEXT("button"),
+        TEXT("save"),
+        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        150, 310,
+        80, 20, 
+        hwnd,
+        (HMENU)ID_SAVE_PARAMETERS,
+        hInstance,
+        NULL
+	);
+	SendMessage(saveParameters, WM_SETFONT, (WPARAM)hFont, true);
 	
 }
 

@@ -1,30 +1,33 @@
 ## capture screenshots on your Windows desktop and create a gif!    
     
 This application lets you select what part of the screen to screenshot, specify how many screenshots to take with delay, and creates a gif from them.    
-I use MinGW gcc(5.3.0) to make/compile this project. Currently a work-in-progress.     
+I use MinGW-64 gcc(8.1.0) to make/compile this project. Currently a work-in-progress.     
     
 #### this is the current look of the application:     
 ![current look of the gui](screenshots/current.png "current look")    
+![current look of the gui](screenshots/current_parameters_page.png "current look (parameters page)")    
  
-There are adjustable settings, such as the <b>number of frames</b>, the <b>time delay between frames</b>, and some <b>color filter choices</b>.    
+There are adjustable settings, such as the <b>number of frames</b>, the <b>time delay between frames</b>, and some <b>color filter choices</b>.  You can also choose between red (![#FF828C](https://placehold.it/15/FF828C/000000?text=+)), blue (![#8CB4FF](https://placehold.it/15/8CB4FF/000000?text=+)), or green (![#8CFFB4](https://placehold.it/15/8CFFB4/000000?text=+)) for the selection area screen when choosing a place on the screen to capture.
+The screenshots below show an earlier version that only had dark red as an option.    
 
-Additionally, you can create a gif from a folder of .bmp images (24-bit and 32-bit!) by specifying the full path to a directory. This feature is particularly useful if you have some bmp images that you have edited (i.e. in MS Paint, which on my machine automatically outputs 24-bit bmps) and want to put them together in a gif.
+Additionally, you can create a gif from a folder of .bmp images (24-bit and 32-bit!) by specifying the full path to a directory. This feature is particularly useful if you have some bmp images that you have edited and want to put them together in a gif.
 If recreating a gif from pre-collected bmps, you also have the option of adding a caption! (but currently only Impact font is used, with size 32, and placement is near the bottom of the gif, centered)    
     
 things to do:    
 - improve look of GUI?    
 - can I get better quality images? different formats (right now it just outputs bmps and uses bmps for gif creation)?    
-- allow gif naming / output directory naming?    
-- different colors for selection screen?      
-    
-thanks to Philip Goh (https://github.com/cotidian/Win32GrabScreen) for the screen capture code, and Charlie Tangora (https://github.com/ginsweater/gif-h/blob/master/gif.h) for the gif-making code.        
-    
+- allow gif naming / output directory naming?      
+- more filters!    
+- finish parameters/options page    
+- remove flickering when dragging selection area screen?    
+
+      
 - - -    
 **screenshots (some of these show use of an older version of the application, but the functionality is the same):**
 ### adjust the settings to your liking and click on the 'select area' button to choose an area on the screen to screenshot. by default it should capture the whole screen.      
 ![start](screenshots/start.png "the gui")    
      
-### select a part of the screen by clicking down anywhere on the screen and dragging. (sorry, only red is available right now)    
+### select a part of the screen by clicking down anywhere on the screen and dragging.    
 ![selecting an area to screenshot](screenshots/selection.png "selecting an area to screenshot")    
     
 ### after clicking the start button, a "processing..." message should appear    
@@ -45,8 +48,10 @@ thanks to Philip Goh (https://github.com/cotidian/Win32GrabScreen) for the scree
     
 ### with saturation and a caption:    
 ![gif with caption](screenshots/caption_demo.gif)    
+     
+check out my Chrome extension that does pretty much the same thing (but is not as neat, and the timing of screenshots is a bit worse I think): https://github.com/syncopika/gifCatch_extension    
     
-gifs were taken from this video by Tonkatsu298: https://www.youtube.com/watch?v=D8gwnKApqCE    
+- - -    
+Thanks very much to Philip Goh (https://github.com/cotidian/Win32GrabScreen) for the screen capture code, and Charlie Tangora (https://github.com/ginsweater/gif-h/blob/master/gif.h) for the gif-making code.    
 
-    
-feel free to check out my Chrome extension that does pretty much the same thing (but is not as neat, and the timing of screenshots is a bit worse I think): https://github.com/syncopika/gifCatch_extension    
+gifs were taken from this video by Tonkatsu298: https://www.youtube.com/watch?v=D8gwnKApqCE   
