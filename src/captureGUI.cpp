@@ -34,8 +34,8 @@
 #include <stdlib.h>  // for atoi 
 
 // this also brings in windows.h, gdiplus.h, and everything else 
-#include "capture.hh"
-#include "bmpHelper.hh"
+#include "headers/capture.hh"
+#include "headers/bmpHelper.hh"
 
 // for improving GUI appearance
 // defined here since it needs to come after windows.h
@@ -45,24 +45,10 @@
 #include <dirent.h>
 
 // give some identifiers for the GUI components 
-#include "resources.h"
+#include "headers/resources.h"
 
-// struct to provide arguments needed for gif creation 
-// notice how in c++ you can declare non-typedef'd structs without struct!
-struct windowInfo {
-	int numFrames;
-	int timeDelay;
-	int selectedFilter;
-	std::string directory;
-	std::string memeText;
-	HWND mainWindow; // main window so the worker thread can post messages to its queue 
-};
-
-// struct that will hold currently set parameters for things like filters, selection screen color 
-struct currentSettings {
-	COLORREF selectionWindowColor;
-};
-
+// some struct definitions 
+#include "headers/captureGUI.hh"
 
 /*****************
 
@@ -104,7 +90,8 @@ HFONT hFont = CreateFont(16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARS
 	  
 // default settings 
 currentSettings currSettings {
-	COLOR
+	COLOR,
+	2.1
 };
 
 
@@ -619,7 +606,7 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 				      
                 HDC hdc = GetDC(hwnd);
                 SelectObject(hdc,GetStockObject(DC_BRUSH));
-                SetDCBrushColor(hdc, currSettings.selectionWindowColor); // set color to pinkish-red color 
+                SetDCBrushColor(hdc, currSettings.selectionWindowColor);
                 
                 SetROP2(hdc, R2_NOTXORPEN);
                 

@@ -1,4 +1,4 @@
-#include "bmpHelper.hh"
+#include "headers/bmpHelper.hh"
 
 // helper function to normalise rgb colors in case > 255 or < 0 
 int correctRGB(int channel){
@@ -510,9 +510,7 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, const std::stri
 }
 
 /***
-
 	just get image data (no filters)
-
 ***/
 std::vector<uint8_t> getBMPImageData(const std::string filename){
 	return getBMPImageData(filename, "none");
@@ -520,9 +518,7 @@ std::vector<uint8_t> getBMPImageData(const std::string filename){
 
 
 /***
-
 	invert image color
-
 ***/
 std::vector<uint8_t> getBMPImageDataInverted(const std::string filename){
 	return getBMPImageData(filename, "inverted");

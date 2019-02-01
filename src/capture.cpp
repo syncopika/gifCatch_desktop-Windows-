@@ -1,8 +1,8 @@
 // capture.cpp 
 
-#include "capture.hh"  // function declarations
-#include "bmpHelper.hh" // function declarations
-#include "gif.h"    // needs gif.h to create the gif (https://github.com/ginsweater/gif-h/blob/master/gif.h)
+#include "headers/capture.hh"  // function declarations
+#include "headers/bmpHelper.hh" // function declarations
+#include "headers/gif.h"    // needs gif.h to create the gif (https://github.com/ginsweater/gif-h/blob/master/gif.h)
 #include <ctime>	// for getting current time and using that to name the resulting gif 
 	
 // probably should convert to non-namespace later 

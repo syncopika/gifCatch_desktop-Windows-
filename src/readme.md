@@ -5,7 +5,7 @@ a bit of an explanation for the files:
 - **capture.cpp / capture.hh**: the code needed to capture the screen     
 - **bmpHelper.cpp / bmpHelper.hh**: contains bmp-data handling functions, filter functions 
 - **gif.h**: the code for creating a gif
-- **captureGUI.cpp**: the code for the GUI    
+- **captureGUI.cpp / captureGUI.hh**: the code for the GUI. captureGUI contains some struct definitions    
 - **resources.h**: defines GUI components with integer IDs    
 - **resources.rc**: connects the icon and application manifest
 - **makefile**: takes care of the compilation process 
