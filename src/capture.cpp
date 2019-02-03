@@ -1,9 +1,6 @@
 // capture.cpp 
-
 #include "headers/capture.hh"  // function declarations
-#include "headers/bmpHelper.hh" // function declarations
-#include "headers/gif.h"    // needs gif.h to create the gif (https://github.com/ginsweater/gif-h/blob/master/gif.h)
-#include <ctime>	// for getting current time and using that to name the resulting gif 
+#include "headers/gif.h"    // needs gif.h to create the gif (https://github.com/ginsweater/gif-h/blob/master/gif.h). include it here (and not the header file!) to prevent multiple definition errors
 	
 // probably should convert to non-namespace later 
 using namespace Gdiplus;
@@ -79,7 +76,7 @@ bool ScreenCapture(int x, int y, int width, int height, const char *filename){
 }
 
 // notice this takes a function pointer!
-void getSnapshots(int nImages, int delay, int x, int y, int width, int height, std::vector<uint8_t> (*filter)(const std::string)){
+void getSnapshots(int nImages, int delay, int x, int y, int width, int height, std::vector<uint8_t> (*filter)(const std::string, windowInfo*), windowInfo* gifParams){
     // Initialize GDI+.
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
@@ -132,8 +129,7 @@ void getSnapshots(int nImages, int delay, int x, int y, int width, int height, s
         nextFrame = "temp/screen" + int_to_string(i) + ".bmp";
 		
 		// get image data and apply a filter  
-		GifWriteFrame(&gifWriter, (uint8_t *)((*filter)(nextFrame).data()), (uint32_t)width, (uint32_t)height, (uint32_t)(delay/10));
-
+		GifWriteFrame(&gifWriter, (uint8_t *)((*filter)(nextFrame, gifParams).data()), (uint32_t)width, (uint32_t)height, (uint32_t)(delay/10));
     }
     GifEnd(&gifWriter);
 }
@@ -255,8 +251,203 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 	return resizeResult;
 }
 
+/***
+
+	get bmp image data 
+	also applies a filter to images if needed 
+
+***/
+// get a bmp image and extract the image data into a uint8_t array 
+// which will be passed to gif functions from gif.h to create the gif 
+std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gifParams){
+	
+	std::string filtername = (*(gifParams->filters))[gifParams->selectedFilter];
+	
+	//std::cout << "filtername in getBMPImageData: " << filtername << std::endl;
+	//std::cout << "saturation value: " << saturationVal << std::endl;
+    
+	// bmp's have a 54 byte header 
+    static constexpr size_t HEADER_SIZE = 54;
+    
+    // read in bmp file as stream
+    std::ifstream bmp(filename, std::ios::binary);
+    
+    // this represents the header of the bmp file 
+    std::array<char, HEADER_SIZE> header;
+    
+    // read in 54 bytes of the file and put that data in the header array
+    bmp.read(header.data(), header.size());
+    
+    //auto fileSize = *reinterpret_cast<uint32_t *>(&header[2]);
+    auto dataOffset = *reinterpret_cast<uint32_t *>(&header[10]);
+    auto width = *reinterpret_cast<uint32_t *>(&header[18]);
+    auto height = *reinterpret_cast<uint32_t *>(&header[22]);
+    auto depth = *reinterpret_cast<uint16_t *>(&header[28]);
+	
+	// now get the image pixel data
+	// not sure this part is necessary since dataOffset comes out to be 54 
+	// which is the header size, when I test it
+	std::vector<char> img(dataOffset - HEADER_SIZE);
+	bmp.read(img.data(), img.size());
+	
+	// use this vector to store all the pixel data, which will be returned
+	std::vector<uint8_t> finalImageData;
+	
+	if((int)depth == 24){
+		
+		// since 24-bit bmps round up to nearest width divisible by 4, 
+		// there might be some extra padding at the end of each pixel row 
+		int paddedWidth = (int)width * 3;
+		
+		while(paddedWidth % 4 != 0){
+			paddedWidth++;
+		}
+		
+		// find out how much padding there is per row 
+		int padding = paddedWidth - ((int)width * 3);
+		
+		// figure out the size of the pixel data, which includes the padding 
+		auto dataSize = (3 * width * height) + (height * padding);
+		img.resize(dataSize);
+		bmp.read(img.data(), img.size());
+
+		int RGBcounter = 0;
+		int widthCount = 0;
+		//int rowCount = 0;
+		
+		std::vector<uint8_t> image;
+		for(int i = dataSize - 1 ; i >= 0; i--){		
+		
+			// after every third element, add a 255 (this is for the alpha channel)
+			image.push_back(img[i]);
+			RGBcounter++;
+			
+			if(RGBcounter == 3){
+				image.push_back(255);
+				RGBcounter = 0;
+			}
+			
+			widthCount++;
+			// check if we've already gotten all the color channels for a row (if so, skip the padding!)
+			if(widthCount == ((int)width * 3)){
+				widthCount = 0;
+				
+				// skip the padding
+				i -= padding;
+				//std::cout << "at row number: " << rowCount++ << std::endl;
+			}
+			
+		}
+
+		// using std::size_t is dangerous here! if you use it instead of int, you get a segmentation fault :|
+		// I think casting is ok here 
+		for(int i = (int)image.size() - 4; i >= 0; i -= 4){
+			char temp = image[i];
+			image[i] = image[i+2];
+			image[i+2] = temp;
+		}
+		
+		int widthSize = 4*(int)width; // total num channels/values per row 
+		std::vector<uint8_t> image2;
+		
+		// flip image horizontally to get the right orientation since it's flipped currently
+		// mind the alpha channel! push them after the rgb channels, not before.
+		for(int j = 0; j < (int)image.size(); j += widthSize){
+			for(int k = widthSize - 1; k >= 0; k-=4){
+				// swap b and g 
+				image2.push_back(image[j + k-3]); 
+				image2.push_back(image[j + k-1]);
+				image2.push_back(image[j + k-2]);
+				image2.push_back(image[j + k]); // push back alpha channel last
+			}
+		
+		}
+		
+		finalImageData = image2;
+		
+	}else if((int)depth == 32){
+
+		// width*4 because each pixel is 4 bytes (32-bit bmp)
+		// ((width*4 + 3) & (~3)) * height; -> this uses bit masking to get the width as a multiple of 4
+		auto dataSize = ((width*4 + 3) & (~3)) * height;
+		img.resize(dataSize);
+		bmp.read(img.data(), img.size());
+		
+		// need to swap R and B (img[i] and img[i+2]) so that the sequence is RGB, not BGR
+		// also, notice that each pixel is represented by 4 bytes, not 3, because
+		// the bmp images are 32-bit
+		// reading backwards gets you BGRA instead of ARGB if reading from index 0 
+		// also, intersting note: if you change int to auto, you get a segmentation fault. :|
+		for(int i = dataSize - 4; i >= 0; i -= 4){
+			char temp = img[i];
+			img[i] = img[i+2];
+			img[i+2] = temp;
+		}
+		
+		// change char vector to uint8_t vector
+		// be careful! bmp image data is stored upside-down :<
+		// so traverse backwards, but also, for each row, invert the row also!
+		std::vector<uint8_t> image;
+		int widthSize = 4 * (int)width;
+		for(int j = (dataSize - 1); j >= 0; j -= widthSize){
+			for(int k = widthSize - 1; k >= 0; k--){
+				image.push_back((uint8_t)img[j - k]);
+			}
+		}
+		
+		finalImageData = image;
+		
+	}else{
+		// return an empty vector 
+		return finalImageData;
+	}
+	
+	// apply filters as needed 
+	if(filtername == "none"){
+		// ready to move on to next step 
+		return finalImageData;
+	}
+	
+	// use this for passing to the filters (which need a char vector)
+	// cast the uint8_t to chars first
+	std::vector<char> imgDataAsChar;
+	for(auto start = finalImageData.begin(), end = finalImageData.end(); start != end; start++){
+		imgDataAsChar.push_back(static_cast<char>(*start));
+	}
+	
+	// use gifParams to get specific parameters for specific filters
+	if(filtername == "inverted"){
+		inversionFilter(imgDataAsChar);
+    }else if(filtername == "saturated"){
+		saturationFilter(gifParams->saturationValue, imgDataAsChar);
+	}else if(filtername == "weird"){
+		weirdFilter(imgDataAsChar);
+	}else if(filtername == "grayscale"){
+		grayscaleFilter(imgDataAsChar);
+	}else if(filtername == "edge_detect"){
+		edgeDetectionFilter(imgDataAsChar, (int)width, (int)height);
+	}else if(filtername == "mosaic"){
+		mosaicFilter(imgDataAsChar, (int)width, (int)height, gifParams->mosaicChunkSize);
+	}else if(filtername == "outline"){
+		outlineFilter(imgDataAsChar, (int)width, (int)height, gifParams->outlineColorDiffLimit);
+	}
+	
+	// go back to uint8_t from char 
+	for(auto start = imgDataAsChar.begin(), end = imgDataAsChar.end(); start != end; start++){
+		// get the index 
+		auto index = std::distance(imgDataAsChar.begin(), start);
+		finalImageData[index] = *start;
+	}
+	
+	return finalImageData;
+	
+}
+
+
 // this function assembles the gif from bmp images in a specified directory 
-void assembleGif(int nImages, int delay, std::vector<std::string> images, std::vector<uint8_t> (*filter)(const std::string), std::string memeText){
+void assembleGif(int nImages, int delay, std::vector<std::string> images, std::vector<uint8_t> (*filter)(const std::string, windowInfo*), windowInfo* gifParams){
+	
+	std::string memeText = gifParams->memeText;
 
     GifWriter gifWriter;
     
@@ -302,7 +493,7 @@ void assembleGif(int nImages, int delay, std::vector<std::string> images, std::v
 		//std::cout << nextFrame << std::endl;
 		
 		// get image data and apply a filter  
-		GifWriteFrame(&gifWriter, (uint8_t *)((*filter)(nextFrame).data()), (uint32_t)initialD[1], (uint32_t)initialD[0], (uint32_t)(delay/10));
+		GifWriteFrame(&gifWriter, (uint8_t *)((*filter)(nextFrame, gifParams).data()), (uint32_t)initialD[1], (uint32_t)initialD[0], (uint32_t)(delay/10));
 
     }
 	

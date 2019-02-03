@@ -26,7 +26,7 @@ $(EXE): $(OBJ)
 resources.o: resources.rc $(HEADER)resources.h
 	windres resources.rc -o resources.o 
 	
-bmpHelper.o: bmpHelper.cpp $(HEADER)bmpHelper.hh 
+bmpHelper.o: bmpHelper.cpp $(HEADER)bmpHelper.hh
 	$(CXX) -Wall -g -c -std=c++14 $< -o $@
 
 capture.o: capture.cpp $(HEADER)capture.hh $(HEADER)gif.h $(HEADER)bmpHelper.hh

@@ -12,42 +12,6 @@
     check out resources.txt in the main directory outside this one for helpful links/resources!
     
 */
-
-// for improving GUI appearance
-// these definitions have to be declared here 
-#define _WIN32_WINNT 0x0601
-#define _WIN32_IE 0x0900
-
-// IDs for signalling certain progress messages
-// see application-defined msgs
-// https://docs.microsoft.com/en-us/windows/desktop/winmsg/about-messages-and-message-queues#application-defined-messages
-#define ID_IN_PROGRESS 		 (WM_APP + 0)
-#define ID_FINISHED 		 (WM_APP + 1)
-#define ID_UNABLE_TO_OPEN	 (WM_APP + 2)
-#define ID_NO_BMPS_FOUND 	 (WM_APP + 3)
-#define ID_ASSEMBLING_GIF 	 (WM_APP + 4)
-#define ID_COLLECTING_IMAGES (WM_APP + 5)
-
-// define a default color for screen selection (light red)
-#define COLOR RGB(255,130,140)
-
-#include <stdlib.h>  // for atoi 
-
-// this also brings in windows.h, gdiplus.h, and everything else 
-#include "headers/capture.hh"
-#include "headers/bmpHelper.hh"
-
-// for improving GUI appearance
-// defined here since it needs to come after windows.h
-#include <commctrl.h> 
-
-// for directory finding 
-#include <dirent.h>
-
-// give some identifiers for the GUI components 
-#include "headers/resources.h"
-
-// some struct definitions 
 #include "headers/captureGUI.hh"
 
 /*****************
@@ -88,12 +52,21 @@ HFONT hFont = CreateFont(16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARS
       OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, 
       DEFAULT_PITCH | FF_DONTCARE, TEXT("Tahoma"));
 	  
-// default settings 
-currentSettings currSettings {
-	COLOR,
-	2.1
+	  
+// filters map - order matters!
+std::map<int, std::string> filterMap = {
+	{0, "none"},
+	{1, "inverted"},
+	{2, "saturated"},
+	{3, "weird"},
+	{4, "grayscale"},
+	{5, "edge_detect"},
+	{6, "mosaic"},
+	{7, "outline"}
 };
 
+// default settings 
+windowInfo* gifParams = new windowInfo();
 
 /******************
 
@@ -113,8 +86,10 @@ void makeGif(windowInfo* args){
 	int tDelay = args->timeDelay;
 	//std::cout << "delay: " << tDelay << std::endl;
 	
+	std::string filterName = (*(args->filters))[args->selectedFilter];
 	int currFilterIndex = args->selectedFilter;
-	//std::cout << "currFilterIndex: " << currFilterIndex << std::endl;
+	std::cout << "currFilterIndex: " << currFilterIndex << std::endl;
+	std::cout << "filter name: " << filterName << std::endl;
 	
 	std::string theDir = args->directory;
 	//std::cout << "directory: " << theDir << std::endl;
@@ -198,52 +173,16 @@ void makeGif(windowInfo* args){
 			// now create gif from images 
 			PostMessage(mainWindow, ID_ASSEMBLING_GIF, 0, 0);
 			
-			switch(currFilterIndex){
-				case 0: assembleGif(nFrames, tDelay, allImages, getBMPImageData, theText);
-						break;
-				case 1: assembleGif(nFrames, tDelay, allImages, getBMPImageDataInverted, theText);
-						break;
-				case 2: assembleGif(nFrames, tDelay, allImages, getBMPImageDataSaturated, theText);
-						break;
-				case 3: assembleGif(nFrames, tDelay, allImages, getBMPImageDataWeird, theText);
-						break;
-				case 4: assembleGif(nFrames, tDelay, allImages, getBMPImageDataGrayscale, theText);
-						break;		
-				case 5: assembleGif(nFrames, tDelay, allImages, getBMPImageDataEdgeDetection, theText);
-						break;	
-				case 6: assembleGif(nFrames, tDelay, allImages, getBMPImageDataMosaic, theText);
-						break;
-				case 7: assembleGif(nFrames, tDelay, allImages, getBMPImageDataOutline, theText);
-						break;
-			}
+			assembleGif(nFrames, tDelay, allImages, getBMPImageData, args);
 			
 			PostMessage(mainWindow, ID_FINISHED, 0, 0);
 		}
 	}else{
 		// this applies to gif-generation from a specified part of the screen (not using already made images)
-		switch(currFilterIndex){
-			case 0: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageData);
-					break;
-			case 1: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataInverted);
-					break;
-			case 2: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataSaturated);
-					break;
-			case 3: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataWeird);
-					break;
-			case 4: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataGrayscale);
-					break;		
-			case 5: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataEdgeDetection);
-					break;	
-			case 6: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataMosaic);
-					break;
-			case 7: getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageDataOutline);
-					break;
-		}
+		getSnapshots(nFrames, tDelay, x1, y1, (x2-x1), (y2-y1), getBMPImageData, args);
+		
 		PostMessage(mainWindow, ID_FINISHED, 0, 0);
 	}
-	
-	// free memory associated with the arguments struct 
-	delete args;
 }
 
 
@@ -305,6 +244,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 				case WM_CLOSE:
 				{
 					DeleteObject(hFont);
+					delete gifParams;
 					DestroyWindow(hwnd);
 				}
 				break;
@@ -312,6 +252,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 				case WM_DESTROY:
 				{
 					DeleteObject(hFont);
+					delete gifParams;
 					PostQuitMessage(0);
 				}
 				break;
@@ -420,7 +361,6 @@ LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 					
 					// set up arguments struct to pass to the thread that will generate the gif 
 					// need to allocate on to heap otherwise this data will go out of scope and be unreachable from thread 
-					windowInfo* gifParams = new windowInfo();
 					gifParams->numFrames = nFrames;
 					gifParams->timeDelay = tDelay;
 					gifParams->selectedFilter = currFilterIndex;
@@ -476,6 +416,7 @@ LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
         case WM_CLOSE:
         {
 			DeleteObject(hFont);
+			delete gifParams;
             DestroyWindow(hwnd);
         }
         break;
@@ -483,6 +424,7 @@ LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
         case WM_DESTROY:
         {
             DeleteObject(hFont);
+			delete gifParams;
             PostQuitMessage(0);
         }
         break;
@@ -526,7 +468,27 @@ LRESULT CALLBACK WndProcParameterPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 					{
 						// get the selected color for the screen! 
 						HWND colorSelect = GetDlgItem(hwnd, ID_SELECTION_COLOR);
-						currSettings.selectionWindowColor = getSelectedColor(colorSelect);
+						gifParams->selectionWindowColor = getSelectedColor(colorSelect);
+						
+						// get the saturation value 
+						// ID_SET_SATURATION
+						HWND saturation = GetDlgItem(hwnd, ID_SET_SATURATION);
+						TCHAR saturationValue[5];
+						GetWindowText(saturation, saturationValue, sizeof(saturationValue));
+						
+						// need to validate!!
+						gifParams->saturationValue = atof(saturationValue);
+						
+						HWND mosaic = GetDlgItem(hwnd, ID_SET_MOSAIC);
+						TCHAR mosaicValue[5];
+						GetWindowText(mosaic, mosaicValue, sizeof(mosaicValue));
+						gifParams->mosaicChunkSize = atoi(mosaicValue);
+						
+						HWND outline = GetDlgItem(hwnd, ID_SET_OUTLINE);
+						TCHAR outlineValue[5];
+						GetWindowText(outline, outlineValue, sizeof(outlineValue));
+						gifParams->outlineColorDiffLimit = atoi(outlineValue);
+						
 					}
 				}
 			}
@@ -537,6 +499,7 @@ LRESULT CALLBACK WndProcParameterPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
         case WM_CLOSE:
         {
             DestroyWindow(hwnd);
+			delete gifParams;
             return 0;
         }
         break;
@@ -544,6 +507,7 @@ LRESULT CALLBACK WndProcParameterPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
         case WM_DESTROY:
         {
             DestroyWindow(hwnd);
+			delete gifParams;
             return 0;
         }
         break;
@@ -606,7 +570,7 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 				      
                 HDC hdc = GetDC(hwnd);
                 SelectObject(hdc,GetStockObject(DC_BRUSH));
-                SetDCBrushColor(hdc, currSettings.selectionWindowColor);
+                SetDCBrushColor(hdc, gifParams->selectionWindowColor);
                 
                 SetROP2(hdc, R2_NOTXORPEN);
                 
@@ -661,7 +625,7 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                     // need to clear screen!!
                     HDC hdc = GetDC(hwnd);
                     SelectObject(hdc,GetStockObject(DC_BRUSH));
-                    SetDCBrushColor(hdc, currSettings.selectionWindowColor); 
+                    SetDCBrushColor(hdc, gifParams->selectionWindowColor); 
                     SetROP2(hdc, R2_NOTXORPEN);
                     // erase old rectangle 
                     Rectangle(hdc, ptCurr.x, ptCurr.y, ptNew.x, ptNew.y);
@@ -703,7 +667,7 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
 
 /***
-	this function creates the UI for the main page/screen
+	this function creates the UI for the main page (the first screen you see)
 	it takes a window handler (HWND) as an argument that the UI will be drawn on 
 	and an HINSTANCE
 ***/
@@ -993,6 +957,86 @@ void createParameterPage(HWND hwnd, HINSTANCE hInstance){
 	SendMessage(setColorBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"light green");
 	SendMessage(setColorBox, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);
 	
+	// set saturation value (float) for saturation filter 
+	HWND setSaturationLabel = CreateWindow(
+	    TEXT("STATIC"),
+        TEXT("set saturation value: "),
+        WS_VISIBLE | WS_CHILD | SS_LEFT,
+        10, 42,
+        200, 20,
+        hwnd,
+        NULL,
+        hInstance,
+        NULL
+	);
+	SendMessage(setSaturationLabel, WM_SETFONT, (WPARAM)hFont, true);
+		
+	HWND setSaturationBox = CreateWindow(
+		TEXT("edit"),
+		TEXT("2.1"),
+		WS_VISIBLE | WS_CHILD | WS_BORDER, 
+		210, 40,  /* x, y coords */
+		50, 20, /* width, height */
+		hwnd,
+		(HMENU)ID_SET_SATURATION,
+		hInstance,
+		NULL
+	);
+	SendMessage(setSaturationBox, WM_SETFONT, (WPARAM)hFont, true);
+	
+	// set mosaic value (int) for saturation filter 
+	HWND setMosaicLabel = CreateWindow(
+	    TEXT("STATIC"),
+        TEXT("set mosaic chunk size: "),
+        WS_VISIBLE | WS_CHILD | SS_LEFT,
+        10, 82,
+        200, 20,
+        hwnd,
+        NULL,
+        hInstance,
+        NULL
+	);
+	SendMessage(setMosaicLabel, WM_SETFONT, (WPARAM)hFont, true);
+		
+	HWND setMosaicBox = CreateWindow(
+		TEXT("edit"),
+		TEXT("30"),
+		WS_VISIBLE | WS_CHILD | WS_BORDER, 
+		210, 80,  /* x, y coords */
+		50, 20, /* width, height */
+		hwnd,
+		(HMENU)ID_SET_MOSAIC,
+		hInstance,
+		NULL
+	);
+	SendMessage(setMosaicBox, WM_SETFONT, (WPARAM)hFont, true);
+	
+	// set the difference limit allowed betweeen 2 pixel colors (int) for outline filter 
+	HWND setOutlineLabel = CreateWindow(
+	    TEXT("STATIC"),
+        TEXT("set outline difference limit: "),
+        WS_VISIBLE | WS_CHILD | SS_LEFT,
+        10, 122,
+        200, 20,
+        hwnd,
+        NULL,
+        hInstance,
+        NULL
+	);
+	SendMessage(setOutlineLabel, WM_SETFONT, (WPARAM)hFont, true);
+		
+	HWND setOutlineBox = CreateWindow(
+		TEXT("edit"),
+		TEXT("10"),
+		WS_VISIBLE | WS_CHILD | WS_BORDER, 
+		210, 120,  /* x, y coords */
+		50, 20, /* width, height */
+		hwnd,
+		(HMENU)ID_SET_OUTLINE,
+		hInstance,
+		NULL
+	);
+	SendMessage(setOutlineBox, WM_SETFONT, (WPARAM)hFont, true);
 	
 	HWND saveParameters = CreateWindow(
 		TEXT("button"),
@@ -1020,6 +1064,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     /* console attached for debugging */
     //AllocConsole();
     //freopen( "CON", "w", stdout );
+	
+	// add some default parameters to gifParams immdeidately
+	// add filters to gifParams 
+	gifParams->filters = &filterMap;
+	gifParams->selectionWindowColor = COLOR;
+	gifParams->saturationValue = 2.1;
+	gifParams->mosaicChunkSize = 30;
+	gifParams->outlineColorDiffLimit = 10;
+	//std::cout << "first filter: " << (*(gifParams->filters))[0] << std::endl;
     
     // for improving the gui appearance (buttons, that is. the font needs to be changed separately) 
     INITCOMMONCONTROLSEX icc;

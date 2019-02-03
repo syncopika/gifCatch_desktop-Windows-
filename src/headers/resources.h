@@ -32,3 +32,6 @@
 // IDs for the parameters page 
 #define ID_SELECTION_COLOR 201
 #define ID_SAVE_PARAMETERS 202
+#define ID_SET_SATURATION 203
+#define ID_SET_MOSAIC 204
+#define ID_SET_OUTLINE 205
