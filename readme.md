@@ -10,7 +10,7 @@ I use MinGW-64 gcc(8.1.0) to make/compile this project. Currently a work-in-prog
 There are adjustable settings, such as the <b>number of frames</b>, the <b>time delay between frames</b>, and some <b>color filter choices</b>.  You can also choose between red (![#FF828C](https://placehold.it/15/FF828C/000000?text=+)), blue (![#8CB4FF](https://placehold.it/15/8CB4FF/000000?text=+)), or green (![#8CFFB4](https://placehold.it/15/8CFFB4/000000?text=+)) for the selection area screen when choosing a place on the screen to capture.
 The screenshots below show an earlier version that only had dark red as an option.    
     
-For the filters, you can currently adjust the amount of saturation with a float value and change the mosaic filter chunk size with an int value. I have not yet implemented any input validation for these parameters.    
+For the filters, you can currently adjust the amount of saturation with a float value, change the mosaic filter chunk size with an int value, and change the outline filter's allowable limit for the difference between 2 pixels' color. I have not yet implemented any input validation for these parameters.    
     
 Additionally, you can create a gif from a folder of .bmp images (24-bit and 32-bit!) by specifying the full path to a directory. This feature is particularly useful if you have some bmp images that you have edited and want to put them together in a gif.
 If recreating a gif from pre-collected bmps, you also have the option of adding a caption! (but currently only Impact font is used, with size 32, and placement is near the bottom of the gif, centered)    
