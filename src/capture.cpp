@@ -266,7 +266,7 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
 	//std::cout << "filtername in getBMPImageData: " << filtername << std::endl;
 	//std::cout << "saturation value: " << saturationVal << std::endl;
     
-	// bmp's have a 54 byte header 
+	// bmps have a 54 byte header 
     static constexpr size_t HEADER_SIZE = 54;
     
     // read in bmp file as stream
@@ -328,8 +328,10 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
 			}
 			
 			widthCount++;
+			
 			// check if we've already gotten all the color channels for a row (if so, skip the padding!)
 			if(widthCount == ((int)width * 3)){
+				
 				widthCount = 0;
 				
 				// skip the padding
@@ -340,7 +342,6 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
 		}
 
 		// using std::size_t is dangerous here! if you use it instead of int, you get a segmentation fault :|
-		// I think casting is ok here 
 		for(int i = (int)image.size() - 4; i >= 0; i -= 4){
 			char temp = image[i];
 			image[i] = image[i+2];
@@ -355,9 +356,9 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
 		for(int j = 0; j < (int)image.size(); j += widthSize){
 			for(int k = widthSize - 1; k >= 0; k-=4){
 				// swap b and g 
-				image2.push_back(image[j + k-3]); 
+				image2.push_back(image[j + k-2]); 
+				image2.push_back(image[j + k-3]);
 				image2.push_back(image[j + k-1]);
-				image2.push_back(image[j + k-2]);
 				image2.push_back(image[j + k]); // push back alpha channel last
 			}
 		

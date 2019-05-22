@@ -7,7 +7,9 @@ HEADER = headers/
 LIB = -lgdi32 -luser32 -lgdiplus -lcomctl32
 
 # include gdiplus headers 
-INCLUDE = -IC:\MinGW\include\gdiplus
+# careful about the path!
+# -IC:\MinGW\include\gdiplus
+INCLUDE = -IC:\mingw-w64\mingw32\i686-w64-mingw32\include\gdiplus
 
 FLAGS = -Wall -g -c -std=c++14 $(INCLUDE)
 LINK_FLAGS = -mwindows -static-libstdc++ -static-libgcc $(LIB)
