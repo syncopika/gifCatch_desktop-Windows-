@@ -1,7 +1,7 @@
 // capture.cpp 
 #include "headers/capture.hh"  // function declarations
 #include "headers/gif.h"    // needs gif.h to create the gif (https://github.com/ginsweater/gif-h/blob/master/gif.h). include it here (and not the header file!) to prevent multiple definition errors
-	
+
 // probably should convert to non-namespace later 
 using namespace Gdiplus;
 
@@ -106,8 +106,6 @@ void getSnapshots(int nImages, int delay, int x, int y, int width, int height, s
     GdiplusShutdown(gdiplusToken);
     
     // make the gif here! using gif.h 
-    //int width = x2 - x1;
-    //int height = y2 - y1;
     GifWriter gifWriter;
     
     // initialize gifWriter
@@ -262,9 +260,6 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gifParams){
 	
 	std::string filtername = (*(gifParams->filters))[gifParams->selectedFilter];
-	
-	//std::cout << "filtername in getBMPImageData: " << filtername << std::endl;
-	//std::cout << "saturation value: " << saturationVal << std::endl;
     
 	// bmps have a 54 byte header 
     static constexpr size_t HEADER_SIZE = 54;
@@ -297,31 +292,32 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
 		
 		// since 24-bit bmps round up to nearest width divisible by 4, 
 		// there might be some extra padding at the end of each pixel row 
-		int paddedWidth = (int)width * 3;
+		int paddedWidth = (int)width*3;
 		
-		while(paddedWidth % 4 != 0){
+		while(paddedWidth%4 != 0){
 			paddedWidth++;
 		}
 		
 		// find out how much padding there is per row 
-		int padding = paddedWidth - ((int)width * 3);
+		int padding = paddedWidth - ((int)width*3);
 		
 		// figure out the size of the pixel data, which includes the padding 
-		auto dataSize = (3 * width * height) + (height * padding);
+		auto dataSize = (3*width*height) + (height*padding);
 		img.resize(dataSize);
 		bmp.read(img.data(), img.size());
 
 		int RGBcounter = 0;
 		int widthCount = 0;
-		//int rowCount = 0;
 		
 		std::vector<uint8_t> image;
-		for(int i = dataSize - 1 ; i >= 0; i--){		
 		
-			// after every third element, add a 255 (this is for the alpha channel)
+		// add in the alpha channel to the data 
+		for(int i = 0; i < (int)dataSize; i++){
+			
 			image.push_back(img[i]);
 			RGBcounter++;
-			
+		
+			// after every third element, add a 255 (this is for the alpha channel)
 			if(RGBcounter == 3){
 				image.push_back(255);
 				RGBcounter = 0;
@@ -330,38 +326,27 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
 			widthCount++;
 			
 			// check if we've already gotten all the color channels for a row (if so, skip the padding!)
-			if(widthCount == ((int)width * 3)){
-				
+			if(widthCount == ((int)width*3)){
 				widthCount = 0;
-				
-				// skip the padding
-				i -= padding;
-				//std::cout << "at row number: " << rowCount++ << std::endl;
-			}
-			
+				i += padding;
+			}			
 		}
 
+		// then swap the blue and red channels so we get RGBA
 		// using std::size_t is dangerous here! if you use it instead of int, you get a segmentation fault :|
-		for(int i = (int)image.size() - 4; i >= 0; i -= 4){
+		for(int i = 0; i <= (int)image.size() - 4; i += 4){
 			char temp = image[i];
 			image[i] = image[i+2];
 			image[i+2] = temp;
 		}
 		
-		int widthSize = 4*(int)width; // total num channels/values per row 
+		int widthSize = 4*(int)width; // total num channels per row 
 		std::vector<uint8_t> image2;
 		
-		// flip image horizontally to get the right orientation since it's flipped currently
-		// mind the alpha channel! push them after the rgb channels, not before.
-		for(int j = 0; j < (int)image.size(); j += widthSize){
-			for(int k = widthSize - 1; k >= 0; k-=4){
-				// swap b and g 
-				image2.push_back(image[j + k-2]); 
-				image2.push_back(image[j + k-3]);
-				image2.push_back(image[j + k-1]);
-				image2.push_back(image[j + k]); // push back alpha channel last
+		for(int j = (int)image.size() - 1; j >= 0; j -= widthSize){
+			for(int k = widthSize - 1; k >= 0; k--){
+				image2.push_back((uint8_t)image[j - k]);
 			}
-		
 		}
 		
 		finalImageData = image2;
@@ -374,19 +359,17 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
 		img.resize(dataSize);
 		bmp.read(img.data(), img.size());
 		
-		// need to swap R and B (img[i] and img[i+2]) so that the sequence is RGB, not BGR
+		// need to swap R and B (img[i] and img[i+2]) so that the sequence is RGBA, not BGRA
 		// also, notice that each pixel is represented by 4 bytes, not 3, because
 		// the bmp images are 32-bit
-		// reading backwards gets you BGRA instead of ARGB if reading from index 0 
-		// also, intersting note: if you change int to auto, you get a segmentation fault. :|
-		for(int i = dataSize - 4; i >= 0; i -= 4){
+		for(int i = 0; i <= (int)(dataSize - 4); i += 4){
 			char temp = img[i];
 			img[i] = img[i+2];
 			img[i+2] = temp;
 		}
 		
-		// change char vector to uint8_t vector
-		// be careful! bmp image data is stored upside-down :<
+		// change char vector to uint8_t vector (why is this necessary, if at all?)
+		// be careful! bmp image data is stored upside-down and flipped horizontally :<
 		// so traverse backwards, but also, for each row, invert the row also!
 		std::vector<uint8_t> image;
 		int widthSize = 4 * (int)width;
@@ -487,15 +470,10 @@ void assembleGif(int nImages, int delay, std::vector<std::string> images, std::v
 	// make the gif 
 	std::string nextFrame; 
     for(int i = 0; i < nImages; i++){
-		
         nextFrame = images[i];
-		
-		//std::vector<int> dimensions = getBMPHeightWidth(images[i]);
-		//std::cout << nextFrame << std::endl;
 		
 		// get image data and apply a filter  
 		GifWriteFrame(&gifWriter, (uint8_t *)((*filter)(nextFrame, gifParams).data()), (uint32_t)initialD[1], (uint32_t)initialD[0], (uint32_t)(delay/10));
-
     }
 	
     GifEnd(&gifWriter);

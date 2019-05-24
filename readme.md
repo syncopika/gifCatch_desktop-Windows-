@@ -1,6 +1,7 @@
 ## capture screenshots on your Windows desktop and create a gif!    
     
-This application lets you select what part of the screen to screenshot, specify how many screenshots to take with delay, and creates a gif from them.    
+This application lets you select a part of the screen to screenshot, specify the number of screenshots to take (with adjustable delay between shots), and creates a gif from them.    
+    
 I use MinGW-64 gcc(8.1.0) to make/compile this project. Currently a work-in-progress.     
     
 #### this is the current look of the application:     
@@ -53,6 +54,7 @@ things to do:
 check out my Chrome extension that does pretty much the same thing (but is not as neat, and the timing of screenshots is a bit worse I think): https://github.com/syncopika/gifCatch_extension    
     
 - - -    
+## acknowledgements
 Thanks very much to Philip Goh (https://github.com/cotidian/Win32GrabScreen) for the screen capture code, and Charlie Tangora (https://github.com/ginsweater/gif-h/blob/master/gif.h) for the gif-making code.    
 
 gifs were taken from this video by Tonkatsu298: https://www.youtube.com/watch?v=D8gwnKApqCE   
