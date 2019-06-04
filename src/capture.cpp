@@ -1,6 +1,9 @@
 // capture.cpp 
-#include "headers/capture.hh"  // function declarations
-#include "headers/gif.h"    // needs gif.h to create the gif (https://github.com/ginsweater/gif-h/blob/master/gif.h). include it here (and not the header file!) to prevent multiple definition errors
+
+// needs gif.h to create the gif (https://github.com/ginsweater/gif-h/blob/master/gif.h) 
+// include it here (and not the header file!) to prevent multiple definition errors
+#include "headers/gif.h"         
+#include "headers/capture.hh"    // function declarations
 
 // probably should convert to non-namespace later 
 using namespace Gdiplus;
@@ -77,7 +80,10 @@ bool ScreenCapture(int x, int y, int width, int height, const char *filename){
 
 // notice this takes a function pointer!
 void getSnapshots(int nImages, int delay, int x, int y, int width, int height, std::vector<uint8_t> (*filter)(const std::string, windowInfo*), windowInfo* gifParams){
-    // Initialize GDI+.
+    
+	HWND mainWindow = gifParams->mainWindow;
+	
+	// Initialize GDI+.
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
@@ -125,6 +131,9 @@ void getSnapshots(int nImages, int delay, int x, int y, int width, int height, s
     std::string nextFrame; 
     for(int i = 0; i < nImages; i++){
         nextFrame = "temp/screen" + int_to_string(i) + ".bmp";
+		
+		// post message to indicate which frame is being processed 
+		PostMessage(mainWindow, ID_PROCESS_FRAME, (WPARAM)i, 0);
 		
 		// get image data and apply a filter  
 		GifWriteFrame(&gifWriter, (uint8_t *)((*filter)(nextFrame, gifParams).data()), (uint32_t)width, (uint32_t)height, (uint32_t)(delay/10));
@@ -432,6 +441,7 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
 void assembleGif(int nImages, int delay, std::vector<std::string> images, std::vector<uint8_t> (*filter)(const std::string, windowInfo*), windowInfo* gifParams){
 	
 	std::string memeText = gifParams->memeText;
+	HWND mainWindow = gifParams->mainWindow; // get the handle to the main window so we can post msgs to it 
 
     GifWriter gifWriter;
     
@@ -471,6 +481,8 @@ void assembleGif(int nImages, int delay, std::vector<std::string> images, std::v
 	std::string nextFrame; 
     for(int i = 0; i < nImages; i++){
         nextFrame = images[i];
+		
+		PostMessage(mainWindow, ID_PROCESS_FRAME, (WPARAM)i, 0);
 		
 		// get image data and apply a filter  
 		GifWriteFrame(&gifWriter, (uint8_t *)((*filter)(nextFrame, gifParams).data()), (uint32_t)initialD[1], (uint32_t)initialD[0], (uint32_t)(delay/10));

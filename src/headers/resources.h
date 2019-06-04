@@ -35,3 +35,15 @@
 #define ID_SET_SATURATION 203
 #define ID_SET_MOSAIC 204
 #define ID_SET_OUTLINE 205
+
+
+// IDs for signalling certain progress messages
+// see application-defined msgs
+// https://docs.microsoft.com/en-us/windows/desktop/winmsg/about-messages-and-message-queues#application-defined-messages
+#define ID_IN_PROGRESS 		 (WM_APP + 0)
+#define ID_FINISHED 		 (WM_APP + 1)
+#define ID_UNABLE_TO_OPEN	 (WM_APP + 2)
+#define ID_NO_BMPS_FOUND 	 (WM_APP + 3)
+#define ID_ASSEMBLING_GIF 	 (WM_APP + 4)
+#define ID_COLLECTING_IMAGES (WM_APP + 5)
+#define ID_PROCESS_FRAME     (WM_APP + 6)

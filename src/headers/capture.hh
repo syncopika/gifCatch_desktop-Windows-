@@ -16,6 +16,7 @@
 #include <map>
 #include <ctime>
 #include "bmpHelper.hh" // filter function declarations
+#include "resources.h"   // contains definition for ID_PROCESS_FRAME
 
 
 // struct to provide arguments needed for gif creation 

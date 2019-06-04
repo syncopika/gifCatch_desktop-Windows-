@@ -412,6 +412,17 @@ LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 			SetDlgItemText(hwnd, ID_PROGRESS_MSG, "collecting images...");
 		}
 		break;
+		
+		case ID_PROCESS_FRAME:
+		{
+			// for this particular message we want to know which frame is being processed, 
+			// so we can use WPARAM as an int 
+			int currFrame = (int)wParam;
+			//std::cout << "curr frame: " << currFrame << std::endl;
+			std::string msg = "processing frame: " + int_to_string(currFrame);
+			SetDlgItemText(hwnd, ID_PROGRESS_MSG, msg.c_str());
+		}
+		break;
 			
         case WM_CLOSE:
         {
