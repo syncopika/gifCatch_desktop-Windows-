@@ -62,7 +62,8 @@ std::map<int, std::string> filterMap = {
 	{4, "grayscale"},
 	{5, "edge_detect"},
 	{6, "mosaic"},
-	{7, "outline"}
+	{7, "outline"},
+	{8, "voronoi"}
 };
 
 // default settings 
@@ -814,6 +815,7 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
 	SendMessage(filterComboBox, WM_SETFONT, (WPARAM)hFont, true);
 	
 	// filter options 
+	// why not loop through filter map and SendMessages for each filter string?
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"none");
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"inverted");
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"saturated");
@@ -822,6 +824,7 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"edge_detect");
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"mosaic");
 	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"outline");
+	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"voronoi");
 	
     // initially the filter is set to "none"
 	SendMessage(filterComboBox, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);

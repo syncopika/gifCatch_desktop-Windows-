@@ -423,6 +423,8 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
 		mosaicFilter(imgDataAsChar, (int)width, (int)height, gifParams->mosaicChunkSize);
 	}else if(filtername == "outline"){
 		outlineFilter(imgDataAsChar, (int)width, (int)height, gifParams->outlineColorDiffLimit);
+	}else if(filtername == "voronoi"){
+		voronoiFilter(imgDataAsChar, (int)width, (int)height, 30);
 	}
 	
 	// go back to uint8_t from char 

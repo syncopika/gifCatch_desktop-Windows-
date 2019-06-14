@@ -33,6 +33,39 @@ std::vector<int> getBMPHeightWidth(const std::string filename){
 	return dimensions;
 }
 
+// get pixel coordinates given index of r channel of a pixel in an array of image data 
+std::vector<int> getPixelCoords(int index, int width, int height){
+	
+	// assuming index represents the r channel of a pixel 
+	// index therefore represents the index of a pixel, since the pixel data 
+	// is laid out like r,g,b,a,r,g,b,a,... in the image data 
+	// so to figure out the x and y coords, take the index and divide by 4,
+	// which gives us the pixel's number. then we need to know its position 
+	// on the canvas.
+	
+	if((width*4) * height < index){
+		// if index is out of bounds 
+		std::vector<int> emptyVec;
+		return emptyVec;
+	}
+	
+	int pixelNum = floor(index / 4);
+	int yCoord = floor(pixelNum / width) - 1; // find what row this pixel belongs in, and subtract 1 because 0-indexing 
+	int xCoord = pixelNum - ((yCoord+1) * width); // find the difference between the pixel number of the pixel at the start of the row and this pixel 
+	
+	std::vector<int> coords;
+	coords.push_back(xCoord);
+	coords.push_back(yCoord);
+	
+	return coords;
+}
+
+// get distance between 2 points
+float getDist(int x1, int x2, int y1, int y2){
+	return sqrt((float)(pow((float)(x1 - x2), (float)2) + pow((float)(y1 - y2), (float)2)));
+}
+
+
 /***
 
 	inversion filter
@@ -320,5 +353,63 @@ void outlineFilter(std::vector<char>& imageData, int width, int height, int colo
 				}
 			}
 		}
+	}
+}
+
+
+/***
+
+	Voronoi filter 
+	- utilizes nearest neighbors to create each colored region in the resulting image 
+
+***/
+void voronoiFilter(std::vector<char>& imageData, int width, int height, int neighborConstant){
+	
+	//var neighborList = []; // array of Points 
+	std::vector<CustomPoint> neighborList;
+	
+	// seed the random num generator 
+	srand(time(0));
+	
+	for(int i = 0; i < (int)imageData.size(); i+=4){
+		// get neighbors
+		// add some offset to each neighbor for randomness (we don't really want evenly spaced neighbors)
+		int offset = rand() % 10; // to be applied in x or y direction
+		int sign = (rand() % 5 + 1) > 5 ? 1 : -1;  // if random num is > 5, positive sign
+		
+		std::vector<int> c1 = getPixelCoords(i, width, height); // index 0 = x, index 1 = y 
+		if(c1[0] % (int)floor(width / 30) == 0 && c1[1] % (int)floor(height / 30) == 0 && c1[0] != 0){
+			int x = (sign * offset) + c1[0];
+			int y = (sign * offset) + c1[1];
+			CustomPoint p1 = CustomPoint(); 
+			p1.x = x;
+			p1.y = y;
+			p1.r = imageData[i];
+			p1.g = imageData[i+1];
+			p1.b = imageData[i+2];
+			neighborList.push_back(p1);
+		}
+	}
+	
+	for(int i = 0; i < (int)imageData.size(); i+=4){
+		std::vector<int> currCoords = getPixelCoords(i, width, height);
+		
+		CustomPoint nearestNeighbor = neighborList[0];
+		float minDist = getDist(nearestNeighbor.x, currCoords[0], nearestNeighbor.y, currCoords[1]);
+		
+		// find the nearest neighbor for this pixel 
+		for(int j = 0; j < (int)neighborList.size(); j++){
+			CustomPoint neighbor = neighborList[j];
+			float dist = getDist(neighbor.x, currCoords[0], neighbor.y, currCoords[1]);
+			if(dist < minDist){
+				minDist = dist;
+				nearestNeighbor = neighborList[j];
+			}
+		}
+		
+		// found nearest neighbor. color the current pixel the color of the nearest neighbor. 
+		imageData[i] = nearestNeighbor.r;
+		imageData[i+1] = nearestNeighbor.g;
+		imageData[i+2] = nearestNeighbor.b;
 	}
 }
