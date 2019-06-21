@@ -50,8 +50,8 @@ std::vector<int> getPixelCoords(int index, int width, int height){
 	}
 	
 	int pixelNum = floor(index / 4);
-	int yCoord = floor(pixelNum / width) - 1; // find what row this pixel belongs in, and subtract 1 because 0-indexing 
-	int xCoord = pixelNum - ((yCoord+1) * width); // find the difference between the pixel number of the pixel at the start of the row and this pixel 
+	int yCoord = floor(pixelNum / width); // find what row this pixel belongs in
+	int xCoord = pixelNum - (yCoord * width); // find the difference between the pixel number of the pixel at the start of the row and this pixel 
 	
 	std::vector<int> coords;
 	coords.push_back(xCoord);
@@ -60,10 +60,6 @@ std::vector<int> getPixelCoords(int index, int width, int height){
 	return coords;
 }
 
-// get distance between 2 points
-float getDist(int x1, int x2, int y1, int y2){
-	return sqrt((float)(pow((float)(x1 - x2), (float)2) + pow((float)(y1 - y2), (float)2)));
-}
 
 
 /***
@@ -370,11 +366,11 @@ void voronoiFilter(std::vector<char>& imageData, int width, int height, int neig
 	
 	// seed the random num generator 
 	srand(time(0));
-	
+
+	// get neighbors
 	for(int i = 0; i < (int)imageData.size(); i+=4){
-		// get neighbors
 		// add some offset to each neighbor for randomness (we don't really want evenly spaced neighbors)
-		int offset = rand() % 10; // to be applied in x or y direction
+		int offset = rand() % 10;
 		int sign = (rand() % 5 + 1) > 5 ? 1 : -1;  // if random num is > 5, positive sign
 		
 		std::vector<int> c1 = getPixelCoords(i, width, height); // index 0 = x, index 1 = y 
@@ -391,13 +387,38 @@ void voronoiFilter(std::vector<char>& imageData, int width, int height, int neig
 		}
 	}
 	
+	// build 2d tree of nearest neighbors 
+	Node* kdtree = build2dTree(neighborList, 0);
+	
+	/*
+	std::cout << "kdtree root: " << "x: " << kdtree->point.x << ", y: " << kdtree->point.y << std::endl;
+	std::cout << "kdtree root: " << "r: " << kdtree->point.r << ", g: " << kdtree->point.g <<  ", b: " << kdtree->point.b << std::endl;
+	std::cout << "kdtree root: " << "dim: " << kdtree->dim << std::endl;
+	std::cout << "----------------------------" << std::endl;
+	
+	std::cout << "kdtree left: " << "x: " << kdtree->left->data[0] << ", y: " << kdtree->left->data[1] << std::endl;
+	std::cout << "kdtree left: " << "r: " << kdtree->left->point.r << ", g: " << kdtree->left->point.g <<  ", b: " << kdtree->left->point.b << std::endl;
+	std::cout << "kdtree left: " << "dim: " << kdtree->left->dim << std::endl;
+	std::cout << "----------------------------" << std::endl;
+	
+	std::cout << "kdtree right: " << "x: " << kdtree->right->data[0] << ", y: " << kdtree->right->data[1] << std::endl;
+	std::cout << "kdtree right: " << "r: " << kdtree->right->point.r << ", g: " << kdtree->right->point.g <<  ", b: " << kdtree->right->point.b << std::endl;
+	std::cout << "kdtree right: " << "dim: " << kdtree->right->dim << std::endl;
+	std::cout << "----------------------------" << std::endl;
+	*/
+	
 	for(int i = 0; i < (int)imageData.size(); i+=4){
 		std::vector<int> currCoords = getPixelCoords(i, width, height);
 		
-		CustomPoint nearestNeighbor = neighborList[0];
-		float minDist = getDist(nearestNeighbor.x, currCoords[0], nearestNeighbor.y, currCoords[1]);
+		//CustomPoint nearestNeighbor = neighborList[0];
+		//float minDist = getDist(nearestNeighbor.x, currCoords[0], nearestNeighbor.y, currCoords[1]);
+		if(i < 13){
+			std::cout << "x: " << currCoords[0] << ", y: " << currCoords[1] << std::endl;
+		}
 		
-		// find the nearest neighbor for this pixel 
+		CustomPoint nearestNeighbor = findNearestNeighbor(kdtree, currCoords[0], currCoords[1]);
+		
+		/* find the nearest neighbor for this pixel (naive way)
 		for(int j = 0; j < (int)neighborList.size(); j++){
 			CustomPoint neighbor = neighborList[j];
 			float dist = getDist(neighbor.x, currCoords[0], neighbor.y, currCoords[1]);
@@ -405,11 +426,14 @@ void voronoiFilter(std::vector<char>& imageData, int width, int height, int neig
 				minDist = dist;
 				nearestNeighbor = neighborList[j];
 			}
-		}
+		}*/
 		
 		// found nearest neighbor. color the current pixel the color of the nearest neighbor. 
 		imageData[i] = nearestNeighbor.r;
 		imageData[i+1] = nearestNeighbor.g;
 		imageData[i+2] = nearestNeighbor.b;
 	}
+	
+	// delete the tree
+	deleteTree(kdtree);
 }

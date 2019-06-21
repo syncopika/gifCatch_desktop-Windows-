@@ -10,6 +10,8 @@
 #include <ctime>	// for time() 
 #include <cstdlib>	// for rand() and srand()
 
+#include "voronoiHelper.hh"
+
 // correct channel value if > 255 or < 0
 int correctRGB(int channel);
 
@@ -20,8 +22,6 @@ std::vector<int> getBMPHeightWidth(const std::string filename);
 // that is arranged like r,g,b,a,r,g,b,a,... 
 std::vector<int> getPixelCoords(int index, int width, int height);
 
-// get distance between 2 points
-float getDist(int x1, int x2, int y1, int y2);
 
 // filters 
 void inversionFilter(std::vector<char>& imageData);
@@ -33,14 +33,5 @@ void mosaicFilter(std::vector<char>& imageData, int width, int height, int chunk
 void outlineFilter(std::vector<char>& imageData, int width, int height, int colorDiffLimit);
 void voronoiFilter(std::vector<char>& imageData, int width, int height, int neighborConstant);
 
-// Point struct
-// used in Voronoi filter 
-struct CustomPoint {
-	int x;
-	int y;
-	int r;
-	int g;
-	int b;
-};
 
 #endif 

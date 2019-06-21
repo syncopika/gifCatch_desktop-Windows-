@@ -14,7 +14,7 @@ INCLUDE = -IC:\mingw-w64\mingw32\i686-w64-mingw32\include\gdiplus
 FLAGS = -Wall -g -c -std=c++14 $(INCLUDE)
 LINK_FLAGS = -mwindows -static-libstdc++ -static-libgcc $(LIB)
 
-OBJ = captureGUI.o capture.o resources.o bmpHelper.o
+OBJ = captureGUI.o capture.o resources.o bmpHelper.o voronoi.o
 
 EXE = gifcatch.exe
 
@@ -28,7 +28,10 @@ $(EXE): $(OBJ)
 resources.o: resources.rc $(HEADER)resources.h
 	windres resources.rc -o resources.o 
 	
-bmpHelper.o: bmpHelper.cpp $(HEADER)bmpHelper.hh
+voronoi.o: voronoiHelper.cpp $(HEADER)voronoiHelper.hh
+	$(CXX) -Wall -g -c -std=c++14 $< -o $@
+	
+bmpHelper.o: bmpHelper.cpp $(HEADER)bmpHelper.hh $(HEADER)voronoiHelper.hh
 	$(CXX) -Wall -g -c -std=c++14 $< -o $@
 
 capture.o: capture.cpp $(HEADER)capture.hh $(HEADER)gif.h $(HEADER)bmpHelper.hh
