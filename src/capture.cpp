@@ -87,9 +87,17 @@ void getSnapshots(int nImages, int delay, int x, int y, int width, int height, s
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+	
+	// get curr time to use for naming the output 
+	std::time_t timeNow = std::time(NULL);
+	std::tm* ptm = std::localtime(&timeNow);
+	
+	char buff[32];
+	std::strftime(buff, 32, "%d-%m-%Y_%H%M%S", ptm);
+	std::string currTime = std::string(buff);
     
     // make a temp directory 
-    std::string dirName = "temp";
+    std::string dirName = "temp_" + currTime;
     if(CreateDirectory(dirName.c_str(), NULL)){
         // do nothing
     }else if(ERROR_ALREADY_EXISTS == GetLastError()){
@@ -98,12 +106,10 @@ void getSnapshots(int nImages, int delay, int x, int y, int width, int height, s
         // directory couldn't be made
     }
     
-    // need to be able to move the images to the temp directory! (or not?) 
     std::string name;
-    
     for(int i = 0; i < nImages; i++){
         // put all images in temp folder 
-        name = "temp/screen" + int_to_string(i) + ".bmp";
+        name = dirName + "/screen" + int_to_string(i) + ".bmp";
         ScreenCapture(x, y, width, height, name.c_str());
         Sleep(delay);
     }
@@ -116,21 +122,13 @@ void getSnapshots(int nImages, int delay, int x, int y, int width, int height, s
     
     // initialize gifWriter
     // name the gif the current time - it'll be in the same directory as the executable 
-	std::time_t timeNow = std::time(NULL);
-	std::tm* ptm = std::localtime(&timeNow);
-	
-	char buff[32];
-	std::strftime(buff, 32, "%d-%m-%Y_%H%M%S", ptm);
-	std::string currTime = std::string(buff);
-	//std::cout << "the time is: " << currTime << std::endl;
-	
 	std::string gifName = currTime + ".gif";
     GifBegin(&gifWriter, gifName.c_str(), (uint32_t)width, (uint32_t)height, (uint32_t)delay/10);
     
     // pass in frames 
     std::string nextFrame; 
     for(int i = 0; i < nImages; i++){
-        nextFrame = "temp/screen" + int_to_string(i) + ".bmp";
+        nextFrame = dirName + "/screen" + int_to_string(i) + ".bmp";
 		
 		// post message to indicate which frame is being processed 
 		PostMessage(mainWindow, ID_PROCESS_FRAME, (WPARAM)i, 0);

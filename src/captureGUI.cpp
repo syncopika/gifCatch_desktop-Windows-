@@ -689,7 +689,7 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
     HWND title;
     title = CreateWindow(
         TEXT("STATIC"),
-        TEXT("nch 2018 | https://github.com/syncopika "),
+        TEXT("nch 2019 | https://github.com/syncopika "),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
         10, 10,
         280, 40,
@@ -976,7 +976,7 @@ void createParameterPage(HWND hwnd, HINSTANCE hInstance){
 	    TEXT("STATIC"),
         TEXT("set saturation value: "),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 42,
+        10, 45,
         200, 20,
         hwnd,
         NULL,
@@ -989,7 +989,7 @@ void createParameterPage(HWND hwnd, HINSTANCE hInstance){
 		TEXT("edit"),
 		TEXT("2.1"),
 		WS_VISIBLE | WS_CHILD | WS_BORDER, 
-		210, 40,  /* x, y coords */
+		210, 43,  /* x, y coords */
 		50, 20, /* width, height */
 		hwnd,
 		(HMENU)ID_SET_SATURATION,
@@ -1003,7 +1003,7 @@ void createParameterPage(HWND hwnd, HINSTANCE hInstance){
 	    TEXT("STATIC"),
         TEXT("set mosaic chunk size: "),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 82,
+        10, 85,
         200, 20,
         hwnd,
         NULL,
@@ -1016,7 +1016,7 @@ void createParameterPage(HWND hwnd, HINSTANCE hInstance){
 		TEXT("edit"),
 		TEXT("30"),
 		WS_VISIBLE | WS_CHILD | WS_BORDER, 
-		210, 80,  /* x, y coords */
+		210, 83,  /* x, y coords */
 		50, 20, /* width, height */
 		hwnd,
 		(HMENU)ID_SET_MOSAIC,
@@ -1030,7 +1030,7 @@ void createParameterPage(HWND hwnd, HINSTANCE hInstance){
 	    TEXT("STATIC"),
         TEXT("set outline difference limit: "),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 122,
+        10, 125,
         200, 20,
         hwnd,
         NULL,
@@ -1043,7 +1043,7 @@ void createParameterPage(HWND hwnd, HINSTANCE hInstance){
 		TEXT("edit"),
 		TEXT("10"),
 		WS_VISIBLE | WS_CHILD | WS_BORDER, 
-		210, 120,  /* x, y coords */
+		210, 123,  /* x, y coords */
 		50, 20, /* width, height */
 		hwnd,
 		(HMENU)ID_SET_OUTLINE,
@@ -1186,7 +1186,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         WS_EX_CLIENTEDGE,
         g_szClassName,
         "gifCatch",
-        WS_TILEDWINDOW,
+        (WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX) & ~WS_MAXIMIZEBOX, // this combo disables maximizing and resizing the window
         CW_USEDEFAULT, CW_USEDEFAULT, 400, 450,
         NULL, NULL, hInstance, NULL
     );

@@ -412,9 +412,6 @@ void voronoiFilter(std::vector<char>& imageData, int width, int height, int neig
 		
 		//CustomPoint nearestNeighbor = neighborList[0];
 		//float minDist = getDist(nearestNeighbor.x, currCoords[0], nearestNeighbor.y, currCoords[1]);
-		if(i < 13){
-			std::cout << "x: " << currCoords[0] << ", y: " << currCoords[1] << std::endl;
-		}
 		
 		CustomPoint nearestNeighbor = findNearestNeighbor(kdtree, currCoords[0], currCoords[1]);
 		
