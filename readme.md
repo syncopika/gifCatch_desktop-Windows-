@@ -9,7 +9,8 @@ I use MinGW-64 gcc(8.1.0) and MSYS to make/compile this project. a work-in-progr
 ![current look of the gui](screenshots/current.png "current look")    
 ![current look of the gui](screenshots/current_parameters_page.png "current look (parameters page)")    
  
-There are adjustable settings, such as the <b>number of frames</b>, the <b>time delay between frames</b>, and some <b>color filter choices</b>.  You can also choose between red (![#FF828C](https://placehold.it/15/FF828C/000000?text=+)), blue (![#8CB4FF](https://placehold.it/15/8CB4FF/000000?text=+)), or green (![#8CFFB4](https://placehold.it/15/8CFFB4/000000?text=+)) for the selection area screen when choosing a place on the screen to capture.   
+There are adjustable settings, such as the <b>number of frames</b>, the <b>time delay between frames</b>, and some <b>color filter choices</b>.  You can choose between red (![#FF828C](https://placehold.it/15/FF828C/000000?text=+)), blue (![#8CB4FF](https://placehold.it/15/8CB4FF/000000?text=+)), or green (![#8CFFB4](https://placehold.it/15/8CFFB4/000000?text=+)) for the selection area screen when choosing a place on the screen to capture.
+You can also choose whether or not to capture the screen cursor in your gifs!   
     
 For the filters, you can currently adjust the amount of saturation with a float value, change the mosaic filter chunk size with an int value, and change the outline filter's allowable limit for the difference between 2 pixels' color. I have not yet implemented any input validation for these parameters.    
     
@@ -22,7 +23,7 @@ things to do:
 - fix up the program structure? i.e. if adding a caption and filter, the caption shouldn't be filtered also.    
 - can I get better quality images? different formats (right now it just outputs bmps and uses bmps for gif creation)?    
 - allow gif naming / output directory naming?      
-- finish parameters/options page    
+- finish parameters/options page + add about page?    
 - remove flickering when dragging selection area screen?    
 - more testing / optimize performance?    
 - code cleanup

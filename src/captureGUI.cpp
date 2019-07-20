@@ -201,7 +201,7 @@ DWORD WINAPI processGifThread(LPVOID lpParam){
 
 /***
 
-    the window procedure for the GUI
+    the window procedure for the GUI (i.e. switching between main page, parameters page, closing the window)
     
 ***/
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
@@ -271,7 +271,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 
 /***
 
-	procedure for the main page
+	procedure for the main page (i.e. select area, start)
 
 ***/
 LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
@@ -483,7 +483,6 @@ LRESULT CALLBACK WndProcParameterPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 						gifParams->selectionWindowColor = getSelectedColor(colorSelect);
 						
 						// get the saturation value 
-						// ID_SET_SATURATION
 						HWND saturation = GetDlgItem(hwnd, ID_SET_SATURATION);
 						TCHAR saturationValue[5];
 						GetWindowText(saturation, saturationValue, sizeof(saturationValue));
@@ -491,16 +490,26 @@ LRESULT CALLBACK WndProcParameterPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 						// need to validate!!
 						gifParams->saturationValue = atof(saturationValue);
 						
+						// get the mosaic chunk size value
 						HWND mosaic = GetDlgItem(hwnd, ID_SET_MOSAIC);
 						TCHAR mosaicValue[5];
 						GetWindowText(mosaic, mosaicValue, sizeof(mosaicValue));
 						gifParams->mosaicChunkSize = atoi(mosaicValue);
 						
+						// get the outline size value 
 						HWND outline = GetDlgItem(hwnd, ID_SET_OUTLINE);
 						TCHAR outlineValue[5];
 						GetWindowText(outline, outlineValue, sizeof(outlineValue));
 						gifParams->outlineColorDiffLimit = atoi(outlineValue);
 						
+						// get the value of 'show cursor' checkbox 
+						HWND getCursorBox = GetDlgItem(hwnd, ID_GET_CURSOR);
+						int getCursorVal = SendMessage(getCursorBox, BM_GETCHECK, 0, 0);
+						if(getCursorVal == BST_CHECKED){
+							gifParams->getCursor = true;
+						}else{
+							gifParams->getCursor = false;
+						}
 					}
 				}
 			}
@@ -936,7 +945,7 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
 }
 
 /***
-	this function sets up[ the parameters page, where the user can change certain parameters
+	this function sets up the parameters page, where the user can change certain parameters
 	like for image filters, or to change the color of the selection screen 
 ***/
 void createParameterPage(HWND hwnd, HINSTANCE hInstance){
@@ -1052,6 +1061,20 @@ void createParameterPage(HWND hwnd, HINSTANCE hInstance){
 	);
 	SendMessage(setOutlineBox, WM_SETFONT, (WPARAM)hFont, true);
 	
+	// set whether the gif should capture the cursor or not 
+	HWND getCursorBox = CreateWindow(
+		TEXT("button"),
+		TEXT("capture screen cursor"),
+		BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE,
+		10, 145,
+		180, 50,
+		hwnd,
+		(HMENU)ID_GET_CURSOR,
+		hInstance,
+		NULL
+	);
+	SendMessage(getCursorBox, WM_SETFONT, (WPARAM)hFont, true);
+	
 	HWND saveParameters = CreateWindow(
 		TEXT("button"),
         TEXT("save"),
@@ -1064,7 +1087,6 @@ void createParameterPage(HWND hwnd, HINSTANCE hInstance){
         NULL
 	);
 	SendMessage(saveParameters, WM_SETFONT, (WPARAM)hFont, true);
-	
 }
 
 /*************
@@ -1079,13 +1101,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     //AllocConsole();
     //freopen( "CON", "w", stdout );
 	
-	// add some default parameters to gifParams immdeidately
-	// add filters to gifParams 
+	// add some default parameters to gifParams immediately
 	gifParams->filters = &filterMap;
 	gifParams->selectionWindowColor = COLOR;
 	gifParams->saturationValue = 2.1;
 	gifParams->mosaicChunkSize = 30;
 	gifParams->outlineColorDiffLimit = 10;
+	gifParams->getCursor = false;
 	//std::cout << "first filter: " << (*(gifParams->filters))[0] << std::endl;
     
     // for improving the gui appearance (buttons, that is. the font needs to be changed separately) 

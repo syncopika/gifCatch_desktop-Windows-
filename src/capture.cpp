@@ -68,11 +68,34 @@ void BitmapToBMP(HBITMAP hbmpImage, int width, int height, std::string filename)
     delete p_bmp;
 }
 
-bool ScreenCapture(int x, int y, int width, int height, const char *filename){
+bool ptIsInRange(POINT start, int width, int height, POINT pt){
+	return (pt.x >= start.x && pt.x <= start.x + width && pt.y >= start.y && pt.y <= start.y + height);
+}
+
+bool ScreenCapture(int x, int y, int width, int height, const char *filename, bool getCursor){
     HDC hDc = CreateCompatibleDC(0);
     HBITMAP hBmp = CreateCompatibleBitmap(GetDC(0), width, height);
     SelectObject(hDc, hBmp);
     BitBlt(hDc, 0, 0, width, height, GetDC(0), x, y, SRCCOPY);
+	
+	// capture the cursor and add to screen shot if so desired
+	if(getCursor){
+		CURSORINFO screenCursor = {sizeof(screenCursor)};
+		GetCursorInfo(&screenCursor);
+		if(screenCursor.flags == CURSOR_SHOWING){
+			RECT rcWnd;
+			HWND hwnd = GetDesktopWindow();
+			GetWindowRect(hwnd, &rcWnd);
+			ICONINFO iconInfo = {sizeof(iconInfo)};
+			GetIconInfo(screenCursor.hCursor, &iconInfo);
+			int cursorX = screenCursor.ptScreenPos.x - iconInfo.xHotspot - x;
+			int cursorY = screenCursor.ptScreenPos.y - iconInfo.yHotspot - y;
+			BITMAP cursorBMP = {0};
+			GetObject(iconInfo.hbmColor, sizeof(cursorBMP), &cursorBMP);
+			DrawIconEx(hDc, cursorX, cursorY, screenCursor.hCursor, cursorBMP.bmWidth, cursorBMP.bmHeight, 0, NULL, DI_NORMAL);
+		}
+	}
+	
     BitmapToBMP(hBmp, width, height, filename);
     DeleteObject(hBmp);
     return true;
@@ -110,7 +133,7 @@ void getSnapshots(int nImages, int delay, int x, int y, int width, int height, s
     for(int i = 0; i < nImages; i++){
         // put all images in temp folder 
         name = dirName + "/screen" + int_to_string(i) + ".bmp";
-        ScreenCapture(x, y, width, height, name.c_str());
+        ScreenCapture(x, y, width, height, name.c_str(), gifParams->getCursor);
         Sleep(delay);
     }
     

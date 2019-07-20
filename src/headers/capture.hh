@@ -34,17 +34,21 @@ struct windowInfo {
 	// parameters from the parameters page 
 	COLORREF selectionWindowColor;
 	float saturationValue;
-	int mosaicChunkSize; // for mosaic filter 
+	int mosaicChunkSize; 		// for mosaic filter 
 	int outlineColorDiffLimit; // for outline filter 
+	bool getCursor;
 };
 
 // convert an int to string 
 std::string int_to_string(int i);
 
+// check if a point is within a particular rect
+bool ptIsInRange(POINT start, int width, int height, POINT pt);
+
 // screen capturing code 
 int GetEncoderClsid(const WCHAR* format, CLSID* pClsid);
 void BitmapToBMP(HBITMAP hbmpImage, int width, int height, std::string filename);
-bool ScreenCapture(int x, int y, int width, int height, const char *filename);
+bool ScreenCapture(int x, int y, int width, int height, const char *filename, bool getCursor);
 
 // this function relies on all the above 
 // the result is creating a temp folder and populating it with screenshots

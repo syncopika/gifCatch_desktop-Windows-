@@ -69,6 +69,9 @@ https://www.codeproject.com/Articles/42529/Outline-Text#singleoutline1  -> very 
 // getting current time 
 https://stackoverflow.com/questions/997512/string-representation-of-time-t
 
+// capturing screen cursor 
+https://stackoverflow.com/questions/1628919/capture-screen-shot-with-mouse-cursor
+
 // processing might take a while, but Windows thinks application is stuck and not responding. help?
 https://stackoverflow.com/questions/402832/avoiding-not-responding-label-in-windows-while-processing-lots-of-data-in-on
 https://docs.microsoft.com/en-us/windows/desktop/win7appqual/preventing-hangs-in-windows-applications
