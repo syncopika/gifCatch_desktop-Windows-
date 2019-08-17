@@ -12,7 +12,7 @@
     check out resources.txt in the main directory outside this one for helpful links/resources!
     
 */
-#include "headers/captureGUI.hh"
+#include "headers/capture_gui.hh"
 
 /*****************
 
@@ -38,12 +38,14 @@ const char g_szClassName[] = "mainGUI";
 const char g_szClassName2[] = "mainPage";
 const char g_szClassName3[] = "parametersPage";
 const char g_szClassName4[] = "selectionWindow";
+const char g_szClassName5[] = "aboutPage";
 
 // handler variables for the windows 
 HWND hwnd;	// this is the main GUI window handle (the parent window of the main and parameter pages)
 HWND mainPage; // this is the main page of the GUI 
 HWND parameterPage; // this is the window handle for the page where the user can set some parameters 
-HWND selectionWindow;	// this is the handle for the rubber-banding selection window 
+HWND selectionWindow; // this is the handle for the rubber-banding selection window 
+HWND aboutPage; // an about page
 
 
 // use Tahoma font for the text 
@@ -87,10 +89,10 @@ void makeGif(windowInfo* args){
 	int tDelay = args->timeDelay;
 	//std::cout << "delay: " << tDelay << std::endl;
 	
-	std::string filterName = (*(args->filters))[args->selectedFilter];
-	int currFilterIndex = args->selectedFilter;
-	std::cout << "currFilterIndex: " << currFilterIndex << std::endl;
-	std::cout << "filter name: " << filterName << std::endl;
+	//std::string filterName = (*(args->filters))[args->selectedFilter];
+	//int currFilterIndex = args->selectedFilter;
+	//std::cout << "currFilterIndex: " << currFilterIndex << std::endl;
+	//std::cout << "filter name: " << filterName << std::endl;
 	
 	std::string theDir = args->directory;
 	//std::cout << "directory: " << theDir << std::endl;
@@ -215,6 +217,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 			hMenu = CreateMenu();
 			AppendMenu(hMenu, MF_STRING, ID_MAIN_PAGE, "Main");
 			AppendMenu(hMenu, MF_STRING, ID_SET_PARAMETERS_PAGE, "Options");
+			AppendMenu(hMenu, MF_STRING, ID_SET_ABOUT_PAGE, "About");
 			SetMenu(hwnd, hMenu);
 		}
 		break;
@@ -227,6 +230,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 				case ID_MAIN_PAGE:
 				{
 					// go back to main page 
+					ShowWindow(aboutPage, SW_HIDE);
 					ShowWindow(parameterPage, SW_HIDE);
 					ShowWindow(mainPage, SW_SHOW);
 					UpdateWindow(hwnd);
@@ -237,11 +241,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 				{
 					// switch to parameters page 
 					ShowWindow(mainPage, SW_HIDE);
+					ShowWindow(aboutPage, SW_HIDE);
 					ShowWindow(parameterPage, SW_SHOW);
 					UpdateWindow(hwnd);
 				}
 				break;
-	
+				
+				case ID_SET_ABOUT_PAGE:
+				{
+					ShowWindow(mainPage, SW_HIDE);
+					ShowWindow(parameterPage, SW_HIDE);
+					ShowWindow(aboutPage, SW_SHOW);
+					UpdateWindow(hwnd);
+				}
+				break;
+				
 				case WM_CLOSE:
 				{
 					DeleteObject(hFont);
@@ -370,8 +384,7 @@ LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 					gifParams->mainWindow = hwnd;
 					
 					// start process in another thread
-					CreateThread(NULL, 0, processGifThread, gifParams, 0, 0);
-					
+					CreateThread(NULL, 0, processGifThread, gifParams, 0, 0);			
                 }
                 break;
             }
@@ -686,6 +699,47 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
 }
 
+/***
+	procedure for the about page 
+***/
+LRESULT CALLBACK WndProcAboutPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
+
+    switch(msg){
+        case WM_LBUTTONDOWN:
+        {
+			case WM_COMMAND:
+			{
+				switch(LOWORD(wParam)){
+					// nothing to do :)
+				}
+			}
+			break;
+		}
+		break;
+		
+        case WM_CLOSE:
+        {
+            DestroyWindow(hwnd);
+			delete gifParams;
+            return 0;
+        }
+        break;
+		
+        case WM_DESTROY:
+        {
+            DestroyWindow(hwnd);
+			delete gifParams;
+            return 0;
+        }
+        break;
+		
+        default:
+            return DefWindowProc(hwnd, msg, wParam, lParam);
+    }
+    return 0;
+
+}
+
 
 /***
 	this function creates the UI for the main page (the first screen you see)
@@ -693,29 +747,13 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 	and an HINSTANCE
 ***/
 void createMainScreen(HWND hwnd, HINSTANCE hInstance){
-
-    /* make a title label */
-    HWND title;
-    title = CreateWindow(
-        TEXT("STATIC"),
-        TEXT("nch 2019 | https://github.com/syncopika "),
-        WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 10,
-        280, 40,
-        hwnd, /* parent window */
-        (HMENU)ID_TITLE_LABEL,
-        hInstance,
-        NULL
-    );
-    // send the gui the font to use 
-    SendMessage(title, WM_SETFONT, (WPARAM)hFont, true);
     
     /* make text box for # FRAMES TO COLLECT (HWND textInputPriorityLabel) */
     HWND framesLabel = CreateWindow(
         TEXT("STATIC"),
         TEXT("# frames to get: "),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 60,
+        10, 20,
         110, 20,
         hwnd, /* parent window */
         (HMENU)ID_NUMFRAMES_LABEL,
@@ -729,7 +767,7 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
         TEXT("edit"),
         TEXT(""),
         WS_VISIBLE | WS_CHILD | WS_BORDER,
-        110, 60,  /* x, y coords */
+        110, 20,  /* x, y coords */
         80, 20, /* width, height */
         hwnd,
         (HMENU)ID_NUMFRAMES_TEXTBOX,
@@ -744,7 +782,7 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
         TEXT("STATIC"),
         TEXT("1 <= frames <= 50"),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
-        210, 60,
+        210, 20,
         130, 20,
         hwnd, /* parent window */
         NULL,
@@ -756,9 +794,9 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
     /* make text box LABEL FOR DELAY (HWND textInputPriorityLabel) */
     HWND delayLabel = CreateWindow(
         TEXT("STATIC"),
-        TEXT("# delay(ms): "),
+        TEXT("# delay (ms): "),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 90,
+        10, 50,
         100, 20,
         hwnd, /* parent window */
         (HMENU)ID_DELAY_LABEL,
@@ -771,7 +809,7 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
         TEXT("edit"),
         TEXT(""),
         WS_VISIBLE | WS_CHILD | WS_BORDER,
-        110, 90,  /* x, y coords */
+        110, 50,  /* x, y coords */
         80, 20, /* width, height */
         hwnd,
         (HMENU)ID_DELAY_TEXTBOX,
@@ -786,7 +824,7 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
         TEXT("STATIC"),
         TEXT("10 <= ms <= 1000"),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
-        210, 90,
+        210, 50,
         130, 20,
         hwnd, /* parent window */
         NULL,
@@ -800,7 +838,7 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
 		TEXT("STATIC"),
         TEXT("filter options: "),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 125,
+        10, 85,
         80, 20,
         hwnd, /* parent window */
         (HMENU)ID_FILTERS_LABEL,
@@ -814,7 +852,7 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
 		WC_COMBOBOX,
 		TEXT(""),
 		CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE, 
-		110, 120, 
+		110, 80, 
 		80, 20,
 		hwnd,
 		(HMENU)ID_FILTERS_COMBOBOX,
@@ -823,28 +861,22 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
 	);
 	SendMessage(filterComboBox, WM_SETFONT, (WPARAM)hFont, true);
 	
-	// filter options 
-	// why not loop through filter map and SendMessages for each filter string?
-	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"none");
-	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"inverted");
-	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"saturated");
-	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"weird");
-	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"grayscale");
-	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"edge_detect");
-	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"mosaic");
-	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"outline");
-	SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"voronoi");
+	// filter options
+	std::map<int, std::string>::iterator it = filterMap.begin();
+	while(it != filterMap.end()){
+		SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)(it->second).c_str());
+		it++;
+	}
 	
     // initially the filter is set to "none"
 	SendMessage(filterComboBox, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);
-	
 	
 	/* let user select a directory of images to create gif from */
     HWND createGifFromDir = CreateWindow(
         TEXT("STATIC"),
         TEXT("specify full directory path of images to generate gif from: "),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 170,
+        10, 130,
         340, 20,
         hwnd, /* parent window */
         NULL,
@@ -857,7 +889,7 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
 		TEXT("edit"),
 		TEXT(""),
 		WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL,
-		10, 190,  /* x, y coords */
+		10, 150,  /* x, y coords */
 		280, 20, /* width, height */
 		hwnd,
 		(HMENU)ID_CHOOSE_DIR,
@@ -877,7 +909,7 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
         TEXT("STATIC"),
         TEXT("specify a message to show at bottom of gif: "),
         WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 220,
+        10, 190,
         340, 20,
         hwnd,
         NULL,
@@ -890,7 +922,7 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
 		TEXT("edit"),
 		TEXT(""),
 		WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL,
-		10, 240,
+		10, 210,
 		280, 20, 
 		hwnd,
 		(HMENU)ID_MEMEFY_MSG,
@@ -899,13 +931,12 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
 	);
 	SendMessage(memefyMsg, WM_SETFONT, (WPARAM)hFont, true);
 	
-	
     /* button to select area of screen  */
     HWND selectAreaButton = CreateWindow(
         TEXT("button"),
         TEXT("select area"),
         WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-        150, 280,
+        150, 260,
         80, 20, 
         hwnd,
         (HMENU)ID_SELECT_SCREENAREA_BUTTON,
@@ -919,7 +950,7 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
         TEXT("button"),
         TEXT("start"),
         WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-        150, 310,
+        150, 290,
         80, 20, 
         hwnd,
         (HMENU)ID_START_BUTTON,
@@ -933,7 +964,7 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
         TEXT("STATIC"),
         TEXT(""),
         WS_VISIBLE | WS_CHILD | WS_BORDER,
-        80, 350,  /* x, y coords */
+        80, 330,  /* x, y coords */
         220, 20, /* width, height */
         hwnd,
         (HMENU)ID_PROGRESS_MSG,
@@ -1089,6 +1120,26 @@ void createParameterPage(HWND hwnd, HINSTANCE hInstance){
 	SendMessage(saveParameters, WM_SETFONT, (WPARAM)hFont, true);
 }
 
+/***
+	set up the about page (sets the text that's on the page)
+***/
+void createAboutPage(HWND hwnd, HINSTANCE hInstance){
+    HWND title;
+    title = CreateWindow(
+        TEXT("STATIC"),
+        TEXT(" \n    An application for catching and creating gifs!\n    Thanks for checking it out! :)\n\n\n    (c) nch 2019 | https://github.com/syncopika\n\n"),
+        WS_VISIBLE | WS_CHILD,
+        0, 0,
+        400, 450,
+        hwnd, /* parent window */
+        NULL,
+        hInstance,
+        NULL
+    );
+    // send the gui the font to use 
+    SendMessage(title, WM_SETFONT, (WPARAM)hFont, true);
+}
+
 /*************
 
 	MAIN METHOD FOR GUI
@@ -1116,10 +1167,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     icc.dwICC = ICC_STANDARD_CLASSES;
     InitCommonControlsEx(&icc);
     
-    WNDCLASSEX wc; // this is the main GUI window  
-    MSG Msg;
+	MSG Msg;
 	
-	/* make a main window */ 
+	// make a main window
+	WNDCLASSEX wc; // this is the main GUI window 
 	wc.cbSize = sizeof(WNDCLASSEX);
     wc.style = 0;
     wc.lpfnWndProc = WndProc;
@@ -1133,7 +1184,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     wc.hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON));
 	wc.hIconSm = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON), IMAGE_ICON, 16, 16, 0);
 	
-    // register the main screen, which is a child of the main window 
+    // register the main screen (the contents i.e. text boxes, labels, etc.), which is a child of the main window 
 	WNDCLASSEX wc1;
     wc1.cbSize = sizeof(WNDCLASSEX);
     wc1.style = 0;
@@ -1148,7 +1199,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	wc1.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 	wc1.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
 	
-	// register the second window class - this is the parameters page  
+	// register the second window class - this is the parameters/options page  
 	WNDCLASSEX wc2;
     wc2.cbSize = sizeof(WNDCLASSEX);
     wc2.style = 0;
@@ -1177,6 +1228,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     wc3.lpszMenuName = NULL;
     wc3.lpszClassName = g_szClassName4;
     wc3.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+	
+	// this is the about page window class 
+	WNDCLASSEX wc4;
+    wc4.cbSize = sizeof(WNDCLASSEX);
+    wc4.style = 0;
+    wc4.lpfnWndProc = WndProcAboutPage; 
+    wc4.cbClsExtra = 0;
+    wc4.cbWndExtra = 0;
+    wc4.hInstance = hInstance;
+    wc4.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+    wc4.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wc4.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
+    wc4.lpszMenuName = NULL;
+    wc4.lpszClassName = g_szClassName5;
+    wc4.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
     
     
     if(!RegisterClassEx(&wc)){
@@ -1198,6 +1264,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
 	
     if(!RegisterClassEx(&wc3)){
+        std::cout << "error code: " << GetLastError() << std::endl;
+        MessageBox(NULL, "window registration failed for selection screen!", "Error!", MB_ICONEXCLAMATION | MB_OK);
+        return 0;
+    }
+	
+	if(!RegisterClassEx(&wc4)){
         std::cout << "error code: " << GetLastError() << std::endl;
         MessageBox(NULL, "window registration failed for selection screen!", "Error!", MB_ICONEXCLAMATION | MB_OK);
         return 0;
@@ -1237,6 +1309,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		hInstance, NULL
     );
 	
+	aboutPage = CreateWindowEx(
+        WS_EX_WINDOWEDGE,
+        g_szClassName5,
+        NULL,
+        WS_CHILD,
+        0, 0, 400, 450,
+        hwnd, // parent window
+		NULL, 
+		hInstance, NULL
+    );
+	
     if(hwnd == NULL){
 		//std::cout << "error code: " << GetLastError() << std::endl;
         MessageBox(NULL, "window creation failed for the main GUI!", "Error!", MB_ICONEXCLAMATION | MB_OK);
@@ -1252,6 +1335,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         MessageBox(NULL, "window creation failed!", "Error!", MB_ICONEXCLAMATION | MB_OK);
         return 0;
     }
+	
+	if(aboutPage == NULL){
+        MessageBox(NULL, "window creation failed!", "Error!", MB_ICONEXCLAMATION | MB_OK);
+        return 0;
+    }
     
 	// make and show main GUI window
     ShowWindow(hwnd, nCmdShow); // show the GUI 
@@ -1262,8 +1350,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ShowWindow(mainPage, SW_SHOW);
 	UpdateWindow(hwnd);
 	
-	// create the parameter page (but don't show it yet)
+	// create the parameter and about pages (but don't show yet)
 	createParameterPage(parameterPage, hInstance);
+	createAboutPage(aboutPage, hInstance);
     
     /* message loop */
     while(GetMessage(&Msg, NULL, 0, 0) > 0){

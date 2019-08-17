@@ -2,7 +2,9 @@
 
 #define ID_MAIN_PAGE 9000
 #define ID_SET_PARAMETERS_PAGE 9001
+#define ID_SET_ABOUT_PAGE 9002
 
+// not used anymore
 #define ID_TITLE_LABEL 99
 
 #define ID_NUMFRAMES_LABEL 100

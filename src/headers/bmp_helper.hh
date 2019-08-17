@@ -10,7 +10,7 @@
 #include <ctime>	// for time() 
 #include <cstdlib>	// for rand() and srand()
 
-#include "voronoiHelper.hh"
+#include "voronoi_helper.hh"
 
 // correct channel value if > 255 or < 0
 int correctRGB(int channel);

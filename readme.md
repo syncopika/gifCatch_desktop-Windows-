@@ -3,7 +3,7 @@
 This application lets you select a part of the screen to screenshot, specify the number of screenshots to take (with adjustable delay between shots), and creates a gif from them.    
 Hope it can be useful to someone!    
     
-I use MinGW-64 gcc(8.1.0) and MSYS to make/compile this project. a work-in-progress.     
+I currently use MinGW gcc(6.3.0) and MSYS to make/compile this project. a work-in-progress.     
     
 #### this is the current look of the application:     
 ![current look of the gui](screenshots/current.png "current look")    
@@ -23,7 +23,7 @@ things to do:
 - fix up the program structure? i.e. if adding a caption and filter, the caption shouldn't be filtered also.    
 - can I get better quality images? different formats (right now it just outputs bmps and uses bmps for gif creation)?    
 - allow gif naming / output directory naming?      
-- finish parameters/options page + add about page?    
+- finish parameters/options page    
 - remove flickering when dragging selection area screen?    
 - more testing / optimize performance?    
 - code cleanup

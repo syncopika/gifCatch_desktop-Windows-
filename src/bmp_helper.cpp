@@ -1,4 +1,4 @@
-#include "headers/bmpHelper.hh"
+#include "headers/bmp_helper.hh"
 
 // helper function to normalise rgb colors in case > 255 or < 0 
 int correctRGB(int channel){

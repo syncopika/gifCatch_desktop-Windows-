@@ -14,9 +14,9 @@ INCLUDE = -IC:\MinGW\include\gdiplus
 FLAGS = -Wall -g -c -std=c++14 $(INCLUDE)
 LINK_FLAGS = -mwindows -static-libstdc++ -static-libgcc $(LIB)
 
-OBJ = captureGUI.o capture.o resources.o bmpHelper.o voronoi.o
+OBJ = capture_gui.o capture.o resources.o bmp_helper.o voronoi.o
 
-EXE = gifcatch.exe
+EXE = gifcatch
 
 all: $(EXE)
 
@@ -28,16 +28,16 @@ $(EXE): $(OBJ)
 resources.o: resources.rc $(HEADER)resources.h
 	windres resources.rc -o resources.o 
 	
-voronoi.o: voronoiHelper.cpp $(HEADER)voronoiHelper.hh
+voronoi.o: voronoi_helper.cpp $(HEADER)voronoi_helper.hh
 	$(CXX) -Wall -g -c -std=c++14 $< -o $@
 	
-bmpHelper.o: bmpHelper.cpp $(HEADER)bmpHelper.hh $(HEADER)voronoiHelper.hh
+bmp_helper.o: bmp_helper.cpp $(HEADER)bmp_helper.hh $(HEADER)voronoi_helper.hh
 	$(CXX) -Wall -g -c -std=c++14 $< -o $@
 
-capture.o: capture.cpp $(HEADER)capture.hh $(HEADER)gif.h $(HEADER)bmpHelper.hh
+capture.o: capture.cpp $(HEADER)capture.hh $(HEADER)gif.h $(HEADER)bmp_helper.hh
 	$(CXX) $(FLAGS) $< -o $@ 
 
-captureGUI.o: captureGUI.cpp $(HEADER)captureGUI.hh $(HEADER)capture.hh $(HEADER)bmpHelper.hh $(HEADER)resources.h
+capture_gui.o: capture_gui.cpp $(HEADER)capture_gui.hh $(HEADER)capture.hh $(HEADER)bmp_helper.hh $(HEADER)resources.h
 	$(CXX) $(FLAGS) $< -o  $@
 	
 clean:

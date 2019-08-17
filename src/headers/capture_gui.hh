@@ -10,7 +10,7 @@
 
 // this also brings in windows.h, gdiplus.h, and everything else 
 #include "capture.hh"
-#include "bmpHelper.hh"
+#include "bmp_helper.hh"
 
 // for improving GUI appearance
 // defined here since it needs to come after windows.h
@@ -39,9 +39,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK WndProcParameterPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK WndProcAboutPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 void createMainScreen(HWND hwnd, HINSTANCE hInstance);
 void createParameterPage(HWND hwnd, HINSTANCE hInstance);
+void createAboutPage(HWND hwnd, HINSTANCE hInstance);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
 

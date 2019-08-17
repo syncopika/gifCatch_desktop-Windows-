@@ -1,4 +1,4 @@
-#include "headers/voronoiHelper.hh"
+#include "headers/voronoi_helper.hh"
 
 
 // get distance between 2 points
