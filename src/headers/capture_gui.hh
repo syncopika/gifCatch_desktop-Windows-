@@ -12,15 +12,10 @@
 #include "capture.hh"
 #include "bmp_helper.hh"
 
-// for improving GUI appearance
-// defined here since it needs to come after windows.h
-#include <commctrl.h> 
-
-// for directory finding 
-#include <dirent.h>
-
-// for mapping color filters to their dropdown box index 
-#include <map>
+#include <commctrl.h> // for improving GUI appearance (defined here since it needs to come after windows.h)
+#include <dirent.h> // for directory finding 
+#include <map> // for mapping color filters to their dropdown box index 
+#include <algorithm> // for min function 
 
 // give some identifiers for the GUI components 
 #include "resources.h"

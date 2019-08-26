@@ -637,10 +637,14 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                     
                 }else if(response == IDYES){
                     // done, record new parameters 
-                    x1 = ptCurr.x;
-                    y1 = ptCurr.y;
-                    x2 = ptNew.x;
-                    y2 = ptNew.y;
+					// note that this can be a bit tricky because normally I'd expect to draw the selection rectangle
+					// from top left to bottom right. however, you should allow for rectangles to be drawn starting from 
+					// wherever the user wants. if you just assume one way (the expected way), you can get negative widths and heights!
+					// therefore, for x1 and x2, x1 should be the min of the 2, and x2 the max. likewise for y1 and y2.
+                    x1 = std::min(ptCurr.x, ptNew.x);
+                    y1 = std::min(ptCurr.y, ptNew.y);
+                    x2 = std::max(ptCurr.x, ptNew.x);
+                    y2 = std::max(ptCurr.y, ptNew.y);
                     
                     // do some correction to take into account the title bar height 
                     if(y1 > 0){
