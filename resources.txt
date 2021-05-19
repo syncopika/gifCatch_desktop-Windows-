@@ -76,6 +76,10 @@ https://stackoverflow.com/questions/1628919/capture-screen-shot-with-mouse-curso
 https://stackoverflow.com/questions/402832/avoiding-not-responding-label-in-windows-while-processing-lots-of-data-in-on
 https://docs.microsoft.com/en-us/windows/desktop/win7appqual/preventing-hangs-in-windows-applications
 
+// win32 threading basics
+https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createthread
+https://docs.microsoft.com/en-us/windows/win32/api/handleapi/nf-handleapi-closehandle
+
 // threads can't access the window (i.e. they can't get dialog text) 
 https://stackoverflow.com/questions/42317343/c-updating-windows-window-from-async-thread
 https://stackoverflow.com/questions/8735830/c-multithreaded-windows-gui-accessing-the-forms
