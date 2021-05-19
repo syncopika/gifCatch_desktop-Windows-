@@ -32,6 +32,7 @@ void edgeDetectionFilter(std::vector<char>& imageData, int width, int height);
 void mosaicFilter(std::vector<char>& imageData, int width, int height, int chunkSize);
 void outlineFilter(std::vector<char>& imageData, int width, int height, int colorDiffLimit);
 void voronoiFilter(std::vector<char>& imageData, int width, int height, int neighborConstant);
+void blurFilter(std::vector<char>& imageData, int width);
 
 
 #endif 

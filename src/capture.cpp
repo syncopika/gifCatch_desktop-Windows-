@@ -220,10 +220,9 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 		// resize the original bmp 
 		Graphics graphics(newBMP); // the new bitmap is the new canvas to draw the resized image on 
 		graphics.DrawImage(bmp, 0, 0, width, height);
-		// delete bmp 
 		delete bmp;
 	
-		// memefy if there's text in the specified box 
+		// caption if there's text in the specified box 
 		if(memeText != ""){
 			std::wstring mtext = std::wstring(memeText.begin(), memeText.end());
 			const wchar_t* string = mtext.c_str(); //L"BLAH BLAH BLAH";
@@ -430,22 +429,16 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
 	}
 	
 	// use gifParams to get specific parameters for specific filters
-	if(filtername == "inverted"){
-		inversionFilter(imgDataAsChar);
-    }else if(filtername == "saturated"){
-		saturationFilter(gifParams->saturationValue, imgDataAsChar);
-	}else if(filtername == "weird"){
-		weirdFilter(imgDataAsChar);
-	}else if(filtername == "grayscale"){
-		grayscaleFilter(imgDataAsChar);
-	}else if(filtername == "edge_detect"){
-		edgeDetectionFilter(imgDataAsChar, (int)width, (int)height);
-	}else if(filtername == "mosaic"){
-		mosaicFilter(imgDataAsChar, (int)width, (int)height, gifParams->mosaicChunkSize);
-	}else if(filtername == "outline"){
-		outlineFilter(imgDataAsChar, (int)width, (int)height, gifParams->outlineColorDiffLimit);
-	}else if(filtername == "voronoi"){
-		voronoiFilter(imgDataAsChar, (int)width, (int)height, 30);
+	switch(filtername){
+		case "inverted": inversionFilter(imgDataAsChar); break;
+		case "saturated": saturationFilter(gifParams->saturationValue, imgDataAsChar); break;
+		case "weird": weirdFilter(imgDataAsChar); break;
+		case "grayscale": grayscaleFilter(imgDataAsChar); break;
+		case "edge_detect": edgeDetectionFilter(imgDataAsChar, (int)width, (int)height); break;
+		case "mosaic": mosaicFilter(imgDataAsChar, (int)width, (int)height, gifParams->mosaicChunkSize); break;
+		case "outline": outlineFilter(imgDataAsChar, (int)width, (int)height, gifParams->outlineColorDiffLimit); break;
+		case "voronoi": voronoiFilter(imgDataAsChar, (int)width, (int)height, 30); break; //TODO: customize voronoi weight
+		case "blur": blurFilter(imgDataAsChar, (int)width); break;
 	}
 	
 	// go back to uint8_t from char 

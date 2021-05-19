@@ -65,7 +65,8 @@ std::map<int, std::string> filterMap = {
 	{5, "edge_detect"},
 	{6, "mosaic"},
 	{7, "outline"},
-	{8, "voronoi"}
+	{8, "voronoi"},
+	{9, "blur"}
 };
 
 // default settings 
@@ -865,7 +866,7 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
 	);
 	SendMessage(filterComboBox, WM_SETFONT, (WPARAM)hFont, true);
 	
-	// filter options
+	// add filter options to dropdown
 	std::map<int, std::string>::iterator it = filterMap.begin();
 	while(it != filterMap.end()){
 		SendMessage(filterComboBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)(it->second).c_str());
