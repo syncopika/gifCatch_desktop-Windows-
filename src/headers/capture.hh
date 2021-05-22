@@ -12,7 +12,7 @@
 #include <memory>     // for screen capture 
 #include <string>   // for int to string conversion 
 #include <sstream>  // for int to string conversion 
-#include <vector>   // used throughout 
+#include <vector>   // used throughout
 #include <map>
 #include <ctime>
 #include "bmp_helper.hh" // filter function declarations

@@ -1,7 +1,7 @@
 #include "headers/bmp_helper.hh"
 
 // helper function to normalise rgb colors in case > 255 or < 0 
-uint8_t correctRGB(uint8_t channel){
+int correctRGB(int channel){
 	if(channel > 255){
 		return 255;
 	}
@@ -104,23 +104,24 @@ void saturationFilter(float saturationVal, std::vector<uint8_t>& imageData){
 		uint8_t g = imageData[i+1];
 		uint8_t b = imageData[i+2];
 		
-		uint8_t newR = (uint8_t)(r*r1 + g*g2 + b*b2);
-		uint8_t newG = (uint8_t)(r*r2 + g*g1 + b*b2);
-		uint8_t newB = (uint8_t)(r*r2 + g*g2 + b*b1);
+		int newR = (int)(r*r1 + g*g2 + b*b2);
+		int newG = (int)(r*r2 + g*g1 + b*b2);
+		int newB = (int)(r*r2 + g*g2 + b*b1);
 		
+		// ensure value is within range of 0 and 255
 		newR = correctRGB(newR);
 		newG = correctRGB(newG);
 		newB = correctRGB(newB);
 		
-		imageData[i] = newR;
-		imageData[i+1] = newG;
-		imageData[i+2] = newB;
+		imageData[i] = (uint8_t)newR;
+		imageData[i+1] = (uint8_t)newG;
+		imageData[i+2] = (uint8_t)newB;
     }
 }
 
 /***
 
-	weird filter 
+	weird filter (idk)
 
 ***/
 void weirdFilter(std::vector<uint8_t>& imageData){
@@ -174,9 +175,6 @@ void grayscaleFilter(std::vector<uint8_t>& imageData){
 	
 ***/
 void edgeDetectionFilter(std::vector<uint8_t>& imageData, int width, int height){
-	
-	//unsigned int dataSize = imageData.size();
-	
 	// need to create a copy of the source image
 	// so that the calculations won't get messed up with overwritten values 
 	// use this data for the calculations
@@ -225,7 +223,8 @@ void edgeDetectionFilter(std::vector<uint8_t>& imageData, int width, int height)
 
 /***
 
-	mosaic filter 
+	mosaic filter
+	TODO: need to fix to handle all sorts of dimensions.
 
 ***/
 void mosaicFilter(std::vector<uint8_t>& imageData, int width, int height, int chunkSize){
@@ -234,12 +233,15 @@ void mosaicFilter(std::vector<uint8_t>& imageData, int width, int height, int ch
 	std::vector<uint8_t> sourceImageCopy(imageData);
 	
 	// change sampling size here. lower for higher detail preservation, higher for less detail (because larger chunks)
-	int chunkWidth = chunkSize; //30;
-	int chunkHeight = chunkSize; //30;
+	int chunkWidth = chunkSize;
+	int chunkHeight = chunkSize;
 	
 	// make sure chunkWidth can completely divide the image width * 4 
 	while(width % chunkWidth != 0){
 		chunkWidth--;
+	}
+	
+	while(height % chunkHeight != 0){
 		chunkHeight--;
 	}
 
@@ -265,7 +267,6 @@ void mosaicFilter(std::vector<uint8_t>& imageData, int width, int height, int ch
 			}
 		}
 	}
-
 }
 
 /***
@@ -355,13 +356,13 @@ std::vector<double> generateGaussBoxes(double stdDev, double numBoxes){
 	// wikipedia is a good start: https://en.wikipedia.org/wiki/Gaussian_blur
 	double wIdeal = std::sqrt((12*stdDev*stdDev/numBoxes) + 1); // ideal averaging filter width
 	
-	double wl = std::floor(wIdeal);
+	int wl = std::floor(wIdeal);
 	
 	if(wl%2 == 0){
 		wl--;
 	}
 	
-	double wu = wl+2;
+	int wu = wl+2;
 	
 	double mIdeal = (12*stdDev*stdDev - numBoxes*wl*wl - 4*numBoxes*wl - 3*numBoxes)/(-4*wl - 4);
 	double m = std::round(mIdeal);
@@ -408,7 +409,7 @@ void boxBlurHorz(std::vector<char>& src, std::vector<char>& trgt, int width, int
 }
 
 void boxBlurTotal(std::vector<char>& src, std::vector<char>& trgt, int width, int height, double stdDev){
-	const iarr = 1 / (stdDev+stdDev+1);
+	double iarr = 1 / (stdDev+stdDev+1);
 	for(int i = 0; i < width; i++){
 		int ti = i;
 		int li = ti;
@@ -424,14 +425,14 @@ void boxBlurTotal(std::vector<char>& src, std::vector<char>& trgt, int width, in
 		
 		for(int j = 0; j <= stdDev; j++){
 			val += src[ri] - fv;
-			trgt[ti] = Math.round(val*iarr);
+			trgt[ti] = std::round(val*iarr);
 			ri += width;
 			ti += width;
 		}
 		
 		for(int j = (int)stdDev+1; j < height-stdDev; j++){
 			val += src[ri] - src[li];
-			trgt[ti] = Math.round(val*iarr);
+			trgt[ti] = std::round(val*iarr);
 			li += width;
 			ri += width;
 			ti += width;
@@ -439,7 +440,7 @@ void boxBlurTotal(std::vector<char>& src, std::vector<char>& trgt, int width, in
 		
 		for(int j = (int)height-stdDev; j < height; j++){
 			val += lv - src[li];
-			trgt[ti] = Math.round(val*iarr);
+			trgt[ti] = std::round(val*iarr);
 			li += width;
 			ti += width;
 		}
@@ -496,9 +497,8 @@ void blurFilter(std::vector<uint8_t>& imageData, int width, int height, double s
 	- utilizes nearest neighbors to create each colored region in the resulting image 
 
 ***/
-void voronoiFilter(std::vector<char>& imageData, int width, int height, int neighborConstant){
-	
-	//var neighborList = []; // array of Points 
+void voronoiFilter(std::vector<uint8_t>& imageData, int width, int height, int neighborConstant){
+
 	std::vector<CustomPoint> neighborList;
 	
 	// seed the random num generator 
@@ -527,40 +527,10 @@ void voronoiFilter(std::vector<char>& imageData, int width, int height, int neig
 	// build 2d tree of nearest neighbors 
 	Node* kdtree = build2dTree(neighborList, 0);
 	
-	/*
-	std::cout << "kdtree root: " << "x: " << kdtree->point.x << ", y: " << kdtree->point.y << std::endl;
-	std::cout << "kdtree root: " << "r: " << kdtree->point.r << ", g: " << kdtree->point.g <<  ", b: " << kdtree->point.b << std::endl;
-	std::cout << "kdtree root: " << "dim: " << kdtree->dim << std::endl;
-	std::cout << "----------------------------" << std::endl;
-	
-	std::cout << "kdtree left: " << "x: " << kdtree->left->data[0] << ", y: " << kdtree->left->data[1] << std::endl;
-	std::cout << "kdtree left: " << "r: " << kdtree->left->point.r << ", g: " << kdtree->left->point.g <<  ", b: " << kdtree->left->point.b << std::endl;
-	std::cout << "kdtree left: " << "dim: " << kdtree->left->dim << std::endl;
-	std::cout << "----------------------------" << std::endl;
-	
-	std::cout << "kdtree right: " << "x: " << kdtree->right->data[0] << ", y: " << kdtree->right->data[1] << std::endl;
-	std::cout << "kdtree right: " << "r: " << kdtree->right->point.r << ", g: " << kdtree->right->point.g <<  ", b: " << kdtree->right->point.b << std::endl;
-	std::cout << "kdtree right: " << "dim: " << kdtree->right->dim << std::endl;
-	std::cout << "----------------------------" << std::endl;
-	*/
-	
 	for(int i = 0; i < (int)imageData.size(); i+=4){
 		std::vector<int> currCoords = getPixelCoords(i, width, height);
 		
-		//CustomPoint nearestNeighbor = neighborList[0];
-		//float minDist = getDist(nearestNeighbor.x, currCoords[0], nearestNeighbor.y, currCoords[1]);
-		
 		CustomPoint nearestNeighbor = findNearestNeighbor(kdtree, currCoords[0], currCoords[1]);
-		
-		/* find the nearest neighbor for this pixel (naive way)
-		for(int j = 0; j < (int)neighborList.size(); j++){
-			CustomPoint neighbor = neighborList[j];
-			float dist = getDist(neighbor.x, currCoords[0], neighbor.y, currCoords[1]);
-			if(dist < minDist){
-				minDist = dist;
-				nearestNeighbor = neighborList[j];
-			}
-		}*/
 		
 		// found nearest neighbor. color the current pixel the color of the nearest neighbor. 
 		imageData[i] = nearestNeighbor.r;

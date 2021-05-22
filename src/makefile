@@ -9,7 +9,7 @@ LIB = -lgdi32 -luser32 -lgdiplus -lcomctl32
 # include gdiplus headers 
 # careful about the path!
 # -IC:\MinGW\include\gdiplus
-INCLUDE = -IC:\MinGW\include\gdiplus
+INCLUDE = -IC:\mingw-w64\mingw32\i686-w64-mingw32\include\gdiplus
 
 FLAGS = -Wall -g -c -std=c++14 $(INCLUDE)
 LINK_FLAGS = -mwindows -static-libstdc++ -static-libgcc $(LIB)
@@ -39,6 +39,7 @@ capture.o: capture.cpp $(HEADER)capture.hh $(HEADER)gif.h $(HEADER)bmp_helper.hh
 
 capture_gui.o: capture_gui.cpp $(HEADER)capture_gui.hh $(HEADER)capture.hh $(HEADER)bmp_helper.hh $(HEADER)resources.h
 	$(CXX) $(FLAGS) $< -o  $@
-	
+
+.PHONY: clean
 clean:
 	rm -f *.o

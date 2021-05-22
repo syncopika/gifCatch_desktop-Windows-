@@ -953,8 +953,6 @@ bool GifBegin( GifWriter* writer, const char* filename, uint32_t width, uint32_t
     writer->f = fopen(filename, "wb");
 #endif
     if(!writer->f) return false;
-	
-    writer->f = file;
 
     writer->firstFrame = true;
     writer->deltaCoded = !transparent;

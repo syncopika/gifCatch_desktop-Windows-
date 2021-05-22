@@ -39,8 +39,7 @@ std::vector<double> generateGaussBoxes(double stdDev, double numBoxes);
 void boxBlurHorz(std::vector<char>& src, std::vector<char>& trgt, int width, int height, double stdDev);
 void boxBlurTotal(std::vector<char>& src, std::vector<char>& trgt, int width, int height, double stdDev);
 void gaussBlur(std::vector<char>& src, std::vector<char>& trgt, int width, int height, double stdDev);
-void blurFilter(std::vector<char>& imageData, int width, int height, double stdDev);
-void blurFilter(std::vector<uint8_t>& imageData, int width);
+void blurFilter(std::vector<uint8_t>& imageData, int width, int height, double stdDev);
 
 
 #endif 
