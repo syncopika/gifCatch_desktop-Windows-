@@ -24,15 +24,23 @@ std::vector<int> getPixelCoords(int index, int width, int height);
 
 
 // filters 
-void inversionFilter(std::vector<char>& imageData);
-void saturationFilter(float saturationVal, std::vector<char>& imageData);
-void weirdFilter(std::vector<char>& imageData);
-void grayscaleFilter(std::vector<char>& imageData);
-void edgeDetectionFilter(std::vector<char>& imageData, int width, int height);
-void mosaicFilter(std::vector<char>& imageData, int width, int height, int chunkSize);
-void outlineFilter(std::vector<char>& imageData, int width, int height, int colorDiffLimit);
-void voronoiFilter(std::vector<char>& imageData, int width, int height, int neighborConstant);
-void blurFilter(std::vector<char>& imageData, int width);
+// TODO: move these to a separate file
+void inversionFilter(std::vector<uint8_t>& imageData);
+void saturationFilter(float saturationVal, std::vector<uint8_t>& imageData);
+void weirdFilter(std::vector<uint8_t>& imageData);
+void grayscaleFilter(std::vector<uint8_t>& imageData);
+void edgeDetectionFilter(std::vector<uint8_t>& imageData, int width, int height);
+void mosaicFilter(std::vector<uint8_t>& imageData, int width, int height, int chunkSize);
+void outlineFilter(std::vector<uint8_t>& imageData, int width, int height, int colorDiffLimit);
+void voronoiFilter(std::vector<uint8_t>& imageData, int width, int height, int neighborConstant);
+
+
+std::vector<double> generateGaussBoxes(double stdDev, double numBoxes);
+void boxBlurHorz(std::vector<char>& src, std::vector<char>& trgt, int width, int height, double stdDev);
+void boxBlurTotal(std::vector<char>& src, std::vector<char>& trgt, int width, int height, double stdDev);
+void gaussBlur(std::vector<char>& src, std::vector<char>& trgt, int width, int height, double stdDev);
+void blurFilter(std::vector<char>& imageData, int width, int height, double stdDev);
+void blurFilter(std::vector<uint8_t>& imageData, int width);
 
 
 #endif 

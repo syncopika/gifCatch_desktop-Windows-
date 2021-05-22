@@ -423,30 +423,30 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
 	
 	// use this for passing to the filters (which need a char vector)
 	// cast the uint8_t to chars first
-	std::vector<char> imgDataAsChar;
+/* 	std::vector<char> imgDataAsChar;
 	for(auto start = finalImageData.begin(), end = finalImageData.end(); start != end; start++){
 		imgDataAsChar.push_back(static_cast<char>(*start));
-	}
+	} */
 	
 	// use gifParams to get specific parameters for specific filters
 	switch(filtername){
-		case "inverted": inversionFilter(imgDataAsChar); break;
-		case "saturated": saturationFilter(gifParams->saturationValue, imgDataAsChar); break;
-		case "weird": weirdFilter(imgDataAsChar); break;
-		case "grayscale": grayscaleFilter(imgDataAsChar); break;
-		case "edge_detect": edgeDetectionFilter(imgDataAsChar, (int)width, (int)height); break;
-		case "mosaic": mosaicFilter(imgDataAsChar, (int)width, (int)height, gifParams->mosaicChunkSize); break;
-		case "outline": outlineFilter(imgDataAsChar, (int)width, (int)height, gifParams->outlineColorDiffLimit); break;
-		case "voronoi": voronoiFilter(imgDataAsChar, (int)width, (int)height, 30); break; //TODO: customize voronoi weight
-		case "blur": blurFilter(imgDataAsChar, (int)width); break;
+		case "inverted": inversionFilter(finalImageData); break;
+		case "saturated": saturationFilter(gifParams->saturationValue, finalImageData); break;
+		case "weird": weirdFilter(finalImageData); break;
+		case "grayscale": grayscaleFilter(finalImageData); break;
+		case "edge_detect": edgeDetectionFilter(finalImageData, (int)width, (int)height); break;
+		case "mosaic": mosaicFilter(finalImageData, (int)width, (int)height, gifParams->mosaicChunkSize); break;
+		case "outline": outlineFilter(finalImageData, (int)width, (int)height, gifParams->outlineColorDiffLimit); break;
+		case "voronoi": voronoiFilter(finalImageData, (int)width, (int)height, 30); break; //TODO: customize voronoi weight
+		case "blur": blurFilter(finalImageData, (int)width); break;
 	}
 	
 	// go back to uint8_t from char 
-	for(auto start = imgDataAsChar.begin(), end = imgDataAsChar.end(); start != end; start++){
+/* 	for(auto start = imgDataAsChar.begin(), end = imgDataAsChar.end(); start != end; start++){
 		// get the index 
 		auto index = std::distance(imgDataAsChar.begin(), start);
 		finalImageData[index] = *start;
-	}
+	} */
 	
 	return finalImageData;
 	

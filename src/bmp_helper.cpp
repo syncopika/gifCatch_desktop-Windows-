@@ -1,7 +1,7 @@
 #include "headers/bmp_helper.hh"
 
 // helper function to normalise rgb colors in case > 255 or < 0 
-int correctRGB(int channel){
+uint8_t correctRGB(uint8_t channel){
 	if(channel > 255){
 		return 255;
 	}
@@ -41,7 +41,6 @@ std::vector<int> getPixelCoords(int index, int width, int height){
 	// so to figure out the x and y coords, take the index and divide by 4,
 	// which gives us the pixel's number. then we need to know its position 
 	// on the canvas.
-	
 	if((width*4) * height < index){
 		// if index is out of bounds 
 		std::vector<int> emptyVec;
@@ -66,7 +65,7 @@ std::vector<int> getPixelCoords(int index, int width, int height){
 	inversion filter
 	
 ***/
-void inversionFilter(std::vector<char>& imageData){
+void inversionFilter(std::vector<uint8_t>& imageData){
 	
 	unsigned int dataSize = imageData.size();
 	
@@ -82,7 +81,7 @@ void inversionFilter(std::vector<char>& imageData){
 	saturation filter
 	
 ***/
-void saturationFilter(float saturationVal, std::vector<char>& imageData){
+void saturationFilter(float saturationVal, std::vector<uint8_t>& imageData){
 	
 	unsigned int dataSize = imageData.size();
 	double saturationValue = saturationVal;
@@ -101,21 +100,21 @@ void saturationFilter(float saturationVal, std::vector<char>& imageData){
 	double b2 = (1 - saturationValue) * lumB;	
 	
     for(unsigned int i = 0; i <= dataSize-4; i += 4){
-		unsigned char r = imageData[i];
-		unsigned char g = imageData[i+1];
-		unsigned char b = imageData[i+2];
+		uint8_t r = imageData[i];
+		uint8_t g = imageData[i+1];
+		uint8_t b = imageData[i+2];
 		
-		int newR = (r*r1 + g*g2 + b*b2);
-		int newG = (r*r2 + g*g1 + b*b2);
-		int newB = (r*r2 + g*g2 + b*b1);
+		uint8_t newR = (uint8_t)(r*r1 + g*g2 + b*b2);
+		uint8_t newG = (uint8_t)(r*r2 + g*g1 + b*b2);
+		uint8_t newB = (uint8_t)(r*r2 + g*g2 + b*b1);
 		
 		newR = correctRGB(newR);
 		newG = correctRGB(newG);
 		newB = correctRGB(newB);
 		
-		imageData[i] = (unsigned char)newR;
-		imageData[i+1] = (unsigned char)newG;
-		imageData[i+2] = (unsigned char)newB;
+		imageData[i] = newR;
+		imageData[i+1] = newG;
+		imageData[i+2] = newB;
     }
 }
 
@@ -124,7 +123,7 @@ void saturationFilter(float saturationVal, std::vector<char>& imageData){
 	weird filter 
 
 ***/
-void weirdFilter(std::vector<char>& imageData){
+void weirdFilter(std::vector<uint8_t>& imageData){
 	
 	unsigned int dataSize = imageData.size();
 	
@@ -134,14 +133,14 @@ void weirdFilter(std::vector<char>& imageData){
 		// iteration of the loop. so in other words, each channel gets treated as r 
 		// and the following channel gets treated as g, but they are not necessarily 
 		// the r and g channels 
-        unsigned char r = imageData[i];
-		unsigned char g = imageData[i+1];
+        uint8_t r = imageData[i];
+		uint8_t g = imageData[i+1];
 
 		if(g > 100 && g < 200){
-			imageData[i+1] = (unsigned char)0;
+			imageData[i+1] = (uint8_t)0;
 		}
 		if(r < 100){
-			imageData[i] = (unsigned char)imageData[i]*2;
+			imageData[i] = (uint8_t)imageData[i]*2;
 		}
     }
 }
@@ -151,22 +150,21 @@ void weirdFilter(std::vector<char>& imageData){
 	grayscale filter 
 	
 ***/
-void grayscaleFilter(std::vector<char>& imageData){
+void grayscaleFilter(std::vector<uint8_t>& imageData){
 	
 	unsigned int dataSize = imageData.size();
 	
 	// for each pixel, set each channel's value to the average of the RGB channels 
 	for(unsigned int i = dataSize-4; i > 0; i-=4){
-		unsigned char r = imageData[i]; 
-		unsigned char g = imageData[i+1];
-		unsigned char b = imageData[i+2];
+		uint8_t r = imageData[i]; 
+		uint8_t g = imageData[i+1];
+		uint8_t b = imageData[i+2];
 		
-		unsigned char avg = (r+g+b) / 3;
+		uint8_t avg = (r+g+b) / 3;
 		
 		imageData[i] = avg;
 		imageData[i+1] = avg;
 		imageData[i+2] = avg;	
-
 	}
 }
 
@@ -175,7 +173,7 @@ void grayscaleFilter(std::vector<char>& imageData){
 	edge detection filter 
 	
 ***/
-void edgeDetectionFilter(std::vector<char>& imageData, int width, int height){
+void edgeDetectionFilter(std::vector<uint8_t>& imageData, int width, int height){
 	
 	//unsigned int dataSize = imageData.size();
 	
@@ -183,7 +181,7 @@ void edgeDetectionFilter(std::vector<char>& imageData, int width, int height){
 	// so that the calculations won't get messed up with overwritten values 
 	// use this data for the calculations
 	// it's best to grayscale the image first! that way each channel has the same value for each pixel 
-	std::vector<char> sourceImageCopy(imageData);
+	std::vector<uint8_t> sourceImageCopy(imageData);
 	grayscaleFilter(imageData);
 	
 	// the kernels needed to form the Sobel filter 
@@ -215,7 +213,7 @@ void edgeDetectionFilter(std::vector<char>& imageData, int width, int height){
 					(yKernel[2][0]*sourceImageCopy[bottomLeft]) + (yKernel[2][1]*sourceImageCopy[bottom]) + (yKernel[2][2]*sourceImageCopy[bottomRight]);
 			
 			// finally set the current pixel to the new value based on the formula 
-			int newVal = (int)( std::ceil( std::sqrt((pX * pX) + (pY * pY)) ) );
+			uint8_t newVal = (uint8_t)(std::ceil(std::sqrt((pX * pX) + (pY * pY))));
 			imageData[center] = newVal;
 			imageData[center+1] = newVal;
 			imageData[center+2] = newVal;
@@ -230,10 +228,10 @@ void edgeDetectionFilter(std::vector<char>& imageData, int width, int height){
 	mosaic filter 
 
 ***/
-void mosaicFilter(std::vector<char>& imageData, int width, int height, int chunkSize){
+void mosaicFilter(std::vector<uint8_t>& imageData, int width, int height, int chunkSize){
 	
 	// make a copy of the data 
-	std::vector<char> sourceImageCopy(imageData);
+	std::vector<uint8_t> sourceImageCopy(imageData);
 	
 	// change sampling size here. lower for higher detail preservation, higher for less detail (because larger chunks)
 	int chunkWidth = chunkSize; //30;
@@ -253,9 +251,9 @@ void mosaicFilter(std::vector<char>& imageData, int width, int height, int chunk
 			// get the color of the first pixel in this chunk
 			// multiply by 4 because 4 channels per pixel
 			// multiply by width because all the image data is in a single array and a row is dependent on width
-			int r = sourceImageCopy[4*i+4*j*width];
-			int g = sourceImageCopy[4*i+4*j*width+1];
-			int b = sourceImageCopy[4*i+4*j*width+2];
+			uint8_t r = sourceImageCopy[4*i+4*j*width];
+			uint8_t g = sourceImageCopy[4*i+4*j*width+1];
+			uint8_t b = sourceImageCopy[4*i+4*j*width+2];
 			
 			// now for all the other pixels in this chunk, set them to this color 
 			for(int k = i; k < i+chunkWidth; k++){
@@ -275,10 +273,10 @@ void mosaicFilter(std::vector<char>& imageData, int width, int height, int chunk
 	outline filter 
 
 ***/
-void outlineFilter(std::vector<char>& imageData, int width, int height, int colorDiffLimit){
+void outlineFilter(std::vector<uint8_t>& imageData, int width, int height, int colorDiffLimit){
 	
 	// make a copy of the data 
-	std::vector<char> sourceImageCopy(imageData);
+	std::vector<uint8_t> sourceImageCopy(imageData);
 	
 	// for each pixel, check the above pixel (if it exists)
 	// if the above pixel is 'significantly' different (i.e. more than +/- 5 of rgb),
@@ -300,13 +298,13 @@ void outlineFilter(std::vector<char>& imageData, int width, int height, int colo
 				int currIndexG = i*width*4 + j*4 + 1;
 				int currIndexB = i*width*4 + j*4 + 2;
 				
-				unsigned char aboveR = sourceImageCopy[aboveIndexR];
-				unsigned char aboveG = sourceImageCopy[aboveIndexG];
-				unsigned char aboveB = sourceImageCopy[aboveIndexB];
+				uint8_t aboveR = sourceImageCopy[aboveIndexR];
+				uint8_t aboveG = sourceImageCopy[aboveIndexG];
+				uint8_t aboveB = sourceImageCopy[aboveIndexB];
 			
-				unsigned char currR = sourceImageCopy[currIndexR]; 
-				unsigned char currG = sourceImageCopy[currIndexG];
-				unsigned char currB = sourceImageCopy[currIndexB];
+				uint8_t currR = sourceImageCopy[currIndexR]; 
+				uint8_t currG = sourceImageCopy[currIndexG];
+				uint8_t currB = sourceImageCopy[currIndexB];
 				
 				if(aboveR - currR < limit && aboveR - currR > -limit){
 					if(aboveG - currG < limit && aboveG - currG > -limit){
@@ -346,11 +344,149 @@ void outlineFilter(std::vector<char>& imageData, int width, int height, int colo
 
 /***
 
-	blur filter 
+	blur filter
+	
+	source: http://blog.ivank.net/fastest-gaussian-blur.html
+	see also Marc Pérez's comment in the above link
 
 ***/
-void blurFilter(std::vector<char>& imageData, int width){
+std::vector<double> generateGaussBoxes(double stdDev, double numBoxes){
+	// I honestly don't know how this works :/ TODO: understand how/why this works
+	// wikipedia is a good start: https://en.wikipedia.org/wiki/Gaussian_blur
+	double wIdeal = std::sqrt((12*stdDev*stdDev/numBoxes) + 1); // ideal averaging filter width
+	
+	double wl = std::floor(wIdeal);
+	
+	if(wl%2 == 0){
+		wl--;
+	}
+	
+	double wu = wl+2;
+	
+	double mIdeal = (12*stdDev*stdDev - numBoxes*wl*wl - 4*numBoxes*wl - 3*numBoxes)/(-4*wl - 4);
+	double m = std::round(mIdeal);
+	
+	std::vector<double> sizes;
+	
+	for(double i = 0; i < numBoxes; i++){
+		sizes.push_back(i < m ? wl : wu);
+	}
+	
+	return sizes;
+}
+
+void boxBlurHorz(std::vector<char>& src, std::vector<char>& trgt, int width, int height, double stdDev){
+	double iarr = 1 / (stdDev+stdDev+1);
+	for(int i = 0; i < height; i++){
+		int ti = i*width;
+		int li = ti;
+		int ri = (int)(ti+stdDev);
+		
+		int fv = src[ti];
+		int lv = src[ti+width-1];
+		int val = (int)(stdDev+1)*fv;
+		
+		for(int j = 0; j < stdDev; j++){
+			val += src[ti+j];
+		}
+		
+		for(int j = 0; j <= stdDev; j++){
+			val += src[ri++] - fv;
+			trgt[ti++] = (int)std::round(val*iarr);
+		}
+		
+		for(int j = (int)stdDev+1; j < (int)width-stdDev; j++){
+			val += src[ri++] - src[li++];
+			trgt[ti++] = (int)std::round(val*iarr);
+		}
+		
+		for(int j = (int)width-stdDev; j < width; j++){
+			val += lv - src[li++];
+			trgt[ti++] = (int)std::round(val*iarr);
+		}
+	}
+}
+
+void boxBlurTotal(std::vector<char>& src, std::vector<char>& trgt, int width, int height, double stdDev){
+	const iarr = 1 / (stdDev+stdDev+1);
+	for(int i = 0; i < width; i++){
+		int ti = i;
+		int li = ti;
+		int ri = (int)ti+stdDev*width;
+		
+		int fv = src[ti];
+		int lv = src[ti+width*(height-1)];
+		int val = (int)(stdDev+1)*fv;
+		
+		for(int j = 0; j < stdDev; j++){
+			val += src[ti+j*width];
+		}
+		
+		for(int j = 0; j <= stdDev; j++){
+			val += src[ri] - fv;
+			trgt[ti] = Math.round(val*iarr);
+			ri += width;
+			ti += width;
+		}
+		
+		for(int j = (int)stdDev+1; j < height-stdDev; j++){
+			val += src[ri] - src[li];
+			trgt[ti] = Math.round(val*iarr);
+			li += width;
+			ri += width;
+			ti += width;
+		}
+		
+		for(int j = (int)height-stdDev; j < height; j++){
+			val += lv - src[li];
+			trgt[ti] = Math.round(val*iarr);
+			li += width;
+			ti += width;
+		}
+	}
+}
+
+void boxBlur(std::vector<char>& src, std::vector<char>& trgt, int width, int height, double stdDev){
+	for(unsigned int i = 0; i < src.size(); i++){
+		trgt[i] = src[i];
+	}
+	boxBlurHorz(trgt, src, width, height, stdDev);
+	boxBlurTotal(src, trgt, width, height, stdDev);
+}
+
+// source channel, target channel, width, height, stdDev
+void gaussBlur(std::vector<char>& src, std::vector<char>& trgt, int width, int height, double stdDev){
+	std::vector<double> boxes = generateGaussBoxes(stdDev, 3);
+	boxBlur(src, trgt, width, height, (boxes[0]-1)/2);
+	boxBlur(trgt, src, width, height, (boxes[1]-1)/2);
+	boxBlur(src, trgt, width, height, (boxes[2]-1)/2);
+}
+
+void blurFilter(std::vector<uint8_t>& imageData, int width, int height, double stdDev){
+	/*
 	unsigned int dataSize = imageData.size();
+	
+	std::vector<char> redChannel(dataSize/4);
+	std::vector<char> greenChannel(dataSize/4);
+	std::vector<char> blueChannel(dataSize/4);
+	
+	for(unsigned int i = 0; i < dataSize; i+=4){
+		redChannel[i/4] = imageData[i];
+		greenChannel[i/4] = imageData[i+1];
+		blueChannel[i/4] = imageData[i+2];
+	}
+	
+	const blurFactor = this.params.blurFactor.value;
+	gaussBlur(redChannel, redChannel, width, height, blurFactor);
+	gaussBlur(greenChannel, greenChannel, width, height, blurFactor);
+	gaussBlur(blueChannel, blueChannel, width, height, blurFactor);
+	
+	for(let i = 0; i < data.length; i+=4){
+		imageData[i] = redChannel[i/4];
+		imageData[i+1] = greenChannel[i/4];
+		imageData[i+2] = blueChannel[i/4];
+	}
+	*/
 }
 
 
