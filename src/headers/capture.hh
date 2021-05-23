@@ -12,7 +12,7 @@
 #include <memory>     // for screen capture 
 #include <string>   // for int to string conversion 
 #include <sstream>  // for int to string conversion 
-#include <vector>   // used throughout 
+#include <vector>   // used throughout
 #include <map>
 #include <ctime>
 #include "bmp_helper.hh" // filter function declarations
@@ -34,8 +34,10 @@ struct windowInfo {
 	// parameters from the parameters page 
 	COLORREF selectionWindowColor;
 	float saturationValue;
-	int mosaicChunkSize; 		// for mosaic filter 
-	int outlineColorDiffLimit; // for outline filter 
+	int mosaicChunkSize; 		 // for mosaic filter 
+	int outlineColorDiffLimit;   // for outline filter 
+	int voronoiNeighborConstant; // for Voronoi filter
+	int blurFactor;              // for blur filter
 	bool getCursor;
 };
 

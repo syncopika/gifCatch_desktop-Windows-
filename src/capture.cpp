@@ -2,7 +2,7 @@
 
 // needs gif.h to create the gif (https://github.com/ginsweater/gif-h/blob/master/gif.h) 
 // include it here (and not the header file!) to prevent multiple definition errors
-#include "headers/gif.h"         
+#include "headers/gif-old.h"
 #include "headers/capture.hh"    // function declarations
 
 // probably should convert to non-namespace later 
@@ -220,10 +220,9 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 		// resize the original bmp 
 		Graphics graphics(newBMP); // the new bitmap is the new canvas to draw the resized image on 
 		graphics.DrawImage(bmp, 0, 0, width, height);
-		// delete bmp 
 		delete bmp;
 	
-		// memefy if there's text in the specified box 
+		// caption if there's text in the specified box 
 		if(memeText != ""){
 			std::wstring mtext = std::wstring(memeText.begin(), memeText.end());
 			const wchar_t* string = mtext.c_str(); //L"BLAH BLAH BLAH";
@@ -421,42 +420,19 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
 		// ready to move on to next step 
 		return finalImageData;
 	}
-	
-	// use this for passing to the filters (which need a char vector)
-	// cast the uint8_t to chars first
-	std::vector<char> imgDataAsChar;
-	for(auto start = finalImageData.begin(), end = finalImageData.end(); start != end; start++){
-		imgDataAsChar.push_back(static_cast<char>(*start));
-	}
-	
+
 	// use gifParams to get specific parameters for specific filters
-	if(filtername == "inverted"){
-		inversionFilter(imgDataAsChar);
-    }else if(filtername == "saturated"){
-		saturationFilter(gifParams->saturationValue, imgDataAsChar);
-	}else if(filtername == "weird"){
-		weirdFilter(imgDataAsChar);
-	}else if(filtername == "grayscale"){
-		grayscaleFilter(imgDataAsChar);
-	}else if(filtername == "edge_detect"){
-		edgeDetectionFilter(imgDataAsChar, (int)width, (int)height);
-	}else if(filtername == "mosaic"){
-		mosaicFilter(imgDataAsChar, (int)width, (int)height, gifParams->mosaicChunkSize);
-	}else if(filtername == "outline"){
-		outlineFilter(imgDataAsChar, (int)width, (int)height, gifParams->outlineColorDiffLimit);
-	}else if(filtername == "voronoi"){
-		voronoiFilter(imgDataAsChar, (int)width, (int)height, 30);
-	}
-	
-	// go back to uint8_t from char 
-	for(auto start = imgDataAsChar.begin(), end = imgDataAsChar.end(); start != end; start++){
-		// get the index 
-		auto index = std::distance(imgDataAsChar.begin(), start);
-		finalImageData[index] = *start;
-	}
+	if(filtername == "inverted") 	inversionFilter(finalImageData);
+	if(filtername == "saturated") 	saturationFilter(gifParams->saturationValue, finalImageData);
+	if(filtername == "weird") 		weirdFilter(finalImageData);
+	if(filtername == "grayscale") 	grayscaleFilter(finalImageData);
+	if(filtername == "edge_detect") edgeDetectionFilter(finalImageData, (int)width, (int)height);
+	if(filtername == "mosaic") 		mosaicFilter(finalImageData, (int)width, (int)height, gifParams->mosaicChunkSize);
+	if(filtername == "outline") 	outlineFilter(finalImageData, (int)width, (int)height, gifParams->outlineColorDiffLimit);
+	if(filtername == "voronoi") 	voronoiFilter(finalImageData, (int)width, (int)height, gifParams->voronoiNeighborConstant);
+	if(filtername == "blur") 		blurFilter(finalImageData, (int)width, (int)height, (double)gifParams->blurFactor); // TODO: just change blur factor to int?
 	
 	return finalImageData;
-	
 }
 
 
