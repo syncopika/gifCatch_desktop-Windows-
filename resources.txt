@@ -1,14 +1,8 @@
 help! - resources I looked at to help me with this program
 
-// win32 basics 
+// win32 basics/misc
 http://www.winprog.org/tutorial/start.html
-
-// screen capture with GDI
-https://github.com/ebonwheeler/Win32GrabScreen/blob/master/capture.cpp
-
-// gif-making 
-https://github.com/ginsweater/gif-h/blob/master/gif.h
-
+https://stackoverflow.com/questions/45208538/c-string-variable-in-text-macro
 https://stackoverflow.com/questions/2382464/win32-full-screen-and-hiding-taskbar
 https://stackoverflow.com/questions/1857292/how-do-you-get-the-location-in-x-y-coordinate-pixels-of-a-mouse-click
 https://stackoverflow.com/questions/3970066/creating-a-transparent-window-in-c-win32
@@ -17,6 +11,12 @@ https://stackoverflow.com/questions/30668040/specifying-a-window-procedure-for-c
 https://stackoverflow.com/questions/15605655/transparent-win32-window-and-text
 https://msdn.microsoft.com/en-us/library/windows/desktop/ms633504(v=vs.85).aspx
 https://msdn.microsoft.com/en-us/library/windows/desktop/ms633548(v=vs.85).aspx  // show/hide window 
+
+// screen capture with GDI
+https://github.com/ebonwheeler/Win32GrabScreen/blob/master/capture.cpp
+
+// gif-making 
+https://github.com/ginsweater/gif-h/blob/master/gif.h
 
 // dragging rectangle / rubberband 
 http://jdearden.gotdns.org/programming_windows_notebook/how_to_use_win32_api_to_draw_a_dragging_rectangle_on_screen_dc.html
@@ -93,3 +93,4 @@ https://blog.saush.com/2011/04/20/edge-detection-with-the-sobel-operator-in-ruby
 https://blog.krum.io/k-d-trees/
 https://github.com/z2oh/chromatic_confinement/blob/master/src/main.rs
 https://stackoverflow.com/questions/1627305/nearest-neighbor-k-d-tree-wikipedia-proof/37107030#37107030
+http://blog.ivank.net/fastest-gaussian-blur.html

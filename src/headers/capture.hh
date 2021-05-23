@@ -34,8 +34,10 @@ struct windowInfo {
 	// parameters from the parameters page 
 	COLORREF selectionWindowColor;
 	float saturationValue;
-	int mosaicChunkSize; 		// for mosaic filter 
-	int outlineColorDiffLimit; // for outline filter 
+	int mosaicChunkSize; 		 // for mosaic filter 
+	int outlineColorDiffLimit;   // for outline filter 
+	int voronoiNeighborConstant; // for Voronoi filter
+	int blurFactor;              // for blur filter
 	bool getCursor;
 };
 

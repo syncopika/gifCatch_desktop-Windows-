@@ -47,8 +47,8 @@ std::vector<int> getPixelCoords(int index, int width, int height){
 		return emptyVec;
 	}
 	
-	int pixelNum = floor(index / 4);
-	int yCoord = floor(pixelNum / width); // find what row this pixel belongs in
+	int pixelNum = std::floor(index / 4);
+	int yCoord = std::floor(pixelNum / width); // find what row this pixel belongs in
 	int xCoord = pixelNum - (yCoord * width); // find the difference between the pixel number of the pixel at the start of the row and this pixel 
 	
 	std::vector<int> coords;
@@ -506,10 +506,13 @@ void voronoiFilter(std::vector<uint8_t>& imageData, int width, int height, int n
 		int offset = rand() % 10;
 		int sign = (rand() % 5 + 1) > 5 ? 1 : -1;  // if random num is > 5, positive sign
 		
-		std::vector<int> c1 = getPixelCoords(i, width, height); // index 0 = x, index 1 = y 
-		if(c1[0] % (int)floor(width / 30) == 0 && c1[1] % (int)floor(height / 30) == 0 && c1[0] != 0){
-			int x = (sign * offset) + c1[0];
-			int y = (sign * offset) + c1[1];
+		std::vector<int> pxCoords = getPixelCoords(i, width, height); // return index 0 = x, index 1 = y 
+		if(pxCoords[0] % (int)std::floor(width / neighborConstant) == 0 && 
+		   pxCoords[1] % (int)std::floor(height / neighborConstant) == 0 && 
+		   pxCoords[0] != 0){
+			// larger neighborConstant == more neighbors == more Voronoi shapes
+			int x = (sign * offset) + pxCoords[0];
+			int y = (sign * offset) + pxCoords[1];
 			CustomPoint p1 = CustomPoint(); 
 			p1.x = x;
 			p1.y = y;

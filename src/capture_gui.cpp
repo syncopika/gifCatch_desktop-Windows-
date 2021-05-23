@@ -70,7 +70,57 @@ std::map<int, std::string> filterMap = {
 };
 
 // default settings 
-windowInfo* gifParams = new windowInfo();
+windowInfo* gifParams = new windowInfo(); // from capture.hh
+
+/***
+
+	functions to make creating window wlements easier
+
+***/
+void createEditBox(std::string defaultText, int width, int height, int xCoord, int yCoord, HWND parent, HINSTANCE hInstance, HMENU elementId, HFONT hFont){
+	HWND editBox = CreateWindow(
+		TEXT("edit"),
+		defaultText.c_str(),
+		WS_VISIBLE | WS_CHILD | WS_BORDER, 
+		xCoord, yCoord,  /* x, y coords */
+		width, height, /* width, height */
+		parent,
+		elementId,
+		hInstance,
+		NULL
+	);
+	SendMessage(editBox, WM_SETFONT, (WPARAM)hFont, true);
+}
+
+void createLabel(std::string defaultText, int width, int height, int xCoord, int yCoord, HWND parent, HINSTANCE hInstance, HMENU elementId, HFONT hFont){
+	HWND label = CreateWindow(
+	    TEXT("STATIC"),
+        defaultText.c_str(),
+        WS_VISIBLE | WS_CHILD | SS_LEFT,
+		xCoord, yCoord,  /* x, y coords */
+		width, height, /* width, height */
+		parent,
+		elementId,
+		hInstance,
+        NULL
+	);
+	SendMessage(label, WM_SETFONT, (WPARAM)hFont, true);
+}
+
+void createCheckBox(std::string defaultText, int width, int height, int xCoord, int yCoord, HWND parent, HINSTANCE hInstance, HMENU elementId, HFONT hFont){
+	HWND checkBox = CreateWindow(
+		TEXT("button"),
+		defaultText.c_str(),
+		BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE,
+		xCoord, yCoord,  /* x, y coords */
+		width, height, /* width, height */
+		parent,
+		elementId,
+		hInstance,
+		NULL
+	);
+	SendMessage(checkBox, WM_SETFONT, (WPARAM)hFont, true);
+}
 
 /******************
 
@@ -85,21 +135,12 @@ void makeGif(windowInfo* args){
 	PostMessage(mainWindow, ID_IN_PROGRESS, 0, 0);
 	
 	int nFrames = args->numFrames;
-	//std::cout << "frames: " << nFrames << std::endl;
 	
 	int tDelay = args->timeDelay;
-	//std::cout << "delay: " << tDelay << std::endl;
-	
-	//std::string filterName = (*(args->filters))[args->selectedFilter];
-	//int currFilterIndex = args->selectedFilter;
-	//std::cout << "currFilterIndex: " << currFilterIndex << std::endl;
-	//std::cout << "filter name: " << filterName << std::endl;
 	
 	std::string theDir = args->directory;
-	//std::cout << "directory: " << theDir << std::endl;
 	
 	std::string theText = args->memeText;
-	//std::cout << "memetext: " << theText << std::endl;
 	
 	// indicate process started 
 	PostMessage(mainWindow, ID_IN_PROGRESS, 0, 0);
@@ -300,7 +341,6 @@ LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				
                 case ID_SELECT_SCREENAREA_BUTTON:
                 {
-					
                     // make a new window to select the area 
                     int x = GetSystemMetrics(SM_CXSCREEN);
                     int y = GetSystemMetrics(SM_CYSCREEN);
@@ -329,7 +369,6 @@ LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				
                 case ID_START_BUTTON:
                 {
-					
 					// get the parameters 
 					HWND frames = GetDlgItem(hwnd, ID_NUMFRAMES_TEXTBOX);
 					HWND delay = GetDlgItem(hwnd, ID_DELAY_TEXTBOX);
@@ -515,6 +554,18 @@ LRESULT CALLBACK WndProcParameterPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 						TCHAR outlineValue[5];
 						GetWindowText(outline, outlineValue, sizeof(outlineValue));
 						gifParams->outlineColorDiffLimit = atoi(outlineValue);
+						
+						// get the Voronoi neighbor constant value
+						HWND voronoi = GetDlgItem(hwnd, ID_SET_VORONOI);
+						TCHAR voronoiValue[5];
+						GetWindowText(voronoi, voronoiValue, sizeof(voronoiValue));
+						gifParams->voronoiNeighborConstant = atoi(voronoiValue);
+						
+						// get the blur factor value
+						HWND blur = GetDlgItem(hwnd, ID_SET_BLUR);
+						TCHAR blurValue[5];
+						GetWindowText(blur, blurValue, sizeof(blurValue));
+						gifParams->blurFactor = atoi(blurValue);
 						
 						// get the value of 'show cursor' checkbox 
 						HWND getCursorBox = GetDlgItem(hwnd, ID_GET_CURSOR);
@@ -985,19 +1036,8 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
 	like for image filters, or to change the color of the selection screen 
 ***/
 void createParameterPage(HWND hwnd, HINSTANCE hInstance){
-	
-	HWND setColorLabel = CreateWindow(
-	    TEXT("STATIC"),
-        TEXT("choose selection screen color: "),
-        WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 12,
-        180, 20,
-        hwnd,
-        NULL,
-        hInstance,
-        NULL
-	);
-	SendMessage(setColorLabel, WM_SETFONT, (WPARAM)hFont, true);
+		
+	createLabel("choose selection screen color: ", 180, 20, 10, 12, hwnd, hInstance, NULL, hFont);
 		
 	HWND setColorBox = CreateWindow(
 		WC_COMBOBOX,
@@ -1016,127 +1056,28 @@ void createParameterPage(HWND hwnd, HINSTANCE hInstance){
 	SendMessage(setColorBox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)"light green");
 	SendMessage(setColorBox, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);
 	
-	// set saturation value (float) for saturation filter 
-	HWND setSaturationLabel = CreateWindow(
-	    TEXT("STATIC"),
-        TEXT("set saturation value: "),
-        WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 45,
-        200, 20,
-        hwnd,
-        NULL,
-        hInstance,
-        NULL
-	);
-	SendMessage(setSaturationLabel, WM_SETFONT, (WPARAM)hFont, true);
-		
-	HWND setSaturationBox = CreateWindow(
-		TEXT("edit"),
-		TEXT("2.1"),
-		WS_VISIBLE | WS_CHILD | WS_BORDER, 
-		210, 43,  /* x, y coords */
-		50, 20, /* width, height */
-		hwnd,
-		(HMENU)ID_SET_SATURATION,
-		hInstance,
-		NULL
-	);
-	SendMessage(setSaturationBox, WM_SETFONT, (WPARAM)hFont, true);
+	// set saturation value (float) for saturation filter
+	createLabel("set saturation value: ", 200, 20, 10, 45, hwnd, hInstance, NULL, hFont);
+	createEditBox("2.1", 50, 20, 210, 43, hwnd, hInstance, (HMENU)ID_SET_SATURATION, hFont);
 	
-	// set mosaic value (int) for saturation filter 
-	HWND setMosaicLabel = CreateWindow(
-	    TEXT("STATIC"),
-        TEXT("set mosaic chunk size: "),
-        WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 85,
-        200, 20,
-        hwnd,
-        NULL,
-        hInstance,
-        NULL
-	);
-	SendMessage(setMosaicLabel, WM_SETFONT, (WPARAM)hFont, true);
-		
-	HWND setMosaicBox = CreateWindow(
-		TEXT("edit"),
-		TEXT("30"),
-		WS_VISIBLE | WS_CHILD | WS_BORDER, 
-		210, 83,  /* x, y coords */
-		50, 20, /* width, height */
-		hwnd,
-		(HMENU)ID_SET_MOSAIC,
-		hInstance,
-		NULL
-	);
-	SendMessage(setMosaicBox, WM_SETFONT, (WPARAM)hFont, true);
+	// set mosaic chunk size for the mosaic filter
+	createLabel("set mosaic chunk size: ", 200, 20, 10, 85, hwnd, hInstance, NULL, hFont);
+	createEditBox("10", 50, 20, 210, 83, hwnd, hInstance, (HMENU)ID_SET_MOSAIC, hFont);
 	
-	// set the difference limit allowed betweeen 2 pixel colors (int) for outline filter 
-	HWND setOutlineLabel = CreateWindow(
-	    TEXT("STATIC"),
-        TEXT("set outline difference limit: "),
-        WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 125,
-        200, 20,
-        hwnd,
-        NULL,
-        hInstance,
-        NULL
-	);
-	SendMessage(setOutlineLabel, WM_SETFONT, (WPARAM)hFont, true);
-		
-	HWND setOutlineBox = CreateWindow(
-		TEXT("edit"),
-		TEXT("10"),
-		WS_VISIBLE | WS_CHILD | WS_BORDER, 
-		210, 123,  /* x, y coords */
-		50, 20, /* width, height */
-		hwnd,
-		(HMENU)ID_SET_OUTLINE,
-		hInstance,
-		NULL
-	);
-	SendMessage(setOutlineBox, WM_SETFONT, (WPARAM)hFont, true);
+	// set the difference limit allowed betweeen 2 pixel colors (int) for outline filter
+	createLabel("set outline difference limit: ", 200, 20, 10, 125, hwnd, hInstance, NULL, hFont);
+	createEditBox("10", 50, 20, 210, 123, hwnd, hInstance, (HMENU)ID_SET_OUTLINE, hFont);
+	
+	// set neighbor constant for Voronoi
+	createLabel("set Voronoi neighbor constant: ", 180, 20, 10, 165, hwnd, hInstance, NULL, hFont);
+	createEditBox("30", 50, 20, 210, 165, hwnd, hInstance, (HMENU)ID_SET_VORONOI, hFont);
 	
 	// set blur factor 
-	HWND setBlurFactorLabel = CreateWindow(
-	    TEXT("STATIC"),
-        TEXT("set blur factor: "),
-        WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 165,
-        170, 20,
-        hwnd,
-        NULL,
-        hInstance,
-        NULL
-	);
-	SendMessage(setBlurFactorLabel, WM_SETFONT, (WPARAM)hFont, true);
-		
-	HWND setBlurFactorBox = CreateWindow(
-		TEXT("edit"),
-		TEXT("3"),
-		WS_VISIBLE | WS_CHILD | WS_BORDER, 
-		210, 165,  /* x, y coords */
-		50, 20, /* width, height */
-		hwnd,
-		(HMENU)ID_SET_BLUR,
-		hInstance,
-		NULL
-	);
-	SendMessage(setBlurFactorBox, WM_SETFONT, (WPARAM)hFont, true);
-	
-	// set whether the gif should capture the cursor or not 
-	HWND getCursorBox = CreateWindow(
-		TEXT("button"),
-		TEXT("capture screen cursor"),
-		BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE,
-		10, 190,
-		180, 50,
-		hwnd,
-		(HMENU)ID_GET_CURSOR,
-		hInstance,
-		NULL
-	);
-	SendMessage(getCursorBox, WM_SETFONT, (WPARAM)hFont, true);
+	createLabel("set blur factor: ", 170, 20, 10, 205, hwnd, hInstance, NULL, hFont);
+	createEditBox("3", 50, 20, 210, 205, hwnd, hInstance, (HMENU)ID_SET_BLUR, hFont);
+
+	// set whether the gif should capture the cursor or not
+	createCheckBox("capture screen cursor", 180, 50, 10, 230, hwnd, hInstance, NULL, hFont);
 	
 	HWND saveParameters = CreateWindow(
 		TEXT("button"),
@@ -1190,8 +1131,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	gifParams->saturationValue = 2.1;
 	gifParams->mosaicChunkSize = 30;
 	gifParams->outlineColorDiffLimit = 10;
+	gifParams->voronoiNeighborConstant = 30;
+	gifParams->blurFactor = 3;
 	gifParams->getCursor = false;
-	//std::cout << "first filter: " << (*(gifParams->filters))[0] << std::endl;
     
     // for improving the gui appearance (buttons, that is. the font needs to be changed separately) 
     INITCOMMONCONTROLSEX icc;
