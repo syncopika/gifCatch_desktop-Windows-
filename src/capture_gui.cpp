@@ -81,7 +81,7 @@ void createEditBox(std::string defaultText, int width, int height, int xCoord, i
 	HWND editBox = CreateWindow(
 		TEXT("edit"),
 		defaultText.c_str(),
-		WS_VISIBLE | WS_CHILD | WS_BORDER, 
+		WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, 
 		xCoord, yCoord,  /* x, y coords */
 		width, height, /* width, height */
 		parent,
@@ -539,33 +539,41 @@ LRESULT CALLBACK WndProcParameterPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 						HWND saturation = GetDlgItem(hwnd, ID_SET_SATURATION);
 						TCHAR saturationValue[5];
 						GetWindowText(saturation, saturationValue, sizeof(saturationValue));
-						
-						// need to validate!!
-						gifParams->saturationValue = atof(saturationValue);
+						float satVal = atof(saturationValue);
+						gifParams->saturationValue = satVal > 10.0 ? 10.0 : satVal;
+						SetDlgItemText(hwnd, ID_SET_SATURATION, std::to_string((gifParams->saturationValue)).c_str());
 						
 						// get the mosaic chunk size value
 						HWND mosaic = GetDlgItem(hwnd, ID_SET_MOSAIC);
 						TCHAR mosaicValue[5];
 						GetWindowText(mosaic, mosaicValue, sizeof(mosaicValue));
-						gifParams->mosaicChunkSize = atoi(mosaicValue);
+						int mosVal = atoi(mosaicValue);
+						gifParams->mosaicChunkSize = mosVal > 80 ? 80 : mosVal;
+						SetDlgItemText(hwnd, ID_SET_MOSAIC, std::to_string(gifParams->mosaicChunkSize).c_str());
 						
 						// get the outline size value 
 						HWND outline = GetDlgItem(hwnd, ID_SET_OUTLINE);
 						TCHAR outlineValue[5];
 						GetWindowText(outline, outlineValue, sizeof(outlineValue));
-						gifParams->outlineColorDiffLimit = atoi(outlineValue);
+						int outlineVal = atoi(outlineValue);
+						gifParams->outlineColorDiffLimit = outlineVal > 20 ? 20 : outlineVal;
+						SetDlgItemText(hwnd, ID_SET_OUTLINE, std::to_string(gifParams->outlineColorDiffLimit).c_str());
 						
 						// get the Voronoi neighbor constant value
 						HWND voronoi = GetDlgItem(hwnd, ID_SET_VORONOI);
 						TCHAR voronoiValue[5];
 						GetWindowText(voronoi, voronoiValue, sizeof(voronoiValue));
-						gifParams->voronoiNeighborConstant = atoi(voronoiValue);
+						int voronoiConst = atoi(voronoiValue);
+						gifParams->voronoiNeighborConstant = voronoiConst > 60 ? 60 : voronoiConst;
+						SetDlgItemText(hwnd, ID_SET_VORONOI, std::to_string(gifParams->voronoiNeighborConstant).c_str());
 						
 						// get the blur factor value
 						HWND blur = GetDlgItem(hwnd, ID_SET_BLUR);
 						TCHAR blurValue[5];
 						GetWindowText(blur, blurValue, sizeof(blurValue));
-						gifParams->blurFactor = atoi(blurValue);
+						int blurVal = atoi(blurValue);
+						gifParams->blurFactor = blurVal > 10 ? 10 : blurVal;
+						SetDlgItemText(hwnd, ID_SET_BLUR, std::to_string(gifParams->blurFactor).c_str());
 						
 						// get the value of 'show cursor' checkbox 
 						HWND getCursorBox = GetDlgItem(hwnd, ID_GET_CURSOR);
@@ -803,107 +811,21 @@ LRESULT CALLBACK WndProcAboutPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 	and an HINSTANCE
 ***/
 void createMainScreen(HWND hwnd, HINSTANCE hInstance){
-    
-    /* make text box for # FRAMES TO COLLECT (HWND textInputPriorityLabel) */
-    HWND framesLabel = CreateWindow(
-        TEXT("STATIC"),
-        TEXT("# frames to get: "),
-        WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 20,
-        110, 20,
-        hwnd, /* parent window */
-        (HMENU)ID_NUMFRAMES_LABEL,
-        hInstance,
-        NULL
-    );
-    SendMessage(framesLabel, WM_SETFONT, (WPARAM)hFont, true);
-    
-    /* make text box  ADD NUMBER OF FRAMES TO COLLECT  (HWND textInput)*/
-    HWND editFrames = CreateWindow(
-        TEXT("edit"),
-        TEXT(""),
-        WS_VISIBLE | WS_CHILD | WS_BORDER,
-        110, 20,  /* x, y coords */
-        80, 20, /* width, height */
-        hwnd,
-        (HMENU)ID_NUMFRAMES_TEXTBOX,
-        hInstance,
-        NULL
-    );
-    SendMessage(editFrames, WM_SETFONT, (WPARAM)hFont, true);
-    /* prepopulate text input */
-    SetDlgItemText(hwnd, ID_NUMFRAMES_TEXTBOX, "10");
-    
-    HWND frameLimit = CreateWindow(
-        TEXT("STATIC"),
-        TEXT("1 <= frames <= 50"),
-        WS_VISIBLE | WS_CHILD | SS_LEFT,
-        210, 20,
-        130, 20,
-        hwnd, /* parent window */
-        NULL,
-        hInstance,
-        NULL
-    );
-    SendMessage(frameLimit, WM_SETFONT, (WPARAM)hFont, true);
-    
-    /* make text box LABEL FOR DELAY (HWND textInputPriorityLabel) */
-    HWND delayLabel = CreateWindow(
-        TEXT("STATIC"),
-        TEXT("# delay (ms): "),
-        WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 50,
-        100, 20,
-        hwnd, /* parent window */
-        (HMENU)ID_DELAY_LABEL,
-        hInstance,
-        NULL
-    );
-    SendMessage(delayLabel, WM_SETFONT, (WPARAM)hFont, true);
-    
-    HWND editDelay = CreateWindow(
-        TEXT("edit"),
-        TEXT(""),
-        WS_VISIBLE | WS_CHILD | WS_BORDER,
-        110, 50,  /* x, y coords */
-        80, 20, /* width, height */
-        hwnd,
-        (HMENU)ID_DELAY_TEXTBOX,
-        hInstance,
-        NULL
-    );
-    SendMessage(editDelay, WM_SETFONT, (WPARAM)hFont, true);
-    /* prepopulate text input */
-    SetDlgItemText(hwnd, ID_DELAY_TEXTBOX, "120");
-    
-    HWND delayLimit = CreateWindow(
-        TEXT("STATIC"),
-        TEXT("10 <= ms <= 1000"),
-        WS_VISIBLE | WS_CHILD | SS_LEFT,
-        210, 50,
-        130, 20,
-        hwnd, /* parent window */
-        NULL,
-        hInstance,
-        NULL
-    );
-    SendMessage(delayLimit, WM_SETFONT, (WPARAM)hFont, true);
 	
-	/* combobox to select image filter LABEL */
-	HWND filterComboBoxLabel = CreateWindow(
-		TEXT("STATIC"),
-        TEXT("filter options: "),
-        WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 85,
-        80, 20,
-        hwnd, /* parent window */
-        (HMENU)ID_FILTERS_LABEL,
-        hInstance,
-        NULL
-	);
-	SendMessage(filterComboBoxLabel, WM_SETFONT, (WPARAM)hFont, true);
+	// set num frames to collect
+	createLabel("# frames to get: ", 110, 20, 10, 20, hwnd, hInstance, (HMENU)ID_NUMFRAMES_LABEL, hFont);
+	createEditBox("10", 80, 20, 110, 20, hwnd, hInstance, (HMENU)ID_NUMFRAMES_TEXTBOX, hFont);
+	createLabel("1 <= frames <= 50", 130, 20, 210, 20, hwnd, hInstance, NULL, hFont);
+    
+	// set gif frame delay time
+	createLabel("# delay (ms): ", 100, 20, 10, 50, hwnd, hInstance, (HMENU)ID_DELAY_LABEL, hFont);
+	createEditBox("120", 80, 20, 110, 50, hwnd, hInstance, (HMENU)ID_DELAY_TEXTBOX, hFont);
+	createLabel("10 <= ms <= 1000", 130, 20, 210, 50, hwnd, hInstance, NULL, hFont);
 	
-	/* combobox to select image filter */
+	// select image filter label
+	createLabel("filter options: ", 80, 20, 10, 85, hwnd, hInstance, (HMENU)ID_FILTERS_LABEL, hFont);
+	
+	// combobox to select image filter
 	HWND filterComboBox = CreateWindow(
 		WC_COMBOBOX,
 		TEXT(""),
@@ -927,32 +849,9 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
     // initially the filter is set to "none"
 	SendMessage(filterComboBox, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);
 	
-	/* let user select a directory of images to create gif from */
-    HWND createGifFromDir = CreateWindow(
-        TEXT("STATIC"),
-        TEXT("specify full directory path of images to generate gif from: "),
-        WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 130,
-        340, 20,
-        hwnd, /* parent window */
-        NULL,
-        hInstance,
-        NULL
-    );
-    SendMessage(createGifFromDir, WM_SETFONT, (WPARAM)hFont, true);
-	
-	HWND editImageDirectory = CreateWindow(
-		TEXT("edit"),
-		TEXT(""),
-		WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL,
-		10, 150,  /* x, y coords */
-		280, 20, /* width, height */
-		hwnd,
-		(HMENU)ID_CHOOSE_DIR,
-		hInstance,
-		NULL
-    );
-    SendMessage(editImageDirectory, WM_SETFONT, (WPARAM)hFont, true);
+	// let user select a directory of images to create gif from
+	createLabel("specify full directory path of images to generate gif from: ", 340, 20, 10, 130, hwnd, hInstance, NULL, hFont);
+	createEditBox("", 280, 20, 10, 150, hwnd, hInstance, (HMENU)ID_CHOOSE_DIR, hFont);
 	
 	/* 
 		let user memefy their gif. for now, it'll be a bit limited in that the text 
@@ -961,33 +860,10 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
 		the amount of text will vary depending on gif size as well
 		font will also be Impact and size will be determined by program 
 	*/
-	HWND memefyOption = CreateWindow(
-        TEXT("STATIC"),
-        TEXT("specify a message to show at bottom of gif: "),
-        WS_VISIBLE | WS_CHILD | SS_LEFT,
-        10, 190,
-        340, 20,
-        hwnd,
-        NULL,
-        hInstance,
-        NULL
-    );
-    SendMessage(memefyOption, WM_SETFONT, (WPARAM)hFont, true);
+	createLabel("specify a message to show at bottom of gif: ", 340, 20, 10, 190, hwnd, hInstance, NULL, hFont);
+	createEditBox("", 280, 20, 10, 210, hwnd, hInstance, (HMENU)ID_MEMEFY_MSG, hFont);
 	
-	HWND memefyMsg = CreateWindow(
-		TEXT("edit"),
-		TEXT(""),
-		WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL,
-		10, 210,
-		280, 20, 
-		hwnd,
-		(HMENU)ID_MEMEFY_MSG,
-		hInstance,
-		NULL
-	);
-	SendMessage(memefyMsg, WM_SETFONT, (WPARAM)hFont, true);
-	
-    /* button to select area of screen  */
+    // button to select area of screen
     HWND selectAreaButton = CreateWindow(
         TEXT("button"),
         TEXT("select area"),
@@ -1001,7 +877,7 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
     );
     SendMessage(selectAreaButton, WM_SETFONT, (WPARAM)hFont, true);
     
-    /* button to start the screen capture */
+    // button to start the screen capture
     HWND startButton = CreateWindow(
         TEXT("button"),
         TEXT("start"),
@@ -1015,7 +891,7 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
     );
     SendMessage(startButton, WM_SETFONT, (WPARAM)hFont, true);
     
-    /* text indicator/message for gif processing progress */
+    // text indicator/message for gif processing progress
     HWND progressBar = CreateWindow(
         TEXT("STATIC"),
         TEXT(""),
@@ -1077,7 +953,7 @@ void createParameterPage(HWND hwnd, HINSTANCE hInstance){
 	createEditBox("3", 50, 20, 210, 205, hwnd, hInstance, (HMENU)ID_SET_BLUR, hFont);
 
 	// set whether the gif should capture the cursor or not
-	createCheckBox("capture screen cursor", 180, 50, 10, 230, hwnd, hInstance, NULL, hFont);
+	createCheckBox("capture screen cursor", 180, 50, 10, 230, hwnd, hInstance, (HMENU)ID_GET_CURSOR, hFont);
 	
 	HWND saveParameters = CreateWindow(
 		TEXT("button"),
@@ -1118,10 +994,9 @@ void createAboutPage(HWND hwnd, HINSTANCE hInstance){
 	MAIN METHOD FOR GUI
     
 **************/
-
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow){
 
-    /* console attached for debugging */
+    /* console attached for debugging std::cout statements */
     //AllocConsole();
     //freopen("CON", "w", stdout);
 	
