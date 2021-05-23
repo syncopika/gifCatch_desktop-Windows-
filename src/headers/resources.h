@@ -37,7 +37,8 @@
 #define ID_SET_SATURATION 203
 #define ID_SET_MOSAIC 204
 #define ID_SET_OUTLINE 205
-#define ID_GET_CURSOR 206
+#define ID_SET_BLUR 206
+#define ID_GET_CURSOR 207
 
 
 // IDs for signalling certain progress messages

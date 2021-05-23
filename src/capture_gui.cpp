@@ -1097,12 +1097,39 @@ void createParameterPage(HWND hwnd, HINSTANCE hInstance){
 	);
 	SendMessage(setOutlineBox, WM_SETFONT, (WPARAM)hFont, true);
 	
+	// set blur factor 
+	HWND setBlurFactorLabel = CreateWindow(
+	    TEXT("STATIC"),
+        TEXT("set blur factor: "),
+        WS_VISIBLE | WS_CHILD | SS_LEFT,
+        10, 165,
+        170, 20,
+        hwnd,
+        NULL,
+        hInstance,
+        NULL
+	);
+	SendMessage(setBlurFactorLabel, WM_SETFONT, (WPARAM)hFont, true);
+		
+	HWND setBlurFactorBox = CreateWindow(
+		TEXT("edit"),
+		TEXT("3"),
+		WS_VISIBLE | WS_CHILD | WS_BORDER, 
+		210, 165,  /* x, y coords */
+		50, 20, /* width, height */
+		hwnd,
+		(HMENU)ID_SET_BLUR,
+		hInstance,
+		NULL
+	);
+	SendMessage(setBlurFactorBox, WM_SETFONT, (WPARAM)hFont, true);
+	
 	// set whether the gif should capture the cursor or not 
 	HWND getCursorBox = CreateWindow(
 		TEXT("button"),
 		TEXT("capture screen cursor"),
 		BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE,
-		10, 145,
+		10, 190,
 		180, 50,
 		hwnd,
 		(HMENU)ID_GET_CURSOR,
@@ -1155,7 +1182,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     /* console attached for debugging */
     //AllocConsole();
-    //freopen( "CON", "w", stdout );
+    //freopen("CON", "w", stdout);
 	
 	// add some default parameters to gifParams immediately
 	gifParams->filters = &filterMap;

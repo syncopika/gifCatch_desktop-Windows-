@@ -430,7 +430,7 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
 	if(filtername == "mosaic") 		mosaicFilter(finalImageData, (int)width, (int)height, gifParams->mosaicChunkSize);
 	if(filtername == "outline") 	outlineFilter(finalImageData, (int)width, (int)height, gifParams->outlineColorDiffLimit);
 	if(filtername == "voronoi") 	voronoiFilter(finalImageData, (int)width, (int)height, 30); //TODO: customize voronoi weight
-	if(filtername == "blur") 		blurFilter(finalImageData, (int)width, (int)height, 3.0);
+	if(filtername == "blur") 		blurFilter(finalImageData, (int)width, (int)height, 3.0); // TODO: customize blur factor
 	
 	return finalImageData;
 	
