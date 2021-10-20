@@ -94,3 +94,10 @@ https://blog.krum.io/k-d-trees/
 https://github.com/z2oh/chromatic_confinement/blob/master/src/main.rs
 https://stackoverflow.com/questions/1627305/nearest-neighbor-k-d-tree-wikipedia-proof/37107030#37107030
 http://blog.ivank.net/fastest-gaussian-blur.html
+
+
+
+/////////// TODO?
+- move filters to separate files? refactor code a bit more
+- error checking in thread? if something goes wrong put an error message
+- can we check performance, memory leaks?

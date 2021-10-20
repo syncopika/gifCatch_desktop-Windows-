@@ -42,7 +42,7 @@ struct windowInfo {
 };
 
 // convert an int to string 
-std::string int_to_string(int i);
+std::string intToString(int i);
 
 // check if a point is within a particular rect
 bool ptIsInRange(POINT start, int width, int height, POINT pt);

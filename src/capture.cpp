@@ -2,20 +2,19 @@
 
 // needs gif.h to create the gif (https://github.com/ginsweater/gif-h/blob/master/gif.h) 
 // include it here (and not the header file!) to prevent multiple definition errors
-#include "headers/gif-old.h"
+#include "headers/gif.h"
 #include "headers/capture.hh"    // function declarations
 
 // probably should convert to non-namespace later 
 using namespace Gdiplus;
 
 // convert an integer to string 
-std::string int_to_string(int i){
+std::string intToString(int i){
     std::stringstream ss;
     ss << i;
     std::string i_str = ss.str();
     return i_str;
 }
-
 
 int GetEncoderClsid(const WCHAR* format, CLSID* pClsid){
     UINT num = 0;          // number of image encoders
@@ -101,6 +100,29 @@ bool ScreenCapture(int x, int y, int width, int height, const char *filename, bo
     return true;
 }
 
+void writeNewGifFrame(std::string frameImgName, int width, int height, int delay, std::vector<uint8_t> (*filter)(const std::string, windowInfo*), GifWriter* gifWriter, windowInfo* gifParams){
+	// get image data and apply a filter
+	// need to convert uint8_t* to a GifRGBA*
+	std::vector<uint8_t> img = (*filter)(frameImgName, gifParams);
+	uint8_t* imgData = (uint8_t *)(img.data());
+	
+	GifRGBA* pixelArr = new GifRGBA[sizeof(GifRGBA)*((int)img.size()/4)];
+	
+	int pixelArrIdx = 0;
+	for(int i = 0; i < (int)img.size() - 4; i += 4){
+		pixelArr[pixelArrIdx].r = imgData[i];
+		pixelArr[pixelArrIdx].g = imgData[i+1];
+		pixelArr[pixelArrIdx].b = imgData[i+2];
+		pixelArr[pixelArrIdx].a = imgData[i+3];
+		pixelArrIdx++;
+	}
+	
+	// get image data and apply a filter  
+	GifWriteFrame(gifWriter, pixelArr, (uint32_t)width, (uint32_t)height, (uint32_t)(delay/10));
+	
+	delete pixelArr;
+}
+
 // notice this takes a function pointer!
 void getSnapshots(int nImages, int delay, int x, int y, int width, int height, std::vector<uint8_t> (*filter)(const std::string, windowInfo*), windowInfo* gifParams){
     
@@ -128,11 +150,11 @@ void getSnapshots(int nImages, int delay, int x, int y, int width, int height, s
     }else{
         // directory couldn't be made
     }
-    
+	
     std::string name;
     for(int i = 0; i < nImages; i++){
-        // put all images in temp folder 
-        name = dirName + "/screen" + int_to_string(i) + ".bmp";
+        // put all images in temp folder
+        name = dirName + "/screen" + intToString(i) + ".bmp";
         ScreenCapture(x, y, width, height, name.c_str(), gifParams->getCursor);
         Sleep(delay);
     }
@@ -151,13 +173,12 @@ void getSnapshots(int nImages, int delay, int x, int y, int width, int height, s
     // pass in frames 
     std::string nextFrame; 
     for(int i = 0; i < nImages; i++){
-        nextFrame = dirName + "/screen" + int_to_string(i) + ".bmp";
+        nextFrame = dirName + "/screen" + intToString(i) + ".bmp";
 		
 		// post message to indicate which frame is being processed 
 		PostMessage(mainWindow, ID_PROCESS_FRAME, (WPARAM)i, 0);
 		
-		// get image data and apply a filter  
-		GifWriteFrame(&gifWriter, (uint8_t *)((*filter)(nextFrame, gifParams).data()), (uint32_t)width, (uint32_t)height, (uint32_t)(delay/10));
+		writeNewGifFrame(nextFrame, width, height, delay, filter, &gifWriter, gifParams);
     }
     GifEnd(&gifWriter);
 }
@@ -188,7 +209,6 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
     }
 	
 	for(int i = 0; i < nImages; i++){
-		
 		std::string filename = images[i];
 		std::wstring wstr = std::wstring(filename.begin(), filename.end());
 		const wchar_t *widestr = wstr.c_str();
@@ -207,7 +227,7 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 				std::cout << "Encoder failed" << std::endl;
 			}
 			
-			filename = "temp_resized/screen" + int_to_string(i) + ".bmp";
+			filename = "temp_resized/screen" + intToString(i) + ".bmp";
 			std::wstring fname = std::wstring(filename.begin(), filename.end());
 			bmp->Save(fname.c_str(), &pngClsid, NULL);
 			delete bmp;
@@ -234,17 +254,18 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 			
 			FontFamily impactFont(L"Impact");
 			StringFormat strFormat;
-			GraphicsPath gpath; 						// use this to hold the outline of the string we want to draw 
-			gpath.AddString(string, 					// the string
-							wcslen(string), 			// length of string
-							&impactFont, 				// font family
-							FontStyleRegular,  			// style of type face 
-							32, 						// font size 
-							Point(xCoord, (h/2 + h/3)),	// where to put the string 
-							&strFormat 					// layout information for the string 
-							);
-			Pen pen(Color(0,0,0), 2); 					// color and width of pen 
-			pen.SetLineJoin(LineJoinRound);				// prevent sharp pointers from occurring on some chars 
+			GraphicsPath gpath; 			// use this to hold the outline of the string we want to draw 
+			gpath.AddString(
+				string, 					// the string
+				wcslen(string), 			// length of string
+				&impactFont, 				// font family
+				FontStyleRegular,  			// style of type face 
+				32, 						// font size 
+				Point(xCoord, (h/2 + h/3)),	// where to put the string 
+				&strFormat 					// layout information for the string 
+			);
+			Pen pen(Color(0,0,0), 2); 		// color and width of pen 
+			pen.SetLineJoin(LineJoinRound);	// prevent sharp pointers from occurring on some chars 
 			graphics.SetSmoothingMode(SmoothingModeAntiAlias); // antialias the text so the outline doesn't look choppy
 			graphics.DrawPath(&pen, &gpath);
 			SolidBrush brush(Color(255,255,255,255));
@@ -261,7 +282,7 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 		
 		// convert filename to a wstring first
 		//filename = filename.substr(0, filename.size() - 4);
-		filename = "temp_resized/screen" + int_to_string(i) + ".bmp";
+		filename = "temp_resized/screen" + intToString(i) + ".bmp";
 		std::wstring fname = std::wstring(filename.begin(), filename.end());
 		
 		newBMP->Save(fname.c_str(), &pngClsid, NULL);
@@ -470,21 +491,20 @@ void assembleGif(int nImages, int delay, std::vector<std::string> images, std::v
 	
 	// right now a temp directory of images is created, whether or not resizing occurred at all 
 	// use that temp directory to generate the new gif from 
-	images = std::vector<std::string>();
+	std::vector<std::string> imageNames;
 	for(int i = 0; i < nImages; i++){
-		std::string fn = "temp_resized/screen" + int_to_string(i) + ".bmp";
-		images.push_back(fn);
+		std::string fn = "temp_resized/screen" + intToString(i) + ".bmp";
+		imageNames.push_back(fn);
 	}
 	
 	// make the gif 
 	std::string nextFrame; 
     for(int i = 0; i < nImages; i++){
-        nextFrame = images[i];
+        nextFrame = imageNames[i];
 		
 		PostMessage(mainWindow, ID_PROCESS_FRAME, (WPARAM)i, 0);
 		
-		// get image data and apply a filter  
-		GifWriteFrame(&gifWriter, (uint8_t *)((*filter)(nextFrame, gifParams).data()), (uint32_t)initialD[1], (uint32_t)initialD[0], (uint32_t)(delay/10));
+		writeNewGifFrame(nextFrame, initialD[1], initialD[0], delay, filter, &gifWriter, gifParams);
     }
 	
     GifEnd(&gifWriter);

@@ -26,9 +26,7 @@ std::vector<int> getBMPHeightWidth(const std::string filename){
     auto height = *reinterpret_cast<uint32_t *>(&header[22]);
 	
 	// height and width will be placed in that order in the vector 
-	std::vector<int> dimensions;
-	dimensions.push_back((int)height);
-	dimensions.push_back((int)width);
+	std::vector<int> dimensions {(int)height, (int)width};
 	
 	return dimensions;
 }

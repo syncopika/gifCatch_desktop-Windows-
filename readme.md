@@ -3,7 +3,7 @@
 This application lets you select a part of the screen to screenshot, specify the number of screenshots to take (with adjustable delay between shots), and creates a gif from them.    
 Hope it can be useful to someone!    
     
-I currently use MinGW gcc(6.3.0) and MSYS to make/compile this project. a work-in-progress.     
+I used MinGW gcc(6.3.0) and MSYS to make/compile this project.    
     
 #### this is the current look of the application:     
 ![current look of the gui](screenshots/current.png "current look")    
@@ -62,13 +62,17 @@ check out my Chrome extension that does pretty much the same thing (but is not a
     
 - - -    
 ## how it works    
-After selecting an area of the screen, the application will take as many screenshots as specified as .bmp images and store them in a folder.    
+After selecting an area of the screen, the application will take as many screenshots as specified by the number of frames to get as .bmp images and store them in a folder.    
 Those images will then be taken and added to the gif (which is when any filter specified is applied as well).    
     
 Currently captions are only added if creating a gif from already-captured images. When pulling images from a directory to create a gif, the images are resized first if necessary, with the caption (if any) applied to the resized images. This step creates a new folder of images, regardless if any resizing occurred. Then these images are passed to gif creation step along with any specified filter.    
     
 - - -    
+## installation
+(Assuming you're using Windows) - Make sure to have MinGW installed (should come with all the necessary dependencies like win32 and gdiplus) and MSYS to run `make`. Modify the path to gdiplus based on where your MinGW installation lives in `makefile` in the src/ directory. Then run `make` to build the executable.    
+    
+- - -    
 ## acknowledgements
-Thanks very much to Philip Goh (https://github.com/cotidian/Win32GrabScreen) for the screen capture code, and Charlie Tangora (https://github.com/ginsweater/gif-h/blob/master/gif.h) for the gif-making code.    
+Thanks very much to Philip Goh (https://github.com/cotidian/Win32GrabScreen) for the screen capture code, and Charlie Tangora (https://github.com/ginsweater/gif-h/blob/master/gif.h) for the gif-making code (as well as [rversteegen](https://github.com/rversteegen/gif-h) for their improvements on gif.h, whose fork I'm using currently).    
 
 gifs were taken from this video by Tonkatsu298: https://www.youtube.com/watch?v=D8gwnKApqCE   
