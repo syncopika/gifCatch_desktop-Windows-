@@ -9,15 +9,14 @@ I used MinGW gcc(6.3.0) and MSYS to make/compile this project.
 ![current look of the gui](screenshots/current.png "current look")    
 ![current look of the gui](screenshots/current_parameters_page.png "current look (parameters page)")    
  
-There are adjustable settings, such as the <b>number of frames</b>, the <b>time delay between frames</b>, and some <b>color filter choices</b>.  You can choose between red (![#FF828C](https://placehold.it/15/FF828C/000000?text=+)), blue (![#8CB4FF](https://placehold.it/15/8CB4FF/000000?text=+)), or green (![#8CFFB4](https://placehold.it/15/8CFFB4/000000?text=+)) for the selection area screen when choosing a place on the screen to capture.
+There are adjustable settings, such as the <b>number of frames</b>, the <b>time delay between frames</b>, and some <b>color filter choices</b>.  You can choose between red (![#FF828C](https://via.placeholder.com/15/FF828C/000000?text=+)), blue (![#8CB4FF](https://via.placeholder.com/15/8CB4FF/000000?text=+)), or green (![#8CFFB4](https://via.placeholder.com/15/8CFFB4/000000?text=+)) for the selection area screen when choosing a place on the screen to capture.
 You can also choose whether or not to capture the screen cursor in your gifs!   
     
 For the filters, you can currently adjust the amount of saturation with a float value, change the mosaic filter chunk size with an int value, and change the outline filter's allowable limit for the difference between 2 pixels' color. I have not yet implemented any input validation for these parameters.    
     
-Additionally, you can create a gif from a folder of .bmp images (24-bit and 32-bit!) by specifying the full path to a directory. This feature is particularly useful if you have some bmp images that you have edited and want to put them together in a gif.
+Additionally, you can create a gif from a folder of .bmp images (24-bit and 32-bit) by specifying the full path to a directory. This feature is particularly useful if you have some bmp images that you have edited and want to put them together in a .gif.
     
-If recreating a gif from pre-collected bmps, you also have the option of adding a caption! (but currently only Impact font is used, with size 32, and placement is near the bottom of the gif, centered)    
-But if applying a filter with a caption, the caption will be subject to any effects the filter produces.    
+If recreating a .gif from pre-collected bmps, you also have the option of adding a caption (but currently only Impact font is used, with size 32, and placement is centered near the bottom of the gif). If applying a filter with a caption, the caption will be subject to any effects the filter produces.    
     
 things to do:    
 - fix up the program structure? i.e. if adding a caption and filter, the caption shouldn't be filtered also.    
@@ -67,11 +66,9 @@ Those images will then be taken and added to the gif (which is when any filter s
     
 Currently captions are only added if creating a gif from already-captured images. When pulling images from a directory to create a gif, the images are resized first if necessary, with the caption (if any) applied to the resized images. This step creates a new folder of images, regardless if any resizing occurred. Then these images are passed to gif creation step along with any specified filter.    
     
-- - -    
 ## installation
 (Assuming you're using Windows) - Make sure to have MinGW installed (should come with all the necessary dependencies like win32 and gdiplus) and MSYS to run `make`. Modify the path to gdiplus based on where your MinGW installation lives in `makefile` in the src/ directory. Then run `make` to build the executable.    
     
-- - -    
 ## acknowledgements
 Thanks very much to Philip Goh (https://github.com/cotidian/Win32GrabScreen) for the screen capture code, and Charlie Tangora (https://github.com/ginsweater/gif-h/blob/master/gif.h) for the gif-making code (as well as [rversteegen](https://github.com/rversteegen/gif-h) for their improvements on gif.h, whose fork I'm using currently).    
 
