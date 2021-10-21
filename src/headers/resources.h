@@ -23,7 +23,7 @@
 #define ID_SELECT_SCREENAREA_BUTTON 106 
 #define ID_START_BUTTON 107
 
-#define ID_MEMEFY_MSG 112
+#define ID_CAPTION_MSG 112
 
 // the textbox that will hold the progress msgs
 #define ID_PROGRESS_MSG 108

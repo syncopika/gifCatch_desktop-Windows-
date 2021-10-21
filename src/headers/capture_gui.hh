@@ -27,9 +27,41 @@ void reset(POINT *p1, POINT *p2, bool *drag, bool *draw);
 void makeGif(windowInfo* args);
 
 // some nice functions to create certain window elements
-void createEditBox(std::string defaultText, int width, int height, int xCoord, int yCoord, HWND parent, HINSTANCE hInstance, HMENU elementId, HFONT hFont);
-void createLabel(std::string defaultText, int width, int height, int xCoord, int yCoord, HWND parent, HINSTANCE hInstance, HMENU elementId, HFONT hFont);
-void createCheckBox(std::string defaultText, int width, int height, int xCoord, int yCoord, HWND parent, HINSTANCE hInstance, HMENU elementId, HFONT hFont);
+void createEditBox(
+	std::string defaultText, 
+	int width, 
+	int height, 
+	int xCoord, 
+	int yCoord, 
+	HWND parent, 
+	HINSTANCE hInstance, 
+	HMENU elementId, 
+	HFONT hFont
+);
+
+void createLabel(
+	std::string defaultText, 
+	int width, 
+	int height, 
+	int xCoord, 
+	int yCoord, 
+	HWND parent, 
+	HINSTANCE hInstance, 
+	HMENU elementId, 
+	HFONT hFont
+);
+
+void createCheckBox(
+	std::string defaultText, 
+	int width, 
+	int height, 
+	int xCoord, 
+	int yCoord, 
+	HWND parent, 
+	HINSTANCE hInstance, 
+	HMENU elementId, 
+	HFONT hFont
+);
 
 COLORREF getSelectedColor(HWND selectBox);
 

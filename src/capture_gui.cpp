@@ -34,7 +34,7 @@ POINT ptCurr = {0, 0};
 POINT ptNew = {0, 0};
 
 // register 4 different windows 
-const char g_szClassName[] = "mainGUI";
+const char g_szClassName[]  = "mainGUI";
 const char g_szClassName2[] = "mainPage";
 const char g_szClassName3[] = "parametersPage";
 const char g_szClassName4[] = "selectionWindow";
@@ -74,10 +74,20 @@ windowInfo* gifParams = new windowInfo(); // from capture.hh
 
 /***
 
-	functions to make creating window wlements easier
+	functions to make creating window elements easier
 
 ***/
-void createEditBox(std::string defaultText, int width, int height, int xCoord, int yCoord, HWND parent, HINSTANCE hInstance, HMENU elementId, HFONT hFont){
+void createEditBox(
+	std::string defaultText, 
+	int width, 
+	int height, 
+	int xCoord, 
+	int yCoord, 
+	HWND parent, 
+	HINSTANCE hInstance, 
+	HMENU elementId, 
+	HFONT hFont
+){
 	HWND editBox = CreateWindow(
 		TEXT("edit"),
 		defaultText.c_str(),
@@ -92,7 +102,17 @@ void createEditBox(std::string defaultText, int width, int height, int xCoord, i
 	SendMessage(editBox, WM_SETFONT, (WPARAM)hFont, true);
 }
 
-void createLabel(std::string defaultText, int width, int height, int xCoord, int yCoord, HWND parent, HINSTANCE hInstance, HMENU elementId, HFONT hFont){
+void createLabel(
+	std::string defaultText, 
+	int width, 
+	int height, 
+	int xCoord, 
+	int yCoord, 
+	HWND parent, 
+	HINSTANCE hInstance, 
+	HMENU elementId, 
+	HFONT hFont
+){
 	HWND label = CreateWindow(
 	    TEXT("STATIC"),
         defaultText.c_str(),
@@ -107,7 +127,17 @@ void createLabel(std::string defaultText, int width, int height, int xCoord, int
 	SendMessage(label, WM_SETFONT, (WPARAM)hFont, true);
 }
 
-void createCheckBox(std::string defaultText, int width, int height, int xCoord, int yCoord, HWND parent, HINSTANCE hInstance, HMENU elementId, HFONT hFont){
+void createCheckBox(
+	std::string defaultText, 
+	int width, 
+	int height, 
+	int xCoord, 
+	int yCoord, 
+	HWND parent, 
+	HINSTANCE hInstance, 
+	HMENU elementId, 
+	HFONT hFont
+){
 	HWND checkBox = CreateWindow(
 		TEXT("button"),
 		defaultText.c_str(),
@@ -122,25 +152,16 @@ void createCheckBox(std::string defaultText, int width, int height, int xCoord, 
 	SendMessage(checkBox, WM_SETFONT, (WPARAM)hFont, true);
 }
 
-/******************
-
-	DO Win32 GUI STUFF HERE 
-
-*****************/
-
 void makeGif(windowInfo* args){
-	
 	HWND mainWindow = args->mainWindow;
 	
 	PostMessage(mainWindow, ID_IN_PROGRESS, 0, 0);
 	
 	int nFrames = args->numFrames;
-	
 	int tDelay = args->timeDelay;
 	
 	std::string theDir = args->directory;
-	
-	std::string theText = args->memeText;
+	std::string theText = args->captionText;
 	
 	// indicate process started 
 	PostMessage(mainWindow, ID_IN_PROGRESS, 0, 0);
@@ -249,9 +270,7 @@ DWORD WINAPI processGifThread(LPVOID lpParam){
     
 ***/
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
-    
     switch(msg){
-		
 		case WM_CREATE:
 		{
 			// create the menu tabs (main page, parameter page tabs)
@@ -268,7 +287,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 		{
             /* LOWORD takes the lower 16 bits of wParam => the element clicked on */
             switch(LOWORD(wParam)){
-				
 				case ID_MAIN_PAGE:
 				{
 					// go back to main page 
@@ -313,15 +331,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 					PostQuitMessage(0);
 				}
 				break;
-				
 			}		
 		}
 		break; 
 		
 		default:
 			return DefWindowProc(hwnd, msg, wParam, lParam);
-
-	}	
+	}
     return 0;
 }
 
@@ -331,14 +347,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 
 ***/
 LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
-    
     switch(msg){
-		
         case WM_COMMAND:
 		{
             /* LOWORD takes the lower 16 bits of wParam => the element clicked on */
             switch(LOWORD(wParam)){
-				
                 case ID_SELECT_SCREENAREA_BUTTON:
                 {
                     // make a new window to select the area 
@@ -405,22 +418,20 @@ LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 					int textLen = GetWindowTextLength(directory);
 					TCHAR dir[textLen + 1]; // +1 for null term 
 					GetWindowText(directory, dir, textLen + 1);
-					std::string theDir = std::string(dir);
 					
-					// check if user wants to memefy! if there's text entered in the textbox for ID_MEMEFY_MSG,
+					// check if user wants a caption! if there's text entered in the textbox for ID_CAPTION_MSG,
 					// pass it to assembleGif 
-					HWND memefyText = GetDlgItem(hwnd, ID_MEMEFY_MSG);
-					TCHAR mtext[textLen + 1];	
-					GetWindowText(memefyText, mtext, textLen + 1);
-					std::string theText = std::string(mtext);
+					HWND captionText = GetDlgItem(hwnd, ID_CAPTION_MSG);
+					TCHAR captext[textLen + 1];	
+					GetWindowText(captionText, captext, textLen + 1);
 					
 					// set up arguments struct to pass to the thread that will generate the gif 
 					// need to allocate on to heap otherwise this data will go out of scope and be unreachable from thread 
 					gifParams->numFrames = nFrames;
 					gifParams->timeDelay = tDelay;
 					gifParams->selectedFilter = currFilterIndex;
-					gifParams->directory = theDir;
-					gifParams->memeText = theText;
+					gifParams->directory = std::string(dir);
+					gifParams->captionText = std::string(captext);
 					gifParams->mainWindow = hwnd;
 					
 					// start process in another thread
@@ -473,11 +484,11 @@ LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 			// so we can use WPARAM as an int 
 			int currFrame = (int)wParam;
 			//std::cout << "curr frame: " << currFrame << std::endl;
-			std::string msg = "processing frame: " + int_to_string(currFrame);
+			std::string msg = "processing frame: " + intToString(currFrame);
 			SetDlgItemText(hwnd, ID_PROGRESS_MSG, msg.c_str());
 		}
 		break;
-			
+		
         case WM_CLOSE:
         {
 			DeleteObject(hFont);
@@ -500,11 +511,6 @@ LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
     return 0;
 }
 
-/***
-
-	window procedure for the parameters page 
-
-***/
 
 // return the selected color for the selection screen 
 COLORREF getSelectedColor(HWND selectBox){
@@ -520,7 +526,6 @@ COLORREF getSelectedColor(HWND selectBox){
 }
 
 LRESULT CALLBACK WndProcParameterPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
-
     switch(msg){
         case WM_LBUTTONDOWN:
         {
@@ -610,14 +615,8 @@ LRESULT CALLBACK WndProcParameterPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
             return DefWindowProc(hwnd, msg, wParam, lParam);
     }
     return 0;
-
 }
 
-/***
-    
-    window procedure for the selection window 
-    
-***/
 
 // reset helper function 
 void reset(POINT *p1, POINT *p2, bool *drag, bool *draw){
@@ -630,7 +629,6 @@ void reset(POINT *p1, POINT *p2, bool *drag, bool *draw){
 }
 
 LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
-
     switch(msg){
         case WM_LBUTTONDOWN:
         {
@@ -693,8 +691,7 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                     reset(&ptCurr, &ptNew, &bDrag, &bDraw);
                     ReleaseCapture();
                     DestroyWindow(hwnd);
-                    return 0; 
-                    
+                    return 0;             
                 }else if(response == IDYES){
                     // done, record new parameters 
 					// note that this can be a bit tricky because normally I'd expect to draw the selection rectangle
@@ -717,8 +714,7 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                     reset(&ptCurr, &ptNew, &bDrag, &bDraw);
                     DestroyWindow(hwnd);
                     ReleaseCapture();
-                    return 0;
-                    
+                    return 0;      
                 }else if(response == IDNO){
                     // need to clear screen!!
                     HDC hdc = GetDC(hwnd);
@@ -730,7 +726,6 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                     ReleaseDC(hwnd, hdc);
                     // reset stuff
                     reset(&ptCurr, &ptNew, &bDrag, &bDraw);
-                    
                 }else{
                     // failure to show message box    
                     std::cout << "error with message box!!" << std::endl;
@@ -760,14 +755,10 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             return DefWindowProc(hwnd, msg, wParam, lParam);
     }
     return 0;
-
 }
 
-/***
-	procedure for the about page 
-***/
-LRESULT CALLBACK WndProcAboutPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 
+LRESULT CALLBACK WndProcAboutPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
     switch(msg){
         case WM_LBUTTONDOWN:
         {
@@ -801,7 +792,6 @@ LRESULT CALLBACK WndProcAboutPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             return DefWindowProc(hwnd, msg, wParam, lParam);
     }
     return 0;
-
 }
 
 
@@ -811,7 +801,6 @@ LRESULT CALLBACK WndProcAboutPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 	and an HINSTANCE
 ***/
 void createMainScreen(HWND hwnd, HINSTANCE hInstance){
-	
 	// set num frames to collect
 	createLabel("# frames to get: ", 110, 20, 10, 20, hwnd, hInstance, (HMENU)ID_NUMFRAMES_LABEL, hFont);
 	createEditBox("10", 80, 20, 110, 20, hwnd, hInstance, (HMENU)ID_NUMFRAMES_TEXTBOX, hFont);
@@ -850,18 +839,40 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
 	SendMessage(filterComboBox, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);
 	
 	// let user select a directory of images to create gif from
-	createLabel("specify full directory path of images to generate gif from: ", 340, 20, 10, 130, hwnd, hInstance, NULL, hFont);
+	createLabel(
+		"specify full directory path of images to generate gif from: ", 
+		340, 
+		20, 
+		10, 
+		130, 
+		hwnd, 
+		hInstance, 
+		NULL, 
+		hFont
+	);
+	
 	createEditBox("", 280, 20, 10, 150, hwnd, hInstance, (HMENU)ID_CHOOSE_DIR, hFont);
 	
 	/* 
-		let user memefy their gif. for now, it'll be a bit limited in that the text 
+		let user add a caption to their gif. for now, it'll be a bit limited in that the text 
 		will automatically be placed towards the bottom of the gif. 
 		it will however, be centered (and so some calculations are needed)
 		the amount of text will vary depending on gif size as well
 		font will also be Impact and size will be determined by program 
 	*/
-	createLabel("specify a message to show at bottom of gif: ", 340, 20, 10, 190, hwnd, hInstance, NULL, hFont);
-	createEditBox("", 280, 20, 10, 210, hwnd, hInstance, (HMENU)ID_MEMEFY_MSG, hFont);
+	createLabel(
+		"specify a message to show at bottom of gif: ", 
+		340, 
+		20, 
+		10, 
+		190, 
+		hwnd, 
+		hInstance, 
+		NULL, 
+		hFont
+	);
+	
+	createEditBox("", 280, 20, 10, 210, hwnd, hInstance, (HMENU)ID_CAPTION_MSG, hFont);
 	
     // button to select area of screen
     HWND selectAreaButton = CreateWindow(
@@ -912,7 +923,6 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
 	like for image filters, or to change the color of the selection screen 
 ***/
 void createParameterPage(HWND hwnd, HINSTANCE hInstance){
-		
 	createLabel("choose selection screen color: ", 180, 20, 10, 12, hwnd, hInstance, NULL, hFont);
 		
 	HWND setColorBox = CreateWindow(
@@ -969,9 +979,7 @@ void createParameterPage(HWND hwnd, HINSTANCE hInstance){
 	SendMessage(saveParameters, WM_SETFONT, (WPARAM)hFont, true);
 }
 
-/***
-	set up the about page (sets the text that's on the page)
-***/
+
 void createAboutPage(HWND hwnd, HINSTANCE hInstance){
     HWND title;
     title = CreateWindow(
@@ -1208,6 +1216,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         TranslateMessage(&Msg);
         DispatchMessage(&Msg);
     }
+	
     return Msg.wParam;
 }
 
