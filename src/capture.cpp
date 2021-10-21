@@ -16,7 +16,7 @@ std::string intToString(int i){
     return i_str;
 }
 
-int GetEncoderClsid(const WCHAR* format, CLSID* pClsid){
+int getEncoderClsid(const WCHAR* format, CLSID* pClsid){
     UINT num = 0;          // number of image encoders
     UINT size = 0;         // size of the image encoder array in bytes
 
@@ -46,13 +46,13 @@ int GetEncoderClsid(const WCHAR* format, CLSID* pClsid){
     return -1;  // Failure
 }
 
-void BitmapToBMP(HBITMAP hbmpImage, int width, int height, std::string filename){
+void bitmapToBMP(HBITMAP hbmpImage, int width, int height, std::string filename){
     Bitmap *p_bmp = Bitmap::FromHBITMAP(hbmpImage, NULL);
     //Bitmap *p_bmp = new Bitmap(width, height, PixelFormat32bppARGB);
     
     CLSID pngClsid;
 	// creating BMP images
-    int result = GetEncoderClsid(L"image/bmp", &pngClsid);  
+    int result = getEncoderClsid(L"image/bmp", &pngClsid);  
     if(result != -1){
         std::cout << "Encoder succeeded" << std::endl;
     }else{
@@ -71,13 +71,13 @@ bool ptIsInRange(POINT start, int width, int height, POINT pt){
 	return (pt.x >= start.x && pt.x <= start.x + width && pt.y >= start.y && pt.y <= start.y + height);
 }
 
-bool ScreenCapture(int x, int y, int width, int height, const char *filename, bool getCursor){
+bool screenCapture(int x, int y, int width, int height, const char *filename, bool getCursor){
     HDC hDc = CreateCompatibleDC(0);
     HBITMAP hBmp = CreateCompatibleBitmap(GetDC(0), width, height);
     SelectObject(hDc, hBmp);
     BitBlt(hDc, 0, 0, width, height, GetDC(0), x, y, SRCCOPY);
 	
-	// capture the cursor and add to screen shot if so desired
+	// capture the cursor and add to screenshot if so desired
 	if(getCursor){
 		CURSORINFO screenCursor = {sizeof(screenCursor)};
 		GetCursorInfo(&screenCursor);
@@ -95,7 +95,7 @@ bool ScreenCapture(int x, int y, int width, int height, const char *filename, bo
 		}
 	}
 	
-    BitmapToBMP(hBmp, width, height, filename);
+    bitmapToBMP(hBmp, width, height, filename);
     DeleteObject(hBmp);
     return true;
 }
@@ -125,7 +125,6 @@ void writeNewGifFrame(std::string frameImgName, int width, int height, int delay
 
 // notice this takes a function pointer!
 void getSnapshots(int nImages, int delay, int x, int y, int width, int height, std::vector<uint8_t> (*filter)(const std::string, windowInfo*), windowInfo* gifParams){
-    
 	HWND mainWindow = gifParams->mainWindow;
 	
 	// Initialize GDI+.
@@ -155,7 +154,7 @@ void getSnapshots(int nImages, int delay, int x, int y, int width, int height, s
     for(int i = 0; i < nImages; i++){
         // put all images in temp folder
         name = dirName + "/screen" + intToString(i) + ".bmp";
-        ScreenCapture(x, y, width, height, name.c_str(), gifParams->getCursor);
+        screenCapture(x, y, width, height, name.c_str(), gifParams->getCursor);
         Sleep(delay);
     }
     
@@ -188,9 +187,8 @@ void getSnapshots(int nImages, int delay, int x, int y, int width, int height, s
 // takes in a number indicating how many images to check for resize, and a width and height to resize to
 // it returns an integer indicating if anything was resized (1 = something was resized);
 // for now, create a new folder called temp_resized to store this new set of images (including the ones that weren't resized)
-// last argument is memeText, which is a string that, if not empty (""), will be written near the bottom of each frame  
-int resizeBMPs(int nImages, std::vector<std::string> images, int width, int height, std::string memeText){
-	
+// last argument is captionText, which is a string that, if not empty (""), will be written near the bottom of each frame  
+int resizeBMPs(int nImages, std::vector<std::string> images, int width, int height, std::string captionText){
 	int resizeResult = 0;
 	
 	// initialize gdiplus 
@@ -219,10 +217,10 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 		
 		CLSID pngClsid;
 		
-		// if dimensions of current image match the initial image and no memetext, just skip this one 
+		// if dimensions of current image match the initial image and no caption text, just skip this one 
 		// but add it to the new temp directory
-		if(h == height && w == width && memeText == ""){
-			int result = GetEncoderClsid(L"image/bmp", &pngClsid);  
+		if(h == height && w == width && captionText == ""){
+			int result = getEncoderClsid(L"image/bmp", &pngClsid);  
 			if(result == -1){
 				std::cout << "Encoder failed" << std::endl;
 			}
@@ -243,8 +241,8 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 		delete bmp;
 	
 		// caption if there's text in the specified box 
-		if(memeText != ""){
-			std::wstring mtext = std::wstring(memeText.begin(), memeText.end());
+		if(captionText != ""){
+			std::wstring mtext = std::wstring(captionText.begin(), captionText.end());
 			const wchar_t* string = mtext.c_str(); //L"BLAH BLAH BLAH";
 			int stringLen = mtext.size();
 			
@@ -273,7 +271,7 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 		}
 		
 		// overwite old file with this new one
-		int result = GetEncoderClsid(L"image/bmp", &pngClsid);  
+		int result = getEncoderClsid(L"image/bmp", &pngClsid);  
 		if(result != -1){
 			//std::cout << "Encoder succeeded" << std::endl;
 		}else{
@@ -308,7 +306,6 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 // get a bmp image and extract the image data into a uint8_t array 
 // which will be passed to gif functions from gif.h to create the gif 
 std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gifParams){
-	
 	std::string filtername = (*(gifParams->filters))[gifParams->selectedFilter];
     
 	// bmps have a 54 byte header 
@@ -339,7 +336,6 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
 	std::vector<uint8_t> finalImageData;
 	
 	if((int)depth == 24){
-		
 		// since 24-bit bmps round up to nearest width divisible by 4, 
 		// there might be some extra padding at the end of each pixel row 
 		int paddedWidth = (int)width*3;
@@ -363,7 +359,6 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
 		
 		// add in the alpha channel to the data 
 		for(int i = 0; i < (int)dataSize; i++){
-			
 			image.push_back(img[i]);
 			RGBcounter++;
 		
@@ -400,9 +395,7 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
 		}
 		
 		finalImageData = image2;
-		
 	}else if((int)depth == 32){
-
 		// width*4 because each pixel is 4 bytes (32-bit bmp)
 		// ((width*4 + 3) & (~3)) * height; -> this uses bit masking to get the width as a multiple of 4
 		auto dataSize = ((width*4 + 3) & (~3)) * height;
@@ -430,7 +423,6 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
 		}
 		
 		finalImageData = image;
-		
 	}else{
 		// return an empty vector 
 		return finalImageData;
@@ -459,8 +451,7 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
 
 // this function assembles the gif from bmp images in a specified directory 
 void assembleGif(int nImages, int delay, std::vector<std::string> images, std::vector<uint8_t> (*filter)(const std::string, windowInfo*), windowInfo* gifParams){
-	
-	std::string memeText = gifParams->memeText;
+	std::string captionText = gifParams->captionText;
 	HWND mainWindow = gifParams->mainWindow; // get the handle to the main window so we can post msgs to it 
 
     GifWriter gifWriter;
@@ -487,7 +478,7 @@ void assembleGif(int nImages, int delay, std::vector<std::string> images, std::v
 	}
 	
 	// resize bmps if needed 
-	resizeBMPs(nImages, images, initialD[1], initialD[0], memeText);
+	resizeBMPs(nImages, images, initialD[1], initialD[0], captionText);
 	
 	// right now a temp directory of images is created, whether or not resizing occurred at all 
 	// use that temp directory to generate the new gif from 

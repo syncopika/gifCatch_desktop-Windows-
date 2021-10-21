@@ -26,7 +26,7 @@ struct windowInfo {
 	int timeDelay;
 	int selectedFilter; // this is the index of the filter in the dropdown box 
 	std::string directory;
-	std::string memeText;
+	std::string captionText;
 	HWND mainWindow; // main window so the worker thread can post messages to its queue 
 	
 	std::map<int, std::string>* filters;
@@ -48,9 +48,9 @@ std::string intToString(int i);
 bool ptIsInRange(POINT start, int width, int height, POINT pt);
 
 // screen capturing code 
-int GetEncoderClsid(const WCHAR* format, CLSID* pClsid);
-void BitmapToBMP(HBITMAP hbmpImage, int width, int height, std::string filename);
-bool ScreenCapture(int x, int y, int width, int height, const char *filename, bool getCursor);
+int getEncoderClsid(const WCHAR* format, CLSID* pClsid);
+void bitmapToBMP(HBITMAP hbmpImage, int width, int height, std::string filename);
+bool screenCapture(int x, int y, int width, int height, const char *filename, bool getCursor);
 
 // this function relies on all the above 
 // the result is creating a temp folder and populating it with screenshots

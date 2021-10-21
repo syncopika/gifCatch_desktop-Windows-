@@ -13,7 +13,6 @@ int correctRGB(int channel){
 
 // get the height and width of a BMP image 
 std::vector<int> getBMPHeightWidth(const std::string filename){
-	
     static constexpr size_t HEADER_SIZE = 54;
     
     std::ifstream bmp(filename, std::ios::binary);
@@ -59,12 +58,9 @@ std::vector<int> getPixelCoords(int index, int width, int height){
 
 
 /***
-
 	inversion filter
-	
 ***/
 void inversionFilter(std::vector<uint8_t>& imageData){
-	
 	unsigned int dataSize = imageData.size();
 	
 	for(unsigned int i = 0; i <= dataSize-4; i += 4){
@@ -75,12 +71,9 @@ void inversionFilter(std::vector<uint8_t>& imageData){
 }
 
 /***
-
 	saturation filter
-	
 ***/
 void saturationFilter(float saturationVal, std::vector<uint8_t>& imageData){
-	
 	unsigned int dataSize = imageData.size();
 	double saturationValue = saturationVal;
 	double lumR = .3086; //constant for determining luminance of red
@@ -118,12 +111,9 @@ void saturationFilter(float saturationVal, std::vector<uint8_t>& imageData){
 }
 
 /***
-
 	weird filter (idk)
-
 ***/
 void weirdFilter(std::vector<uint8_t>& imageData){
-	
 	unsigned int dataSize = imageData.size();
 	
 	// do the filtering stuff
@@ -145,12 +135,9 @@ void weirdFilter(std::vector<uint8_t>& imageData){
 }
 
 /***
-	
 	grayscale filter 
-	
 ***/
 void grayscaleFilter(std::vector<uint8_t>& imageData){
-	
 	unsigned int dataSize = imageData.size();
 	
 	// for each pixel, set each channel's value to the average of the RGB channels 
@@ -167,9 +154,7 @@ void grayscaleFilter(std::vector<uint8_t>& imageData){
 }
 
 /***
-	
 	edge detection filter 
-	
 ***/
 void edgeDetectionFilter(std::vector<uint8_t>& imageData, int width, int height){
 	// need to create a copy of the source image
@@ -219,12 +204,9 @@ void edgeDetectionFilter(std::vector<uint8_t>& imageData, int width, int height)
 }
 
 /***
-
 	mosaic filter
-
 ***/
 void mosaicFilter(std::vector<uint8_t>& imageData, int width, int height, int chunkSize){
-	
 	// make a copy of the data 
 	std::vector<uint8_t> sourceImageCopy(imageData);
 	
@@ -263,12 +245,9 @@ void mosaicFilter(std::vector<uint8_t>& imageData, int width, int height, int ch
 }
 
 /***
-
 	outline filter 
-
 ***/
 void outlineFilter(std::vector<uint8_t>& imageData, int width, int height, int colorDiffLimit){
-	
 	// make a copy of the data 
 	std::vector<uint8_t> sourceImageCopy(imageData);
 	
@@ -337,12 +316,10 @@ void outlineFilter(std::vector<uint8_t>& imageData, int width, int height, int c
 }
 
 /***
-
 	blur filter
 	
 	source: http://blog.ivank.net/fastest-gaussian-blur.html
 	see also Marc Pérez's comment in the above link
-
 ***/
 std::vector<double> generateGaussBoxes(double stdDev, double numBoxes){
 	// I honestly don't know how this works :/ TODO: understand how/why this works
@@ -486,10 +463,8 @@ void blurFilter(std::vector<uint8_t>& imageData, int width, int height, double b
 
 
 /***
-
 	Voronoi filter 
 	- utilizes nearest neighbors to create each colored region in the resulting image 
-
 ***/
 void voronoiFilter(std::vector<uint8_t>& imageData, int width, int height, int neighborConstant){
 
