@@ -77,7 +77,17 @@ windowInfo* gifParams = new windowInfo(); // from capture.hh
 	functions to make creating window elements easier
 
 ***/
-void createEditBox(std::string defaultText, int width, int height, int xCoord, int yCoord, HWND parent, HINSTANCE hInstance, HMENU elementId, HFONT hFont){
+void createEditBox(
+	std::string defaultText, 
+	int width, 
+	int height, 
+	int xCoord, 
+	int yCoord, 
+	HWND parent, 
+	HINSTANCE hInstance, 
+	HMENU elementId, 
+	HFONT hFont
+){
 	HWND editBox = CreateWindow(
 		TEXT("edit"),
 		defaultText.c_str(),
@@ -92,7 +102,17 @@ void createEditBox(std::string defaultText, int width, int height, int xCoord, i
 	SendMessage(editBox, WM_SETFONT, (WPARAM)hFont, true);
 }
 
-void createLabel(std::string defaultText, int width, int height, int xCoord, int yCoord, HWND parent, HINSTANCE hInstance, HMENU elementId, HFONT hFont){
+void createLabel(
+	std::string defaultText, 
+	int width, 
+	int height, 
+	int xCoord, 
+	int yCoord, 
+	HWND parent, 
+	HINSTANCE hInstance, 
+	HMENU elementId, 
+	HFONT hFont
+){
 	HWND label = CreateWindow(
 	    TEXT("STATIC"),
         defaultText.c_str(),
@@ -107,7 +127,17 @@ void createLabel(std::string defaultText, int width, int height, int xCoord, int
 	SendMessage(label, WM_SETFONT, (WPARAM)hFont, true);
 }
 
-void createCheckBox(std::string defaultText, int width, int height, int xCoord, int yCoord, HWND parent, HINSTANCE hInstance, HMENU elementId, HFONT hFont){
+void createCheckBox(
+	std::string defaultText, 
+	int width, 
+	int height, 
+	int xCoord, 
+	int yCoord, 
+	HWND parent, 
+	HINSTANCE hInstance, 
+	HMENU elementId, 
+	HFONT hFont
+){
 	HWND checkBox = CreateWindow(
 		TEXT("button"),
 		defaultText.c_str(),
@@ -809,7 +839,18 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
 	SendMessage(filterComboBox, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);
 	
 	// let user select a directory of images to create gif from
-	createLabel("specify full directory path of images to generate gif from: ", 340, 20, 10, 130, hwnd, hInstance, NULL, hFont);
+	createLabel(
+		"specify full directory path of images to generate gif from: ", 
+		340, 
+		20, 
+		10, 
+		130, 
+		hwnd, 
+		hInstance, 
+		NULL, 
+		hFont
+	);
+	
 	createEditBox("", 280, 20, 10, 150, hwnd, hInstance, (HMENU)ID_CHOOSE_DIR, hFont);
 	
 	/* 
@@ -819,7 +860,18 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
 		the amount of text will vary depending on gif size as well
 		font will also be Impact and size will be determined by program 
 	*/
-	createLabel("specify a message to show at bottom of gif: ", 340, 20, 10, 190, hwnd, hInstance, NULL, hFont);
+	createLabel(
+		"specify a message to show at bottom of gif: ", 
+		340, 
+		20, 
+		10, 
+		190, 
+		hwnd, 
+		hInstance, 
+		NULL, 
+		hFont
+	);
+	
 	createEditBox("", 280, 20, 10, 210, hwnd, hInstance, (HMENU)ID_CAPTION_MSG, hFont);
 	
     // button to select area of screen

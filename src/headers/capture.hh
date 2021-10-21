@@ -54,13 +54,28 @@ bool screenCapture(int x, int y, int width, int height, const char *filename, bo
 
 // this function relies on all the above 
 // the result is creating a temp folder and populating it with screenshots
-void getSnapshots(int nImages, int delay, int x, int y, int width, int height, std::vector<uint8_t> (*filter)(const std::string, windowInfo*), windowInfo* gifParams);
+void getSnapshots(
+	int nImages, 
+	int delay, 
+	int x, 
+	int y, 
+	int width, 
+	int height, 
+	std::vector<uint8_t> (*filter)(const std::string, windowInfo*), 
+	windowInfo* gifParams
+);
 
 // this function assembles the gif from bmp images in a specified directory 
-void assembleGif(int nImages, int delay, std::vector<std::string> images, std::vector<uint8_t> (*filter)(const std::string, windowInfo*), windowInfo* gifParams);
+void assembleGif(
+	int nImages, 
+	int delay, 
+	std::vector<std::string> images, 
+	std::vector<uint8_t> (*filter)(const std::string, windowInfo*), 
+	windowInfo* gifParams
+);
 
 // this function helps resize any bmps. it doesn't respect ratios though currently so it might produce not-so-good frames.
-int resizeBMPs(int nImages, std::vector<std::string> images, int width, int height, std::string memeText);
+int resizeBMPs(int nImages, std::vector<std::string> images, int width, int height, std::string captionText);
 
 // get bmp image data 
 std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gifParams);

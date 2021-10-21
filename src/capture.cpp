@@ -91,7 +91,17 @@ bool screenCapture(int x, int y, int width, int height, const char *filename, bo
 			int cursorY = screenCursor.ptScreenPos.y - iconInfo.yHotspot - y;
 			BITMAP cursorBMP = {0};
 			GetObject(iconInfo.hbmColor, sizeof(cursorBMP), &cursorBMP);
-			DrawIconEx(hDc, cursorX, cursorY, screenCursor.hCursor, cursorBMP.bmWidth, cursorBMP.bmHeight, 0, NULL, DI_NORMAL);
+			DrawIconEx(
+				hDc, 
+				cursorX, 
+				cursorY, 
+				screenCursor.hCursor, 
+				cursorBMP.bmWidth, 
+				cursorBMP.bmHeight, 
+				0, 
+				NULL, 
+				DI_NORMAL
+			);
 		}
 	}
 	
@@ -100,7 +110,15 @@ bool screenCapture(int x, int y, int width, int height, const char *filename, bo
     return true;
 }
 
-void writeNewGifFrame(std::string frameImgName, int width, int height, int delay, std::vector<uint8_t> (*filter)(const std::string, windowInfo*), GifWriter* gifWriter, windowInfo* gifParams){
+void writeNewGifFrame(
+	std::string frameImgName, 
+	int width, 
+	int height, 
+	int delay, 
+	std::vector<uint8_t> (*filter)(const std::string, windowInfo*), 
+	GifWriter* gifWriter, 
+	windowInfo* gifParams
+){
 	// get image data and apply a filter
 	// need to convert uint8_t* to a GifRGBA*
 	std::vector<uint8_t> img = (*filter)(frameImgName, gifParams);
@@ -124,7 +142,16 @@ void writeNewGifFrame(std::string frameImgName, int width, int height, int delay
 }
 
 // notice this takes a function pointer!
-void getSnapshots(int nImages, int delay, int x, int y, int width, int height, std::vector<uint8_t> (*filter)(const std::string, windowInfo*), windowInfo* gifParams){
+void getSnapshots(
+	int nImages, 
+	int delay, 
+	int x, 
+	int y, 
+	int width, 
+	int height, 
+	std::vector<uint8_t> (*filter)(const std::string, windowInfo*), 
+	windowInfo* gifParams
+){
 	HWND mainWindow = gifParams->mainWindow;
 	
 	// Initialize GDI+.
