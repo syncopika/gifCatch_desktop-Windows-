@@ -68,7 +68,7 @@ std::map<int, std::string> filterMap = {
 };
 
 // default settings 
-windowInfo* gifParams = new windowInfo(); // from capture.hh
+std::unique_ptr<WindowInfo> gifParams = std::make_unique<WindowInfo>(); // WindowInfo is from capture.hh
 
 /***
 
@@ -150,7 +150,7 @@ void createCheckBox(
     SendMessage(checkBox, WM_SETFONT, (WPARAM)hFont, true);
 }
 
-void makeGif(windowInfo* args){
+void makeGif(std::unique_ptr<WindowInfo>& args){
     HWND mainWindow = args->mainWindow;
     
     PostMessage(mainWindow, ID_IN_PROGRESS, 0, 0);
@@ -173,7 +173,6 @@ void makeGif(windowInfo* args){
         if(pd == NULL){
             std::cout << "unable to open directory..." << std::endl;
             //PostMessage(mainWindow, ID_UNABLE_TO_OPEN, 0, 0);
-            delete args;
             return;
         }
         
@@ -219,7 +218,6 @@ void makeGif(windowInfo* args){
         if(images1.size() == 0 && images2.size() == 0){
             // no bmp images found 
             PostMessage(mainWindow, ID_NO_BMPS_FOUND, 0, 0);
-            delete args;
             return;
         }else{
             
@@ -253,9 +251,8 @@ void makeGif(windowInfo* args){
     pass it a pointer to a struct that contains parameters for creating the gif
 
 ***/
-DWORD WINAPI processGifThread(LPVOID lpParam){
-    makeGif((windowInfo*)lpParam);
-    return 0;
+void processGifThread(std::unique_ptr<WindowInfo>& windowInfo){
+    makeGif(windowInfo);
 }
 
 
@@ -314,7 +311,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
                 case WM_CLOSE:
                 {
                     DeleteObject(hFont);
-                    delete gifParams;
                     DestroyWindow(hwnd);
                 }
                 break;
@@ -322,7 +318,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
                 case WM_DESTROY:
                 {
                     DeleteObject(hFont);
-                    delete gifParams;
                     PostQuitMessage(0);
                 }
                 break;
@@ -430,7 +425,9 @@ LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
                     gifParams->mainWindow = hwnd;
                     
                     // start process in another thread
-                    CreateThread(NULL, 0, processGifThread, gifParams, 0, 0);
+                    //CreateThread(NULL, 0, processGifThread, (void *)gifParams, 0, 0);
+                    std::thread thread(processGifThread, gifParams);
+                    thread.detach();
                 }
                 break;
             }
@@ -487,7 +484,6 @@ LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
         case WM_CLOSE:
         {
             DeleteObject(hFont);
-            delete gifParams;
             DestroyWindow(hwnd);
         }
         break;
@@ -495,7 +491,6 @@ LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
         case WM_DESTROY:
         {
             DeleteObject(hFont);
-            delete gifParams;
             PostQuitMessage(0);
         }
         break;
@@ -593,7 +588,6 @@ LRESULT CALLBACK WndProcParameterPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
         case WM_CLOSE:
         {
             DestroyWindow(hwnd);
-            delete gifParams;
             return 0;
         }
         break;
@@ -601,7 +595,6 @@ LRESULT CALLBACK WndProcParameterPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
         case WM_DESTROY:
         {
             DestroyWindow(hwnd);
-            delete gifParams;
             return 0;
         }
         break;
@@ -756,7 +749,6 @@ LRESULT CALLBACK WndProcAboutPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             case WM_COMMAND:
             {
                 switch(LOWORD(wParam)){
-                    // nothing to do :)
                 }
             }
             break;
@@ -766,7 +758,6 @@ LRESULT CALLBACK WndProcAboutPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         case WM_CLOSE:
         {
             DestroyWindow(hwnd);
-            delete gifParams;
             return 0;
         }
         break;
@@ -774,7 +765,6 @@ LRESULT CALLBACK WndProcAboutPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         case WM_DESTROY:
         {
             DestroyWindow(hwnd);
-            delete gifParams;
             return 0;
         }
         break;
@@ -998,7 +988,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     //freopen("CON", "w", stdout);
     
     // add some default parameters to gifParams immediately
-    gifParams->filters = &filterMap;
+    gifParams->filters = filterMap;
     gifParams->selectionWindowColor = COLOR;
     gifParams->saturationValue = 2.1;
     gifParams->mosaicChunkSize = 30;

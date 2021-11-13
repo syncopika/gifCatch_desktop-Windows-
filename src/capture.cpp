@@ -115,9 +115,9 @@ void writeNewGifFrame(
     int width, 
     int height, 
     int delay, 
-    std::vector<uint8_t> (*filter)(const std::string, windowInfo*), 
+    std::vector<uint8_t> (*filter)(const std::string, std::unique_ptr<WindowInfo>&), 
     GifWriter* gifWriter, 
-    windowInfo* gifParams
+    std::unique_ptr<WindowInfo>& gifParams
 ){
     // get image data and apply a filter
     // need to convert uint8_t* to a GifRGBA*
@@ -149,8 +149,8 @@ void getSnapshots(
     int y, 
     int width, 
     int height, 
-    std::vector<uint8_t> (*filter)(const std::string, windowInfo*), 
-    windowInfo* gifParams
+    std::vector<uint8_t> (*filter)(const std::string, std::unique_ptr<WindowInfo>&), 
+    std::unique_ptr<WindowInfo>& gifParams
 ){
     HWND mainWindow = gifParams->mainWindow;
     
@@ -215,7 +215,7 @@ void getSnapshots(
 // it returns an integer indicating if anything was resized (1 = something was resized);
 // for now, create a new folder called temp_resized to store this new set of images (including the ones that weren't resized)
 // last argument is captionText, which is a string that, if not empty (""), will be written near the bottom of each frame  
-int resizeBMPs(int nImages, std::vector<std::string> images, int width, int height, std::string captionText){
+int resizeBMPs(int nImages, std::vector<std::string>& images, int width, int height, std::string captionText){
     int resizeResult = 0;
     
     // initialize gdiplus 
@@ -265,7 +265,6 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
         // resize the original bmp 
         Graphics graphics(newBMP); // the new bitmap is the new canvas to draw the resized image on 
         graphics.DrawImage(bmp, 0, 0, width, height);
-        delete bmp;
     
         // caption if there's text in the specified box 
         if(captionText != ""){
@@ -312,9 +311,10 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
         
         newBMP->Save(fname.c_str(), &pngClsid, NULL);
         //std::cout << "status: " << newBMP->Save(fname.c_str(), &pngClsid, NULL) << std::endl;
-    
+        
         resizeResult = 1;
-    
+        
+        delete bmp;
         delete newBMP;
     }
     
@@ -332,8 +332,8 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 ***/
 // get a bmp image and extract the image data into a uint8_t array 
 // which will be passed to gif functions from gif.h to create the gif 
-std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gifParams){
-    std::string filtername = (*(gifParams->filters))[gifParams->selectedFilter];
+std::vector<uint8_t> getBMPImageData(const std::string filename, std::unique_ptr<WindowInfo>& gifParams){
+    std::string filtername = (gifParams->filters)[gifParams->selectedFilter];
     
     // bmps have a 54 byte header 
     static constexpr size_t HEADER_SIZE = 54;
@@ -405,7 +405,6 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
         }
 
         // then swap the blue and red channels so we get RGBA
-        // using std::size_t is dangerous here! if you use it instead of int, you get a segmentation fault :|
         for(int i = 0; i <= (int)image.size() - 4; i += 4){
             char temp = image[i];
             image[i] = image[i+2];
@@ -463,13 +462,13 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
 
     // use gifParams to get specific parameters for specific filters
     if(filtername == "inverted")     inversionFilter(finalImageData);
-    if(filtername == "saturated")     saturationFilter(gifParams->saturationValue, finalImageData);
-    if(filtername == "weird")         weirdFilter(finalImageData);
-    if(filtername == "grayscale")     grayscaleFilter(finalImageData);
-    if(filtername == "edge_detect") edgeDetectionFilter(finalImageData, (int)width, (int)height);
-    if(filtername == "mosaic")         mosaicFilter(finalImageData, (int)width, (int)height, gifParams->mosaicChunkSize);
-    if(filtername == "outline")     outlineFilter(finalImageData, (int)width, (int)height, gifParams->outlineColorDiffLimit);
-    if(filtername == "voronoi")     voronoiFilter(finalImageData, (int)width, (int)height, gifParams->voronoiNeighborConstant);
+    if(filtername == "saturated")    saturationFilter(gifParams->saturationValue, finalImageData);
+    if(filtername == "weird")        weirdFilter(finalImageData);
+    if(filtername == "grayscale")    grayscaleFilter(finalImageData);
+    if(filtername == "edge_detect")  edgeDetectionFilter(finalImageData, (int)width, (int)height);
+    if(filtername == "mosaic")       mosaicFilter(finalImageData, (int)width, (int)height, gifParams->mosaicChunkSize);
+    if(filtername == "outline")      outlineFilter(finalImageData, (int)width, (int)height, gifParams->outlineColorDiffLimit);
+    if(filtername == "voronoi")      voronoiFilter(finalImageData, (int)width, (int)height, gifParams->voronoiNeighborConstant);
     if(filtername == "blur")         blurFilter(finalImageData, (int)width, (int)height, (double)gifParams->blurFactor); // TODO: just change blur factor to int?
     
     return finalImageData;
@@ -477,7 +476,13 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
 
 
 // this function assembles the gif from bmp images in a specified directory 
-void assembleGif(int nImages, int delay, std::vector<std::string> images, std::vector<uint8_t> (*filter)(const std::string, windowInfo*), windowInfo* gifParams){
+void assembleGif(
+    int nImages, 
+    int delay, 
+    std::vector<std::string>& images, 
+    std::vector<uint8_t> (*filter)(const std::string, std::unique_ptr<WindowInfo>&), 
+    std::unique_ptr<WindowInfo>& gifParams)
+    {
     std::string captionText = gifParams->captionText;
     HWND mainWindow = gifParams->mainWindow; // get the handle to the main window so we can post msgs to it 
 
