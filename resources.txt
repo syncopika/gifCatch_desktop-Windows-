@@ -95,7 +95,8 @@ https://github.com/z2oh/chromatic_confinement/blob/master/src/main.rs
 https://stackoverflow.com/questions/1627305/nearest-neighbor-k-d-tree-wikipedia-proof/37107030#37107030
 http://blog.ivank.net/fastest-gaussian-blur.html
 
-
+// using smart ptrs with win32 threads (hint: just don't)
+https://stackoverflow.com/questions/31187938/combining-stlc11-with-winapi
 
 /////////// TODO?
 - move filters to separate files? refactor code a bit more
