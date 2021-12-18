@@ -16,7 +16,6 @@
 #include <dirent.h>   // for directory finding 
 #include <map>        // for mapping color filters to their dropdown box index 
 #include <algorithm>  // for min function 
-#include <thread>
 
 // give some identifiers for the GUI components 
 #include "resources.h"
