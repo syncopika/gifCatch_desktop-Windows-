@@ -19,7 +19,6 @@
     global variables
 
 *****************/
-
 int x1 = 0; // top left x coord 
 int y1 = 0; // top left y coord
 int x2 = GetSystemMetrics(SM_CXSCREEN); // screen bottom right x coord 
@@ -68,7 +67,7 @@ std::map<int, std::string> filterMap = {
 };
 
 // default settings 
-std::unique_ptr<WindowInfo> gifParams = std::make_unique<WindowInfo>(); // WindowInfo is from capture.hh
+static WindowInfo gifParams; // WindowInfo is from capture.hh
 
 /***
 
@@ -150,7 +149,7 @@ void createCheckBox(
     SendMessage(checkBox, WM_SETFONT, (WPARAM)hFont, true);
 }
 
-void makeGif(std::unique_ptr<WindowInfo>& args){
+void makeGif(WindowInfo* args){
     HWND mainWindow = args->mainWindow;
     
     PostMessage(mainWindow, ID_IN_PROGRESS, 0, 0);
@@ -167,11 +166,9 @@ void makeGif(std::unique_ptr<WindowInfo>& args){
     if(theDir != ""){
         // user wants to assemble a gif from some already made bmps!
         struct dirent *dir_entry;
-        DIR *pd = 0;
-        
-        pd = opendir(theDir.c_str());
+        DIR *pd = opendir(theDir.c_str());
         if(pd == NULL){
-            std::cout << "unable to open directory..." << std::endl;
+            std::cout << "unable to open directory...\n";
             //PostMessage(mainWindow, ID_UNABLE_TO_OPEN, 0, 0);
             return;
         }
@@ -192,13 +189,13 @@ void makeGif(std::unique_ptr<WindowInfo>& args){
             //images.push_back(std::string(dir_entry->d_name));
             std::string filename = dir_entry->d_name;
             if(filename.compare(".") != 0 && filename.compare("..") != 0){
-                // look for bmp images only 
+                // look for bmp images only
                 int len = filename.size();
                 if(len < 3){
                     continue;
                 }else{
-                    std::string last3chars = filename.substr(len - 3);
-                    if(last3chars.compare("bmp") == 0){
+                    std::string extension = filename.substr(len - 3);
+                    if(extension.compare("bmp") == 0){
                         if(filenameLength == -1){
                             filenameLength = len;
                             // put first file in images1 
@@ -220,7 +217,6 @@ void makeGif(std::unique_ptr<WindowInfo>& args){
             PostMessage(mainWindow, ID_NO_BMPS_FOUND, 0, 0);
             return;
         }else{
-            
             std::vector<std::string> allImages; // add images from images1 and images2 to here
             int images1len = images1.size();
             int images2len = images2.size();
@@ -251,8 +247,9 @@ void makeGif(std::unique_ptr<WindowInfo>& args){
     pass it a pointer to a struct that contains parameters for creating the gif
 
 ***/
-void processGifThread(std::unique_ptr<WindowInfo>& windowInfo){
-    makeGif(windowInfo);
+DWORD WINAPI processGifThread(LPVOID windowInfo){
+    makeGif((WindowInfo*)windowInfo);
+    return 0;
 }
 
 
@@ -417,17 +414,17 @@ LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
                     
                     // set up arguments struct to pass to the thread that will generate the gif 
                     // need to allocate on to heap otherwise this data will go out of scope and be unreachable from thread 
-                    gifParams->numFrames = nFrames;
-                    gifParams->timeDelay = tDelay;
-                    gifParams->selectedFilter = currFilterIndex;
-                    gifParams->directory = std::string(dir);
-                    gifParams->captionText = std::string(captext);
-                    gifParams->mainWindow = hwnd;
+                    gifParams.numFrames = nFrames;
+                    gifParams.timeDelay = tDelay;
+                    gifParams.selectedFilter = currFilterIndex;
+                    gifParams.directory = std::string(dir);
+                    gifParams.captionText = std::string(captext);
+                    gifParams.mainWindow = hwnd;
                     
                     // start process in another thread
-                    //CreateThread(NULL, 0, processGifThread, (void *)gifParams, 0, 0);
-                    std::thread thread(processGifThread, gifParams);
-                    thread.detach();
+                    CreateThread(NULL, 0, processGifThread, &gifParams, 0, 0);
+                    //std::thread thread(processGifThread, gifParams);
+                    //thread.detach();
                 }
                 break;
             }
@@ -528,55 +525,55 @@ LRESULT CALLBACK WndProcParameterPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
                     {
                         // get the selected color for the screen! 
                         HWND colorSelect = GetDlgItem(hwnd, ID_SELECTION_COLOR);
-                        gifParams->selectionWindowColor = getSelectedColor(colorSelect);
+                        gifParams.selectionWindowColor = getSelectedColor(colorSelect);
                         
                         // get the saturation value 
                         HWND saturation = GetDlgItem(hwnd, ID_SET_SATURATION);
                         TCHAR saturationValue[5];
                         GetWindowText(saturation, saturationValue, sizeof(saturationValue));
                         float satVal = atof(saturationValue);
-                        gifParams->saturationValue = satVal > 10.0 ? 10.0 : satVal;
-                        SetDlgItemText(hwnd, ID_SET_SATURATION, std::to_string((gifParams->saturationValue)).c_str());
+                        gifParams.saturationValue = satVal > 10.0 ? 10.0 : satVal;
+                        SetDlgItemText(hwnd, ID_SET_SATURATION, std::to_string((gifParams.saturationValue)).c_str());
                         
                         // get the mosaic chunk size value
                         HWND mosaic = GetDlgItem(hwnd, ID_SET_MOSAIC);
                         TCHAR mosaicValue[5];
                         GetWindowText(mosaic, mosaicValue, sizeof(mosaicValue));
                         int mosVal = atoi(mosaicValue);
-                        gifParams->mosaicChunkSize = mosVal > 80 ? 80 : mosVal;
-                        SetDlgItemText(hwnd, ID_SET_MOSAIC, std::to_string(gifParams->mosaicChunkSize).c_str());
+                        gifParams.mosaicChunkSize = mosVal > 80 ? 80 : mosVal;
+                        SetDlgItemText(hwnd, ID_SET_MOSAIC, std::to_string(gifParams.mosaicChunkSize).c_str());
                         
                         // get the outline size value 
                         HWND outline = GetDlgItem(hwnd, ID_SET_OUTLINE);
                         TCHAR outlineValue[5];
                         GetWindowText(outline, outlineValue, sizeof(outlineValue));
                         int outlineVal = atoi(outlineValue);
-                        gifParams->outlineColorDiffLimit = outlineVal > 20 ? 20 : outlineVal;
-                        SetDlgItemText(hwnd, ID_SET_OUTLINE, std::to_string(gifParams->outlineColorDiffLimit).c_str());
+                        gifParams.outlineColorDiffLimit = outlineVal > 20 ? 20 : outlineVal;
+                        SetDlgItemText(hwnd, ID_SET_OUTLINE, std::to_string(gifParams.outlineColorDiffLimit).c_str());
                         
                         // get the Voronoi neighbor constant value
                         HWND voronoi = GetDlgItem(hwnd, ID_SET_VORONOI);
                         TCHAR voronoiValue[5];
                         GetWindowText(voronoi, voronoiValue, sizeof(voronoiValue));
                         int voronoiConst = atoi(voronoiValue);
-                        gifParams->voronoiNeighborConstant = voronoiConst > 60 ? 60 : voronoiConst;
-                        SetDlgItemText(hwnd, ID_SET_VORONOI, std::to_string(gifParams->voronoiNeighborConstant).c_str());
+                        gifParams.voronoiNeighborConstant = voronoiConst > 60 ? 60 : voronoiConst;
+                        SetDlgItemText(hwnd, ID_SET_VORONOI, std::to_string(gifParams.voronoiNeighborConstant).c_str());
                         
                         // get the blur factor value
                         HWND blur = GetDlgItem(hwnd, ID_SET_BLUR);
                         TCHAR blurValue[5];
                         GetWindowText(blur, blurValue, sizeof(blurValue));
                         int blurVal = atoi(blurValue);
-                        gifParams->blurFactor = blurVal > 10 ? 10 : blurVal;
-                        SetDlgItemText(hwnd, ID_SET_BLUR, std::to_string(gifParams->blurFactor).c_str());
+                        gifParams.blurFactor = blurVal > 10 ? 10 : blurVal;
+                        SetDlgItemText(hwnd, ID_SET_BLUR, std::to_string(gifParams.blurFactor).c_str());
                         
                         // get the value of 'show cursor' checkbox 
                         HWND getCursorBox = GetDlgItem(hwnd, ID_GET_CURSOR);
                         int getCursorVal = SendMessage(getCursorBox, BM_GETCHECK, 0, 0);
                         if(getCursorVal == BST_CHECKED){
-                            gifParams->getCursor = true;
+                            gifParams.getCursor = true;
                         }else{
-                            gifParams->getCursor = false;
+                            gifParams.getCursor = false;
                         }
                     }
                 }
@@ -644,11 +641,10 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                 // convert coordinates
                 ScreenToClient(hwnd, &ptNew);
                 bDrag = false;
-            }else if(bDraw){
-                      
+            }else if(bDraw){  
                 HDC hdc = GetDC(hwnd);
                 SelectObject(hdc,GetStockObject(DC_BRUSH));
-                SetDCBrushColor(hdc, gifParams->selectionWindowColor);
+                SetDCBrushColor(hdc, gifParams.selectionWindowColor);
                 
                 SetROP2(hdc, R2_NOTXORPEN);
                 
@@ -688,11 +684,9 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                     y2 = std::max(ptCurr.y, ptNew.y);
                     
                     // do some correction to take into account the title bar height 
-                    if(y1 > 0){
-                        y1 = y1 + GetSystemMetrics(SM_CYCAPTION);
-                    }
+                    if(y1 > 0) y1 = y1 + GetSystemMetrics(SM_CYCAPTION);
                     
-                    // don't forget about y2, the endpoint for the y-coord - needs to be adjusted too
+                    // also adjust y2, the endpoint for the y-coord
                     y2 = y2 + GetSystemMetrics(SM_CYCAPTION);
                     
                     reset(&ptCurr, &ptNew, &bDrag, &bDraw);
@@ -703,7 +697,7 @@ LRESULT CALLBACK WndProcSelection(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                     // need to clear screen!!
                     HDC hdc = GetDC(hwnd);
                     SelectObject(hdc,GetStockObject(DC_BRUSH));
-                    SetDCBrushColor(hdc, gifParams->selectionWindowColor); 
+                    SetDCBrushColor(hdc, gifParams.selectionWindowColor); 
                     SetROP2(hdc, R2_NOTXORPEN);
                     // erase old rectangle 
                     Rectangle(hdc, ptCurr.x, ptCurr.y, ptNew.x, ptNew.y);
@@ -988,14 +982,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     //freopen("CON", "w", stdout);
     
     // add some default parameters to gifParams immediately
-    gifParams->filters = filterMap;
-    gifParams->selectionWindowColor = COLOR;
-    gifParams->saturationValue = 2.1;
-    gifParams->mosaicChunkSize = 30;
-    gifParams->outlineColorDiffLimit = 10;
-    gifParams->voronoiNeighborConstant = 30;
-    gifParams->blurFactor = 3;
-    gifParams->getCursor = false;
+    gifParams.filters = filterMap;
+    gifParams.selectionWindowColor = COLOR;
+    gifParams.saturationValue = 2.1;
+    gifParams.mosaicChunkSize = 30;
+    gifParams.outlineColorDiffLimit = 10;
+    gifParams.voronoiNeighborConstant = 30;
+    gifParams.blurFactor = 3;
+    gifParams.getCursor = false;
     
     // for improving the gui appearance (buttons, that is. the font needs to be changed separately) 
     INITCOMMONCONTROLSEX icc;

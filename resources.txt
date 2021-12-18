@@ -98,6 +98,9 @@ http://blog.ivank.net/fastest-gaussian-blur.html
 // using smart ptrs with win32 threads (hint: just don't)
 https://stackoverflow.com/questions/31187938/combining-stlc11-with-winapi
 
+// unique ptrs
+https://stackoverflow.com/questions/38038158/stdmake-unique-for-gdi-objects
+
 /////////// TODO?
 - move filters to separate files? refactor code a bit more
 - error checking in thread? if something goes wrong put an error message

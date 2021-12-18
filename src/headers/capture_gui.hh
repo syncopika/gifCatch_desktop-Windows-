@@ -25,7 +25,7 @@
 #define COLOR RGB(255,130,140)
 
 void reset(POINT *p1, POINT *p2, bool *drag, bool *draw);
-void makeGif(std::unique_ptr<WindowInfo>& args);
+void makeGif(WindowInfo* args);
 
 // some nice functions to create certain window elements
 void createEditBox(
@@ -66,7 +66,7 @@ void createCheckBox(
 
 COLORREF getSelectedColor(HWND selectBox);
 
-void processGifThread(std::unique_ptr<WindowInfo>& windowInfo);
+DWORD WINAPI processGifThread(LPVOID windowInfo);
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);

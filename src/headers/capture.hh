@@ -9,7 +9,7 @@
 #include <array>      // for reading in bmp image data
 #include <windows.h>  // for screen capture 
 #include <gdiplus.h>  // for screen capture 
-#include <memory>     // for screen capture 
+#include <memory>     // for screen capture, unique pointer
 #include <string>     // for int to string conversion 
 #include <sstream>    // for int to string conversion 
 #include <vector>     // used throughout
@@ -44,12 +44,12 @@ struct WindowInfo {
 std::string intToString(int i);
 
 // check if a point is within a particular rect
-bool ptIsInRange(POINT start, int width, int height, POINT pt);
+bool ptIsInRange(POINT& start, int width, int height, POINT& pt);
 
 // screen capturing code 
 int getEncoderClsid(const WCHAR* format, CLSID* pClsid);
 void bitmapToBMP(HBITMAP hbmpImage, int width, int height, std::string filename);
-bool screenCapture(int x, int y, int width, int height, const char *filename, bool getCursor);
+bool screenCapture(int x, int y, int width, int height, const char* filename, bool getCursor);
 
 // this function relies on all the above 
 // the result is creating a temp folder and populating it with screenshots
@@ -60,8 +60,8 @@ void getSnapshots(
 	int y, 
 	int width, 
 	int height, 
-	std::vector<uint8_t> (*filter)(const std::string, std::unique_ptr<WindowInfo>&), 
-	std::unique_ptr<WindowInfo>& gifParams
+	std::vector<uint8_t> (*filter)(const std::string&, WindowInfo*), 
+	WindowInfo* gifParams
 );
 
 // this function assembles the gif from bmp images in a specified directory 
@@ -69,16 +69,15 @@ void assembleGif(
 	int nImages, 
 	int delay, 
 	std::vector<std::string>& images, 
-	std::vector<uint8_t> (*filter)(const std::string, std::unique_ptr<WindowInfo>&), 
-	std::unique_ptr<WindowInfo>& gifParams
+	std::vector<uint8_t> (*filter)(const std::string&, WindowInfo*),
+	WindowInfo* gifParams
 );
 
 // this function helps resize any bmps. it doesn't respect ratios though currently so it might produce not-so-good frames.
-int resizeBMPs(int nImages, std::vector<std::string>& images, int width, int height, std::string captionText);
+int resizeBMPs(int nImages, std::vector<std::string>& images, int width, int height, std::string& captionText);
 
 // get bmp image data 
-std::vector<uint8_t> getBMPImageData(const std::string filename, std::unique_ptr<WindowInfo>& gifParams);
-
+std::vector<uint8_t> getBMPImageData(const std::string& filename, WindowInfo* gifParams);
 
 
 #endif // CAPTURE_H
