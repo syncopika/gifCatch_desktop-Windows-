@@ -13,9 +13,9 @@
 #include "bmp_helper.hh"
 
 #include <commctrl.h> // for improving GUI appearance (defined here since it needs to come after windows.h)
-#include <dirent.h> // for directory finding 
-#include <map> // for mapping color filters to their dropdown box index 
-#include <algorithm> // for min function 
+#include <dirent.h>   // for directory finding 
+#include <map>        // for mapping color filters to their dropdown box index 
+#include <algorithm>  // for min function 
 
 // give some identifiers for the GUI components 
 #include "resources.h"
@@ -24,7 +24,7 @@
 #define COLOR RGB(255,130,140)
 
 void reset(POINT *p1, POINT *p2, bool *drag, bool *draw);
-void makeGif(windowInfo* args);
+void makeGif(WindowInfo* args);
 
 // some nice functions to create certain window elements
 void createEditBox(
@@ -65,7 +65,7 @@ void createCheckBox(
 
 COLORREF getSelectedColor(HWND selectBox);
 
-DWORD WINAPI processGifThread(LPVOID lpParam);
+DWORD WINAPI processGifThread(LPVOID windowInfo);
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);

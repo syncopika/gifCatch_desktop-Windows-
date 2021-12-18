@@ -47,10 +47,11 @@ int getEncoderClsid(const WCHAR* format, CLSID* pClsid){
 }
 
 void bitmapToBMP(HBITMAP hbmpImage, int width, int height, std::string filename){
-    Bitmap *p_bmp = Bitmap::FromHBITMAP(hbmpImage, NULL);
-    //Bitmap *p_bmp = new Bitmap(width, height, PixelFormat32bppARGB);
+    // with unique ptr we don't have to worry about manually deleting the bitmap
+    std::unique_ptr<Gdiplus::Bitmap> p_bmp = std::unique_ptr<Gdiplus::Bitmap>(Gdiplus::Bitmap::FromHBITMAP(hbmpImage, NULL));
     
     CLSID pngClsid;
+    
     // creating BMP images
     int result = getEncoderClsid(L"image/bmp", &pngClsid);  
     if(result != -1){
@@ -64,14 +65,13 @@ void bitmapToBMP(HBITMAP hbmpImage, int width, int height, std::string filename)
     
     // use .c_str to convert to wchar_t*
     p_bmp->Save(fname.c_str(), &pngClsid, NULL);
-    delete p_bmp;
 }
 
-bool ptIsInRange(POINT start, int width, int height, POINT pt){
+bool ptIsInRange(POINT& start, int width, int height, POINT& pt){
     return (pt.x >= start.x && pt.x <= start.x + width && pt.y >= start.y && pt.y <= start.y + height);
 }
 
-bool screenCapture(int x, int y, int width, int height, const char *filename, bool getCursor){
+bool screenCapture(int x, int y, int width, int height, const char* filename, bool getCursor){
     HDC hDc = CreateCompatibleDC(0);
     HBITMAP hBmp = CreateCompatibleBitmap(GetDC(0), width, height);
     SelectObject(hDc, hBmp);
@@ -79,13 +79,13 @@ bool screenCapture(int x, int y, int width, int height, const char *filename, bo
     
     // capture the cursor and add to screenshot if so desired
     if(getCursor){
-        CURSORINFO screenCursor = {sizeof(screenCursor)};
+        CURSORINFO screenCursor{sizeof(screenCursor)};
         GetCursorInfo(&screenCursor);
         if(screenCursor.flags == CURSOR_SHOWING){
             RECT rcWnd;
             HWND hwnd = GetDesktopWindow();
             GetWindowRect(hwnd, &rcWnd);
-            ICONINFO iconInfo = {sizeof(iconInfo)};
+            ICONINFO iconInfo{sizeof(iconInfo)};
             GetIconInfo(screenCursor.hCursor, &iconInfo);
             int cursorX = screenCursor.ptScreenPos.x - iconInfo.xHotspot - x;
             int cursorY = screenCursor.ptScreenPos.y - iconInfo.yHotspot - y;
@@ -111,18 +111,18 @@ bool screenCapture(int x, int y, int width, int height, const char *filename, bo
 }
 
 void writeNewGifFrame(
-    std::string frameImgName, 
+    std::string& frameImgName, 
     int width, 
     int height, 
     int delay, 
-    std::vector<uint8_t> (*filter)(const std::string, windowInfo*), 
+    std::vector<uint8_t> (*filter)(const std::string&, WindowInfo*), 
     GifWriter* gifWriter, 
-    windowInfo* gifParams
+    WindowInfo* gifParams
 ){
     // get image data and apply a filter
     // need to convert uint8_t* to a GifRGBA*
     std::vector<uint8_t> img = (*filter)(frameImgName, gifParams);
-    uint8_t* imgData = (uint8_t *)(img.data());
+    uint8_t* imgData = (uint8_t*)(img.data());
     
     GifRGBA* pixelArr = new GifRGBA[sizeof(GifRGBA)*((int)img.size()/4)];
     
@@ -149,8 +149,8 @@ void getSnapshots(
     int y, 
     int width, 
     int height, 
-    std::vector<uint8_t> (*filter)(const std::string, windowInfo*), 
-    windowInfo* gifParams
+    std::vector<uint8_t> (*filter)(const std::string&, WindowInfo*), 
+    WindowInfo* gifParams
 ){
     HWND mainWindow = gifParams->mainWindow;
     
@@ -185,7 +185,6 @@ void getSnapshots(
         Sleep(delay);
     }
     
-    //Shutdown GDI+
     GdiplusShutdown(gdiplusToken);
     
     // make the gif here! using gif.h 
@@ -206,6 +205,7 @@ void getSnapshots(
         
         writeNewGifFrame(nextFrame, width, height, delay, filter, &gifWriter, gifParams);
     }
+    
     GifEnd(&gifWriter);
 }
 
@@ -215,13 +215,13 @@ void getSnapshots(
 // it returns an integer indicating if anything was resized (1 = something was resized);
 // for now, create a new folder called temp_resized to store this new set of images (including the ones that weren't resized)
 // last argument is captionText, which is a string that, if not empty (""), will be written near the bottom of each frame  
-int resizeBMPs(int nImages, std::vector<std::string> images, int width, int height, std::string captionText){
+int resizeBMPs(int nImages, std::vector<std::string>& images, int width, int height, std::string& captionText){
     int resizeResult = 0;
     
     // initialize gdiplus 
-    GdiplusStartupInput gdiplusStartupInput;
+    Gdiplus::GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
-    GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+    Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
     
     // make a temp_resized directory 
     std::string dirName = "temp_resized";
@@ -238,7 +238,7 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
         std::wstring wstr = std::wstring(filename.begin(), filename.end());
         const wchar_t *widestr = wstr.c_str();
         
-        Bitmap* bmp = new Bitmap(widestr, false);
+        Gdiplus::Bitmap* bmp = new Gdiplus::Bitmap(widestr, false);
         int h = bmp->GetHeight();
         int w = bmp->GetWidth();
         
@@ -260,12 +260,11 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
         }
         
         // make a new empty bmp with the new dimensions
-        Bitmap* newBMP = new Bitmap(width, height, bmp->GetPixelFormat());
+        Gdiplus::Bitmap* newBMP = new Gdiplus::Bitmap(width, height, bmp->GetPixelFormat());
         
-        // resize the original bmp 
-        Graphics graphics(newBMP); // the new bitmap is the new canvas to draw the resized image on 
+        // resize the original bmp
+        Gdiplus::Graphics graphics(newBMP); // the new bitmap is the new canvas to draw the resized image on 
         graphics.DrawImage(bmp, 0, 0, width, height);
-        delete bmp;
     
         // caption if there's text in the specified box 
         if(captionText != ""){
@@ -277,23 +276,25 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
             // assume each char in the string takes up 15 pixels?
             int xCoord = (w/2) - ((stringLen*15)/2);
             
-            FontFamily impactFont(L"Impact");
-            StringFormat strFormat;
-            GraphicsPath gpath;             // use this to hold the outline of the string we want to draw 
+            Gdiplus::FontFamily impactFont(L"Impact");
+            Gdiplus::StringFormat strFormat;
+            Gdiplus::GraphicsPath gpath;       // use this to hold the outline of the string we want to draw 
             gpath.AddString(
-                string,                     // the string
-                wcslen(string),             // length of string
-                &impactFont,                 // font family
+                string,                        // the string
+                wcslen(string),                // length of string
+                &impactFont,                   // font family
                 FontStyleRegular,              // style of type face 
-                32,                         // font size 
+                32,                            // font size 
                 Point(xCoord, (h/2 + h/3)),    // where to put the string 
                 &strFormat                     // layout information for the string 
             );
-            Pen pen(Color(0,0,0), 2);         // color and width of pen 
+            
+            Gdiplus::Pen pen(Color(0,0,0), 2); // color and width of pen 
             pen.SetLineJoin(LineJoinRound);    // prevent sharp pointers from occurring on some chars 
             graphics.SetSmoothingMode(SmoothingModeAntiAlias); // antialias the text so the outline doesn't look choppy
             graphics.DrawPath(&pen, &gpath);
-            SolidBrush brush(Color(255,255,255,255));
+            
+            Gdiplus::SolidBrush brush(Color(255,255,255,255));
             graphics.FillPath(&brush, &gpath);
         }
         
@@ -312,14 +313,15 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
         
         newBMP->Save(fname.c_str(), &pngClsid, NULL);
         //std::cout << "status: " << newBMP->Save(fname.c_str(), &pngClsid, NULL) << std::endl;
-    
+        
         resizeResult = 1;
-    
+        
+        //delete bmp;
         delete newBMP;
     }
     
     // shutdown gdiplus 
-    GdiplusShutdown(gdiplusToken);
+    Gdiplus::GdiplusShutdown(gdiplusToken);
     
     return resizeResult;
 }
@@ -332,8 +334,8 @@ int resizeBMPs(int nImages, std::vector<std::string> images, int width, int heig
 ***/
 // get a bmp image and extract the image data into a uint8_t array 
 // which will be passed to gif functions from gif.h to create the gif 
-std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gifParams){
-    std::string filtername = (*(gifParams->filters))[gifParams->selectedFilter];
+std::vector<uint8_t> getBMPImageData(const std::string& filename, WindowInfo* gifParams){
+    std::string filtername = (gifParams->filters)[gifParams->selectedFilter];
     
     // bmps have a 54 byte header 
     static constexpr size_t HEADER_SIZE = 54;
@@ -405,7 +407,6 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
         }
 
         // then swap the blue and red channels so we get RGBA
-        // using std::size_t is dangerous here! if you use it instead of int, you get a segmentation fault :|
         for(int i = 0; i <= (int)image.size() - 4; i += 4){
             char temp = image[i];
             image[i] = image[i+2];
@@ -457,19 +458,18 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
     
     // apply filters as needed 
     if(filtername == "none"){
-        // ready to move on to next step 
         return finalImageData;
     }
 
     // use gifParams to get specific parameters for specific filters
     if(filtername == "inverted")     inversionFilter(finalImageData);
-    if(filtername == "saturated")     saturationFilter(gifParams->saturationValue, finalImageData);
-    if(filtername == "weird")         weirdFilter(finalImageData);
-    if(filtername == "grayscale")     grayscaleFilter(finalImageData);
-    if(filtername == "edge_detect") edgeDetectionFilter(finalImageData, (int)width, (int)height);
-    if(filtername == "mosaic")         mosaicFilter(finalImageData, (int)width, (int)height, gifParams->mosaicChunkSize);
-    if(filtername == "outline")     outlineFilter(finalImageData, (int)width, (int)height, gifParams->outlineColorDiffLimit);
-    if(filtername == "voronoi")     voronoiFilter(finalImageData, (int)width, (int)height, gifParams->voronoiNeighborConstant);
+    if(filtername == "saturated")    saturationFilter(gifParams->saturationValue, finalImageData);
+    if(filtername == "weird")        weirdFilter(finalImageData);
+    if(filtername == "grayscale")    grayscaleFilter(finalImageData);
+    if(filtername == "edge_detect")  edgeDetectionFilter(finalImageData, (int)width, (int)height);
+    if(filtername == "mosaic")       mosaicFilter(finalImageData, (int)width, (int)height, gifParams->mosaicChunkSize);
+    if(filtername == "outline")      outlineFilter(finalImageData, (int)width, (int)height, gifParams->outlineColorDiffLimit);
+    if(filtername == "voronoi")      voronoiFilter(finalImageData, (int)width, (int)height, gifParams->voronoiNeighborConstant);
     if(filtername == "blur")         blurFilter(finalImageData, (int)width, (int)height, (double)gifParams->blurFactor); // TODO: just change blur factor to int?
     
     return finalImageData;
@@ -477,7 +477,13 @@ std::vector<uint8_t> getBMPImageData(const std::string filename, windowInfo* gif
 
 
 // this function assembles the gif from bmp images in a specified directory 
-void assembleGif(int nImages, int delay, std::vector<std::string> images, std::vector<uint8_t> (*filter)(const std::string, windowInfo*), windowInfo* gifParams){
+void assembleGif(
+    int nImages, 
+    int delay, 
+    std::vector<std::string>& images, 
+    std::vector<uint8_t> (*filter)(const std::string&, WindowInfo*), 
+    WindowInfo* gifParams
+){
     std::string captionText = gifParams->captionText;
     HWND mainWindow = gifParams->mainWindow; // get the handle to the main window so we can post msgs to it 
 
@@ -519,9 +525,7 @@ void assembleGif(int nImages, int delay, std::vector<std::string> images, std::v
     std::string nextFrame; 
     for(int i = 0; i < nImages; i++){
         nextFrame = imageNames[i];
-        
         PostMessage(mainWindow, ID_PROCESS_FRAME, (WPARAM)i, 0);
-        
         writeNewGifFrame(nextFrame, initialD[1], initialD[0], delay, filter, &gifWriter, gifParams);
     }
     

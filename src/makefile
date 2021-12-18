@@ -11,7 +11,7 @@ LIB = -lgdi32 -luser32 -lgdiplus -lcomctl32
 # -IC:\mingw-w64\mingw32\i686-w64-mingw32\include\gdiplus
 INCLUDE = -IC:\MinGW\include\gdiplus
 
-FLAGS = -Wall -g -c -std=c++14 $(INCLUDE)
+FLAGS = -Wall -Os -g -c -std=c++14 $(INCLUDE)
 LINK_FLAGS = -mwindows -static-libstdc++ -static-libgcc $(LIB)
 
 OBJ = capture_gui.o capture.o resources.o bmp_helper.o voronoi.o
