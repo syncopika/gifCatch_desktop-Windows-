@@ -485,12 +485,7 @@ void voronoiFilter(std::vector<uint8_t>& imageData, int width, int height, int n
             // larger neighborConstant == more neighbors == more Voronoi shapes
             int x = (sign * offset) + pxCoords[0];
             int y = (sign * offset) + pxCoords[1];
-            CustomPoint p1 = CustomPoint(); 
-            p1.x = x;
-            p1.y = y;
-            p1.r = imageData[i];
-            p1.g = imageData[i+1];
-            p1.b = imageData[i+2];
+            CustomPoint p1{x, y, imageData[i], imageData[i+1], imageData[i+2]};
             neighborList.push_back(p1);
         }
     }

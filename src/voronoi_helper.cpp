@@ -35,7 +35,7 @@ void deleteTree(Node*& root){
 // returns the root of the resulting 2d tree 
 // in this use case our dimensions will be x and y (since each pixel has an x,y coordinate), so only 2 dimensions 
 Node* build2dTree(std::vector<CustomPoint> pointsList, int currDim){
-    int maxDim = 2;
+    int maxDim = 2; // ensures dimension is either 0 or 1
     
     // base cases
     if(pointsList.size() == 0){
@@ -161,7 +161,6 @@ void findNearestNeighborHelper(Node* root, CustomPoint& nearestNeighbor, float& 
 
 // find nearest neighbor in 2d tree given a point's x and y coords and the tree's root 
 CustomPoint findNearestNeighbor(Node* root, int x, int y){
-    
     // set default values
     CustomPoint nearestNeighbor = root->point;
     float minDist = getDist(root->data[0], x, root->data[1], y);
