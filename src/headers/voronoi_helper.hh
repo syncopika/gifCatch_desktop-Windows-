@@ -16,13 +16,13 @@
 struct CustomPoint {
 	int x;
 	int y;
-	char r;
-	char g;
-	char b;
+	unsigned char r;
+	unsigned char g;
+	unsigned char b;
 };
 
 
-// each node takes Point info (x, y, rgb) and a dimension
+// each node takes Point info (x, y, rgb) and a dimension (0 for 'x', 1 for 'y')
 struct Node {
 	std::vector<int> data; //this.data = [point.x, point.y];
 	CustomPoint point;
