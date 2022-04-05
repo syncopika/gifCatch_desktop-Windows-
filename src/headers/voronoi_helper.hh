@@ -9,6 +9,7 @@
 #include <iostream>
 #include <cmath>
 #include <algorithm>
+#include <utility>
 #include <vector>
 
 // Point struct
@@ -24,7 +25,7 @@ struct CustomPoint {
 
 // each node takes Point info (x, y, rgb) and a dimension (0 for 'x', 1 for 'y')
 struct Node {
-	std::vector<int> data; //this.data = [point.x, point.y];
+	std::pair<int, int> data; // [point.x, point.y];
 	CustomPoint point;
 	int dim;
 	Node* left = nullptr;

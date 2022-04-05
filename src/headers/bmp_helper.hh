@@ -4,6 +4,7 @@
 #include <iostream> // for reading in data (includes ios)
 #include <fstream>  // for reading in bmp image data
 #include <array>    // for reading in bmp image data
+#include <utility>  // for std::pair
 #include <vector>
 #include <string>
 #include <cmath>	// for using sqrt, floor
@@ -20,7 +21,7 @@ std::vector<int> getBMPHeightWidth(const std::string filename);
 
 // get the pixel coordinates given an r channel index of a pixel in an array of image data 
 // that is arranged like r,g,b,a,r,g,b,a,... 
-std::vector<int> getPixelCoords(int index, int width, int height);
+std::pair<int, int> getPixelCoords(int index, int width, int height);
 
 // filters 
 // TODO: move these to a separate file?

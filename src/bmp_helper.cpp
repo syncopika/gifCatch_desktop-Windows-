@@ -31,7 +31,7 @@ std::vector<int> getBMPHeightWidth(const std::string filename){
 }
 
 // get pixel coordinates given index of r channel of a pixel in an array of image data 
-std::vector<int> getPixelCoords(int index, int width, int height){
+std::pair<int, int> getPixelCoords(int index, int width, int height){
     // assuming index represents the r channel of a pixel
     // index therefore represents the index of a pixel, since the pixel data
     // is laid out like r,g,b,a,r,g,b,a,... in the image data
@@ -40,17 +40,15 @@ std::vector<int> getPixelCoords(int index, int width, int height){
     // on the canvas.
     if((width*4) * height < index){
         // if index is out of bounds 
-        std::vector<int> emptyVec;
-        return emptyVec;
+        std::pair<int, int> emptyPair{-1, -1};
+        return emptyPair;
     }
     
     int pixelNum = std::floor(index / 4);
     int yCoord = std::floor(pixelNum / width); // find what row this pixel belongs in
     int xCoord = pixelNum - (yCoord * width); // find the difference between the pixel number of the pixel at the start of the row and this pixel 
     
-    std::vector<int> coords;
-    coords.push_back(xCoord);
-    coords.push_back(yCoord);
+    std::pair<int, int> coords{xCoord, yCoord};
     
     return coords;
 }
@@ -478,13 +476,16 @@ void voronoiFilter(std::vector<uint8_t>& imageData, int width, int height, int n
         int offset = rand() % 10;
         int sign = (rand() % 5 + 1) > 5 ? 1 : -1;  // if random num is > 5, positive sign
         
-        std::vector<int> pxCoords = getPixelCoords(i, width, height); // return index 0 = x, index 1 = y 
-        if(pxCoords[0] % (int)std::floor(width / neighborConstant) == 0 && 
-           pxCoords[1] % (int)std::floor(height / neighborConstant) == 0 && 
-           pxCoords[0] != 0){
+        std::pair<int, int> pxCoords = getPixelCoords(i, width, height);
+
+        if(pxCoords.first == -1) continue;
+        
+        if(pxCoords.first % (int)std::floor(width / neighborConstant) == 0 && 
+           pxCoords.second % (int)std::floor(height / neighborConstant) == 0 && 
+           pxCoords.first != 0){
             // larger neighborConstant == more neighbors == more Voronoi shapes
-            int x = (sign * offset) + pxCoords[0];
-            int y = (sign * offset) + pxCoords[1];
+            int x = (sign * offset) + pxCoords.first;
+            int y = (sign * offset) + pxCoords.second;
             CustomPoint p1{x, y, imageData[i], imageData[i+1], imageData[i+2]};
             neighborList.push_back(p1);
         }
@@ -494,9 +495,11 @@ void voronoiFilter(std::vector<uint8_t>& imageData, int width, int height, int n
     Node* kdtree = build2dTree(neighborList, 0);
     
     for(int i = 0; i < (int)imageData.size(); i+=4){
-        std::vector<int> currCoords = getPixelCoords(i, width, height);
+        std::pair<int, int> currCoords = getPixelCoords(i, width, height);
         
-        CustomPoint nearestNeighbor = findNearestNeighbor(kdtree, currCoords[0], currCoords[1]);
+        if(currCoords.first == -1) continue;
+        
+        CustomPoint nearestNeighbor = findNearestNeighbor(kdtree, currCoords.first, currCoords.second);
         
         // found nearest neighbor. color the current pixel the color of the nearest neighbor. 
         imageData[i] = nearestNeighbor.r;
