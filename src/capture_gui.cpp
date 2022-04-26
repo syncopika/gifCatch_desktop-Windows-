@@ -13,6 +13,7 @@
     
 */
 #include "headers/capture_gui.hh"
+#include <shlobj.h>
 
 /*****************
 
@@ -148,6 +149,28 @@ void createCheckBox(
     );
     SendMessage(checkBox, WM_SETFONT, (WPARAM)hFont, true);
 }
+
+// find a folder with bmp files
+void getFolder(HWND buttonHandle, HWND textBox){
+    BROWSEINFO bInfo;
+    TCHAR szDir[260] = {0};
+    bInfo.hwndOwner = buttonHandle;
+    bInfo.pidlRoot = NULL;
+    bInfo.pszDisplayName = szDir;
+    bInfo.lpszTitle = "Select a folder";
+    bInfo.ulFlags = 0;
+    bInfo.lpfn = NULL;
+    bInfo.lParam = 0;
+    bInfo.iImage = -1;
+    
+    LPITEMIDLIST lpItem = SHBrowseForFolderA(&bInfo);
+    if(lpItem != NULL){
+        SHGetPathFromIDList(lpItem, szDir);
+        //std::cout << szDir << "\n";
+    }
+}
+
+
 
 void makeGif(WindowInfo* args){
     HWND mainWindow = args->mainWindow;
@@ -337,7 +360,7 @@ LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
     switch(msg){
         case WM_COMMAND:
         {
-            /* LOWORD takes the lower 16 bits of wParam => the element clicked on */
+            // LOWORD takes the lower 16 bits of wParam => the element clicked on
             switch(LOWORD(wParam)){
                 case ID_SELECT_SCREENAREA_BUTTON:
                 {
@@ -425,6 +448,14 @@ LRESULT CALLBACK WndProcMainPage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
                     CreateThread(NULL, 0, processGifThread, &gifParams, 0, 0);
                     //std::thread thread(processGifThread, gifParams);
                     //thread.detach();
+                }
+                break;
+                
+                case ID_CHOOSE_DIR_BUTTON:
+                {
+                    HWND textbox = GetDlgItem(hwnd, ID_CHOOSE_DIR);
+                    HWND button = GetDlgItem(hwnd, ID_CHOOSE_DIR_BUTTON);
+                    getFolder(button, textbox);
                 }
                 break;
             }
@@ -816,17 +847,28 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
     // let user select a directory of images to create gif from
     createLabel(
         "specify full directory path of images to generate gif from: ",
-        340,
-        20,
-        10,
-        130,
+        340, 20,
+        10, 130,
         hwnd,
         hInstance,
         NULL,
         hFont
     );
     
-    createEditBox("", 280, 20, 10, 150, hwnd, hInstance, (HMENU)ID_CHOOSE_DIR, hFont);
+    createEditBox("", 280, 20, 10, 150, hwnd, hInstance, (HMENU)ID_CHOOSE_DIR, hFont); // w, h, x, y
+    
+    HWND selectDirButton = CreateWindow(
+        TEXT("button"),
+        TEXT("select dir"),
+        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        300, 150, // x, y
+        80, 20,  // w, h
+        hwnd,
+        (HMENU)ID_CHOOSE_DIR_BUTTON,
+        hInstance,
+        NULL
+    );
+    SendMessage(selectDirButton, WM_SETFONT, (WPARAM)hFont, true);
     
     /* 
         let user add a caption to their gif. for now, it'll be a bit limited in that the text 
@@ -837,10 +879,8 @@ void createMainScreen(HWND hwnd, HINSTANCE hInstance){
     */
     createLabel(
         "specify a message to show at bottom of gif: ",
-        340,
-        20,
-        10,
-        190,
+        340, 20,
+        10, 190,
         hwnd,
         hInstance,
         NULL,
