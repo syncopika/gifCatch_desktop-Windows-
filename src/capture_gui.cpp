@@ -158,7 +158,7 @@ void getFolder(HWND buttonHandle, HWND textBox){
     bInfo.pidlRoot = NULL;
     bInfo.pszDisplayName = szDir;
     bInfo.lpszTitle = "Select a folder";
-    bInfo.ulFlags = 0;
+    bInfo.ulFlags = BIF_USENEWUI;
     bInfo.lpfn = NULL;
     bInfo.lParam = 0;
     bInfo.iImage = -1;
@@ -166,7 +166,7 @@ void getFolder(HWND buttonHandle, HWND textBox){
     LPITEMIDLIST lpItem = SHBrowseForFolderA(&bInfo);
     if(lpItem != NULL){
         SHGetPathFromIDList(lpItem, szDir);
-        //std::cout << szDir << "\n";
+        SetWindowText(textBox, szDir);
     }
 }
 

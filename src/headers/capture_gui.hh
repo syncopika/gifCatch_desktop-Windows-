@@ -63,6 +63,8 @@ void createCheckBox(
 	HFONT hFont
 );
 
+void getFolder(HWND buttonHandle, HWND textBox);
+
 COLORREF getSelectedColor(HWND selectBox);
 
 DWORD WINAPI processGifThread(LPVOID windowInfo);
