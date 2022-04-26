@@ -11,6 +11,9 @@ https://stackoverflow.com/questions/30668040/specifying-a-window-procedure-for-c
 https://stackoverflow.com/questions/15605655/transparent-win32-window-and-text
 https://msdn.microsoft.com/en-us/library/windows/desktop/ms633504(v=vs.85).aspx
 https://msdn.microsoft.com/en-us/library/windows/desktop/ms633548(v=vs.85).aspx  // show/hide window 
+https://docs.microsoft.com/en-us/windows/win32/api/commdlg/nf-commdlg-getopenfilenamea
+https://docs.microsoft.com/en-us/windows/win32/api/shlobj_core/nf-shlobj_core-shbrowseforfoldera
+https://stackoverflow.com/questions/1953339/how-to-get-full-path-from-shbrowseforfolder-function
 
 // screen capture with GDI
 https://github.com/ebonwheeler/Win32GrabScreen/blob/master/capture.cpp
