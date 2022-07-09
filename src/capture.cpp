@@ -138,7 +138,7 @@ void writeNewGifFrame(
     // get image data and apply a filter  
     GifWriteFrame(gifWriter, pixelArr, (uint32_t)width, (uint32_t)height, (uint32_t)(delay/10));
     
-    delete pixelArr;
+    delete[] pixelArr;
 }
 
 // notice this takes a function pointer!
